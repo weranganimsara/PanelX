@@ -2133,22 +2133,80 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       });
     }
 
+    async function copyToClipboard(text, successMsg = 'Copied to clipboard!') {
+      if (!text) return;
+      let copied = false;
+
+      // Method 1: Modern Clipboard API (works on HTTPS & localhost)
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        } catch (e) {
+          copied = false;
+        }
+      }
+
+      // Method 2: Universal execCommand fallback (works on HTTP IP addresses)
+      if (!copied) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.top = '0';
+          ta.style.left = '0';
+          ta.style.width = '2em';
+          ta.style.height = '2em';
+          ta.style.padding = '0';
+          ta.style.border = 'none';
+          ta.style.outline = 'none';
+          ta.style.boxShadow = 'none';
+          ta.style.background = 'transparent';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          ta.setSelectionRange(0, 99999);
+          copied = document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch (e) {
+          copied = false;
+        }
+      }
+
+      if (copied) {
+        showToast(successMsg);
+      } else {
+        window.prompt("Press Ctrl+C to copy:", text);
+      }
+    }
+
     function copyActiveConfig() {
       let text = document.getElementById('modal-netmod-text').innerText;
       if (activeConfigTab === 'hc') text = document.getElementById('modal-hc-text').innerText;
       else if (activeConfigTab === 'wa') text = document.getElementById('modal-wa-text').innerText;
       else if (activeConfigTab === 'direct') text = document.getElementById('modal-direct-text').innerText;
-      navigator.clipboard.writeText(text);
-      showToast('Copied to clipboard!');
+      copyToClipboard(text, 'Config copied to clipboard!');
     }
 
     function downloadConfigText() {
       if (!currentUser) return;
-      const text = document.getElementById('modal-wa-text').innerText;
+      let text = document.getElementById('modal-netmod-text').innerText;
+      let filename = `${currentUser.username}-NetMod-Config.txt`;
+      if (activeConfigTab === 'hc') {
+        text = document.getElementById('modal-hc-text').innerText;
+        filename = `${currentUser.username}-HTTP-Custom.txt`;
+      } else if (activeConfigTab === 'wa') {
+        text = document.getElementById('modal-wa-text').innerText;
+        filename = `${currentUser.username}-Account-Details.txt`;
+      } else if (activeConfigTab === 'direct') {
+        text = document.getElementById('modal-direct-text').innerText;
+        filename = `${currentUser.username}-Direct-SSH.txt`;
+      }
+
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${currentUser.username}-PanelX-Config.txt`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2494,7 +2552,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
 
     function copyApiKey() {
       const k = document.getElementById('st-api-key').value;
-      if (k) { navigator.clipboard.writeText(k); showToast('API Key copied!'); }
+      if (k) copyToClipboard(k, 'API Key copied!');
     }
 
     async function handleSaveSettings(e) {
