@@ -1481,21 +1481,46 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       if (view === 'settings') loadSettingsToForm();
     }
 
+    // Global fetch interceptor to automatically attach PanelX Bearer token
+    const _nativeFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+      options = options || {};
+      options.headers = options.headers || {};
+      const token = localStorage.getItem('panelx_token');
+      if (token) {
+        if (options.headers instanceof Headers) {
+          if (!options.headers.has('Authorization')) options.headers.set('Authorization', 'Bearer ' + token);
+        } else if (Array.isArray(options.headers)) {
+          options.headers.push(['Authorization', 'Bearer ' + token]);
+        } else {
+          if (!options.headers['Authorization']) options.headers['Authorization'] = 'Bearer ' + token;
+        }
+      }
+      return _nativeFetch(url, options).then(res => {
+        if (res.status === 401 && typeof url === 'string' && !url.includes('/api/auth/login')) {
+          document.getElementById('login-view').style.display = 'flex';
+          document.getElementById('app-layout').style.display = 'none';
+        }
+        return res;
+      });
+    };
+
     // Authentication
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
-          document.getElementById('login-view').style.display = 'none';
-          document.getElementById('app-layout').style.display = 'flex';
-          initDashboard();
-        } else {
-          document.getElementById('login-view').style.display = 'flex';
-          document.getElementById('app-layout').style.display = 'none';
+          const data = await res.json();
+          if (data.authenticated) {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('app-layout').style.display = 'flex';
+            initDashboard();
+            return;
+          }
         }
-      } catch (e) {
-        document.getElementById('login-view').style.display = 'flex';
-      }
+      } catch (e) {}
+      document.getElementById('login-view').style.display = 'flex';
+      document.getElementById('app-layout').style.display = 'none';
     }
 
     async function handleLogin(e) {
@@ -1510,7 +1535,9 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
-        if (data.success) {
+        if (data.success && data.token) {
+          localStorage.setItem('panelx_token', data.token);
+          document.cookie = `panelx_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
           showToast('Welcome to PanelX!');
           document.getElementById('login-view').style.display = 'none';
           document.getElementById('app-layout').style.display = 'flex';
@@ -1524,7 +1551,9 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     }
 
     async function handleLogout() {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      localStorage.removeItem('panelx_token');
+      document.cookie = 'panelx_token=; path=/; max-age=0; SameSite=Lax';
       window.location.reload();
     }
 

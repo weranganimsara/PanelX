@@ -807,7 +807,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
 
-    def send_json(self, status: int, data: dict):
+    def send_json(self, status: int, data: dict, extra_headers: dict = None):
         body = json.dumps(data).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -815,6 +815,9 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key")
+        if extra_headers:
+            for k, v in extra_headers.items():
+                self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
 
@@ -846,8 +849,15 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             return auth_header[7:].strip()
         cookies = self.headers.get("Cookie", "")
         for c in cookies.split(";"):
-            if "panelx_token=" in c:
-                return c.split("=")[1].strip()
+            c = c.strip()
+            if c.startswith("panelx_token="):
+                return c.split("=", 1)[1].strip()
+        try:
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            if "token" in query and query["token"]:
+                return query["token"][0].strip()
+        except Exception:
+            pass
         return ""
 
     def is_authenticated(self) -> bool:
@@ -1049,7 +1059,8 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 conn.commit()
                 conn.close()
                 audit_log(username, "login", "web_panel", client_ip, "Successful admin login")
-                self.send_json(200, {"success": True, "token": token, "username": username})
+                cookie_header = f"panelx_token={token}; Path=/; Max-Age=2592000; SameSite=Lax"
+                self.send_json(200, {"success": True, "token": token, "username": username}, extra_headers={"Set-Cookie": cookie_header})
                 return
             audit_log(username, "login_failed", "web_panel", client_ip, "Invalid credentials", "FAILED")
             self.send_json(401, {"error": "Invalid username or password"})
@@ -1063,7 +1074,8 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
                 conn.commit()
                 conn.close()
-            self.send_json(200, {"success": True})
+            cookie_header = "panelx_token=; Path=/; Max-Age=0; SameSite=Lax"
+            self.send_json(200, {"success": True}, extra_headers={"Set-Cookie": cookie_header})
             return
 
         # Authenticated endpoints check
