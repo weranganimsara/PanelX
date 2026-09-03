@@ -195,14 +195,14 @@ def init_db():
                 0
             ),
             (
-                "Mobitel All IP (Zoom Payload)",
-                "ssh.sghome.space",
+                "M ZOOM ALL",
+                "zoom.sghome.space",
                 80,
                 "http",
                 "partner.zoom.us",
                 80,
-                "GET /cdn-cgi/trace HTTP/1.1[crlf]Host: partner.zoom.us[crlf][crlf][split]UNLOCK /? HTTP/1.1[crlf]Host: [host][crlf]Connection: upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]",
-                0
+                "u+fRSFV7ZzQTd2kgWG+TY92TH+R6nGuBhyI2CGZKwd71Rs47LQSHqfcK0TlCYHsYZftunkE8Al3qKrcmXYM7rcVuhsPr+0WKt/cg4TANhYBtrOf2rLsuSRmQ8GnOr51g6WFQnzC5NFqPzVLIN3bchwPW2d1yQnwcVejehin+sznPW8OPiGpoxeT3WHG8W3vyah3QheT63sVOA/kTUL0yF1e0ZMGsXEz71rlIivUFfxeYKzwqLEEw2apDHcUG8JYJ5rwlrWsLndVraqwqPkdfjLQO9si89tJr2FTtqJJUxVUdJ398k2qfXrUKWwxs4c5yYhxjge6NfOgCNsxPYO0L8vYyCfwpdaYVF5vTkpeLVqz7FeKIZG8swHRFxDudPS9C9eYzCmTjWIlFzgWbEGN4RNRW+07nEN+7QtOn1LLuEqCsiEVn41b1kykcimYLNpzMuIVzB5IlsPDJpTiBJEuWHluLrUd/iq46xckOPZY3RDCuSEeHcuvKNhk169cBwlpXFOHp+ddYOAF/0MyYtfJngu206/3nsKhAV14NhsSi3NbiiqK1UPFhCAplSSMLLjfPC3sztyWXtu9g4477Aqp+vyKaTygOQr7PXqjMMuDzslAP4YWJPMOKItBxEnd7qFYFYB6uWGp+xxxEVQWcFVm3lGA3xzsE8IdRIAgFpWlwMvQdI6gA7k+ppuAUpwRmN4iWPLLgaCRzhWrgZIJ1cyDv3qAzsSS5EB53DHuzm57Akssss54jhoFSDwN0pd70/EcyFuG5pbyWH8sxLSdthrPDAa+o3fE3qQ7eO+d1exCUwyQVgU5tyo4ZbkFsqUo6xyMiIwTyh4VIpew/U8KFOn+sJIvyBDqMadUQt7Qr1gzuCHs3Gx/jXUwGeR7KjWG5jwa1gDlY4z82S5vbbUNJahv8oGKYAj9jIJInMqzqx6csUOUe/t7bX10UUz5kU6R7dhvbudy7coi+MOuOrUtXR98wl1Y0tQS5uSC03gbQdKwrEJu0rpySqAZYmCH7NzCWjW/O",
+                1
             ),
             (
                 "Dialog Fastly 5G (Port 80 Bypass)",

@@ -2065,10 +2065,10 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       const u = currentUser;
       const host = inb.host || document.getElementById('stat-public-ip').innerText || '127.0.0.1';
       const port = inb.port || 80;
-      const remark = encodeURIComponent(`${inb.remark} - ${u.username}`);
+      const cleanRemark = encodeURIComponent(inb.remark ? inb.remark.trim() : 'SG HOME VPN');
 
-      // 1. SSH for NetMod URI
-      const netmodUri = `ssh://${u.username}:${u.password}@${host}:${port}?${inb.payload}#${remark}`;
+      // 1. SSH for NetMod URI (Exact NetMod Syna URI specification: :port/?payload#remark)
+      const netmodUri = `ssh://${u.username}:${u.password}@${host}:${port}/?${inb.payload}#${cleanRemark}`;
       document.getElementById('modal-netmod-text').innerText = netmodUri;
 
       // 2. HTTP Custom
