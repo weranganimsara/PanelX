@@ -1481,28 +1481,21 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       if (view === 'settings') loadSettingsToForm();
     }
 
-    // Global fetch interceptor to automatically attach PanelX Bearer token
-    const _nativeFetch = window.fetch;
+    // Global fetch interceptor to automatically attach Authorization token
+    const originalFetch = window.fetch;
     window.fetch = function(url, options = {}) {
-      options = options || {};
-      options.headers = options.headers || {};
       const token = localStorage.getItem('panelx_token');
-      if (token) {
+      if (token && typeof url === 'string' && url.startsWith('/api/')) {
+        options.headers = options.headers || {};
         if (options.headers instanceof Headers) {
-          if (!options.headers.has('Authorization')) options.headers.set('Authorization', 'Bearer ' + token);
+          if (!options.headers.has('Authorization')) options.headers.set('Authorization', `Bearer ${token}`);
         } else if (Array.isArray(options.headers)) {
-          options.headers.push(['Authorization', 'Bearer ' + token]);
+          options.headers.push(['Authorization', `Bearer ${token}`]);
         } else {
-          if (!options.headers['Authorization']) options.headers['Authorization'] = 'Bearer ' + token;
+          if (!options.headers['Authorization']) options.headers['Authorization'] = `Bearer ${token}`;
         }
       }
-      return _nativeFetch(url, options).then(res => {
-        if (res.status === 401 && typeof url === 'string' && !url.includes('/api/auth/login')) {
-          document.getElementById('login-view').style.display = 'flex';
-          document.getElementById('app-layout').style.display = 'none';
-        }
-        return res;
-      });
+      return originalFetch.call(this, url, options);
     };
 
     // Authentication
@@ -1510,17 +1503,16 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated) {
-            document.getElementById('login-view').style.display = 'none';
-            document.getElementById('app-layout').style.display = 'flex';
-            initDashboard();
-            return;
-          }
+          document.getElementById('login-view').style.display = 'none';
+          document.getElementById('app-layout').style.display = 'flex';
+          initDashboard();
+        } else {
+          document.getElementById('login-view').style.display = 'flex';
+          document.getElementById('app-layout').style.display = 'none';
         }
-      } catch (e) {}
-      document.getElementById('login-view').style.display = 'flex';
-      document.getElementById('app-layout').style.display = 'none';
+      } catch (e) {
+        document.getElementById('login-view').style.display = 'flex';
+      }
     }
 
     async function handleLogin(e) {
@@ -1551,7 +1543,9 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     }
 
     async function handleLogout() {
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {}
       localStorage.removeItem('panelx_token');
       document.cookie = 'panelx_token=; path=/; max-age=0; SameSite=Lax';
       window.location.reload();

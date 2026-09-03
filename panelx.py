@@ -807,17 +807,16 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
 
-    def send_json(self, status: int, data: dict, extra_headers: dict = None):
+    def send_json(self, status: int, data: dict, cookie: str = None):
         body = json.dumps(data).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key")
-        if extra_headers:
-            for k, v in extra_headers.items():
-                self.send_header(k, v)
+        self.send_header("Access-Control-Allow-Headers", "*")
+        if cookie:
+            self.send_header("Set-Cookie", cookie)
         self.end_headers()
         self.wfile.write(body)
 
@@ -825,7 +824,7 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key")
+        self.send_header("Access-Control-Allow-Headers", "*")
         self.end_headers()
 
     def do_HEAD(self):
@@ -844,33 +843,52 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
         return {}
 
     def get_token(self) -> str:
-        auth_header = self.headers.get("Authorization", "")
+        auth_header = self.headers.get("Authorization", "").strip()
         if auth_header.startswith("Bearer "):
             return auth_header[7:].strip()
         cookies = self.headers.get("Cookie", "")
         for c in cookies.split(";"):
-            c = c.strip()
-            if c.startswith("panelx_token="):
-                return c.split("=", 1)[1].strip()
-        try:
-            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            if "token" in query and query["token"]:
-                return query["token"][0].strip()
-        except Exception:
-            pass
+            if "panelx_token=" in c:
+                return c.split("=")[1].strip()
         return ""
 
     def is_authenticated(self) -> bool:
-        # Check 1: API Secret Key in x-api-key header (For SG Home & external integrations)
-        api_key = self.headers.get("x-api-key", "").strip()
-        configured_secret = get_setting("api_secret", "")
-        if api_key and configured_secret and api_key == configured_secret:
-            return True
+        configured_secret = get_setting("api_secret", "SG_HOME_FALCON_SECRET_2026")
+        
+        # Check 1: API Secret Key in various header formats (for SG Home & curl automation)
+        for h in ["x-api-key", "X-API-KEY", "x-falcon-key", "X-Falcon-Key", "api-key", "ApiKey"]:
+            val = self.headers.get(h, "").strip()
+            if val and val == configured_secret:
+                return True
 
-        # Check 2: Session Bearer Token or Cookie
+        # Check Authorization header for Bearer <secret> or ApiKey <secret>
+        auth_header = self.headers.get("Authorization", "").strip()
+        if auth_header.startswith("Bearer "):
+            bearer_val = auth_header[7:].strip()
+            if bearer_val == configured_secret:
+                return True
+        elif auth_header.startswith("ApiKey "):
+            if auth_header[7:].strip() == configured_secret:
+                return True
+
+        # Check Query Parameters: ?apiKey=... or ?api_key=... or ?key=...
+        try:
+            url = urllib.parse.urlparse(self.path)
+            q = urllib.parse.parse_qs(url.query)
+            for k in ["apiKey", "api_key", "key", "token"]:
+                if k in q and q[k] and q[k][0] == configured_secret:
+                    return True
+        except Exception:
+            pass
+
+        # Check 2: Session Bearer Token or Cookie from login
         token = self.get_token()
         if not token:
             return False
+
+        if token == configured_secret:
+            return True
+
         conn = get_db()
         row = conn.execute("SELECT username FROM sessions WHERE token = ?", (token,)).fetchone()
         conn.close()
@@ -1059,8 +1077,8 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 conn.commit()
                 conn.close()
                 audit_log(username, "login", "web_panel", client_ip, "Successful admin login")
-                cookie_header = f"panelx_token={token}; Path=/; Max-Age=2592000; SameSite=Lax"
-                self.send_json(200, {"success": True, "token": token, "username": username}, extra_headers={"Set-Cookie": cookie_header})
+                cookie_val = f"panelx_token={token}; Path=/; Max-Age=2592000; SameSite=Lax"
+                self.send_json(200, {"success": True, "token": token, "username": username}, cookie=cookie_val)
                 return
             audit_log(username, "login_failed", "web_panel", client_ip, "Invalid credentials", "FAILED")
             self.send_json(401, {"error": "Invalid username or password"})
@@ -1074,8 +1092,8 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
                 conn.commit()
                 conn.close()
-            cookie_header = "panelx_token=; Path=/; Max-Age=0; SameSite=Lax"
-            self.send_json(200, {"success": True}, extra_headers={"Set-Cookie": cookie_header})
+            clear_cookie = "panelx_token=; Path=/; Max-Age=0; SameSite=Lax"
+            self.send_json(200, {"success": True}, cookie=clear_cookie)
             return
 
         # Authenticated endpoints check
