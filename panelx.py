@@ -355,6 +355,18 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         path = url.path
 
+        # 0. API: Health Check (Compatible with SG Home Paid Site)
+        if path == "/api/health":
+            stats = get_system_stats()
+            self.send_json(200, {
+                "status": "online",
+                "service": "PanelX SSH Agent",
+                "version": "1.0.0",
+                "uptime": stats.get("uptime", "0d 0h"),
+                "maxDevices": 3
+            })
+            return
+
         # 1. API: System Status
         if path == "/api/system/status":
             if not self.is_authenticated():
@@ -468,13 +480,13 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(401, {"error": "Unauthorized"})
             return
 
-        # 3. Create Single User
-        if path == "/api/users/create":
+        # 3. Create Single User (Supports both /api/users/create and /api/user/create)
+        if path in ["/api/users/create", "/api/user/create"]:
             username = body.get("username", "").strip().lower().replace(" ", "")
             password = body.get("password", "").strip()
             days = int(body.get("days", 30))
-            max_logins = int(body.get("simultaneous_limit", 3))
-            bandwidth_gb = int(body.get("bandwidth_gb", 0))
+            max_logins = int(body.get("simultaneousLimit") or body.get("simultaneous_limit") or 3)
+            bandwidth_gb = int(body.get("bandwidthGB") or body.get("bandwidth_gb") or 0)
             notes = body.get("notes", "").strip()
 
             if not username or not password:
@@ -502,14 +514,21 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
 
             ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
             ssh_port = get_setting("ssh_port", "80")
+            full_ssh_url = f"ssh://{username}:{password}@{ssh_domain}:{ssh_port}"
 
             self.send_json(200, {
                 "success": True,
+                "username": username,
+                "password": password,
+                "bandwidthGB": bandwidth_gb,
+                "maxDevices": max_logins,
+                "expiryDate": expiry_date,
+                "sshUrl": full_ssh_url,
                 "user": {
                     "username": username,
                     "password": password,
                     "expiry_date": expiry_date,
-                    "ssh_url": f"ssh://{username}:{password}@{ssh_domain}:{ssh_port}"
+                    "ssh_url": full_ssh_url
                 }
             })
             return
@@ -519,7 +538,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             count = min(int(body.get("count", 5)), 50)
             prefix = body.get("prefix", "user").strip().lower()
             days = int(body.get("days", 30))
-            max_logins = int(body.get("simultaneous_limit", 3))
+            max_logins = int(body.get("simultaneousLimit") or body.get("simultaneous_limit") or 3)
 
             created = []
             conn = get_db()
@@ -553,13 +572,13 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, {"success": True, "created_count": len(created), "users": created})
             return
 
-        # 5. Renew User
-        elif path == "/api/users/renew":
+        # 5. Renew User (Supports both /api/users/renew and /api/user/renew)
+        elif path in ["/api/users/renew", "/api/user/renew"]:
             username = body.get("username", "").strip().lower()
             days = int(body.get("days", 30))
 
             conn = get_db()
-            row = conn.execute("SELECT expiry_date FROM users WHERE username = ?", (username,)).fetchone()
+            row = conn.execute("SELECT password, expiry_date FROM users WHERE username = ?", (username,)).fetchone()
             if not row:
                 conn.close()
                 self.send_json(404, {"error": "User not found"})
@@ -577,11 +596,20 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             conn.close()
 
             os_renew_user(username, new_exp)
-            self.send_json(200, {"success": True, "username": username, "new_expiry_date": new_exp})
+            ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
+            ssh_port = get_setting("ssh_port", "80")
+
+            self.send_json(200, {
+                "success": True,
+                "username": username,
+                "expiryDate": new_exp,
+                "new_expiry_date": new_exp,
+                "sshUrl": f"ssh://{username}:{row['password']}@{ssh_domain}:{ssh_port}"
+            })
             return
 
-        # 6. Delete User
-        elif path == "/api/users/delete":
+        # 6. Delete User (Supports both /api/users/delete and /api/user/delete)
+        elif path in ["/api/users/delete", "/api/user/delete"]:
             username = body.get("username", "").strip().lower()
             conn = get_db()
             conn.execute("DELETE FROM users WHERE username = ?", (username,))
@@ -611,6 +639,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             panel_title = body.get("panel_title")
             ssh_domain = body.get("ssh_domain")
             default_payload = body.get("default_payload")
+            api_secret = body.get("api_secret")
 
             if admin_user: set_setting("admin_user", admin_user.strip())
             if admin_pass: set_setting("admin_pass_hash", hash_password(admin_pass.strip()))
@@ -618,6 +647,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             if panel_title: set_setting("panel_title", panel_title.strip())
             if ssh_domain is not None: set_setting("ssh_domain", ssh_domain.strip())
             if default_payload: set_setting("default_payload", default_payload.strip())
+            if api_secret: set_setting("api_secret", api_secret.strip())
 
             self.send_json(200, {"success": True, "message": "Settings updated successfully"})
             return

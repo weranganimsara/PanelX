@@ -691,6 +691,17 @@
           <input type="text" id="st-domain" class="form-input" placeholder="e.g. ssh.yourdomain.com (Leave blank for VPS IP)">
         </div>
         <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> API Secret Key (For External Sites & Automation)</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="st-api-key" class="form-input" style="font-family: var(--font-mono); color: var(--accent-amber);" placeholder="API Secret Key">
+            <button type="button" class="btn btn-outline" onclick="copyApiKey()" title="Copy API Key"><i class="fa-solid fa-copy"></i></button>
+            <button type="button" class="btn btn-outline" onclick="generateRandomApiKey()" title="Regenerate Key"><i class="fa-solid fa-rotate"></i></button>
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Use this in your paid site as <code>x-api-key: YOUR_KEY</code> or set to <code>SG_HOME_FALCON_SECRET_2026</code>.
+          </div>
+        </div>
+        <div class="form-group">
           <label class="form-label">Default Bug Host / Payload</label>
           <textarea id="st-payload" class="form-input" rows="3" style="font-family: var(--font-mono); font-size: 11px;"></textarea>
         </div>
@@ -1079,6 +1090,7 @@
         document.getElementById('st-admin-pass').value = '';
         document.getElementById('st-domain').value = st.ssh_domain || '';
         document.getElementById('st-payload').value = st.default_payload || defaultPayload;
+        document.getElementById('st-api-key').value = st.api_secret || '';
 
         sshHostDomain = st.ssh_domain || '';
         defaultPayload = st.default_payload || defaultPayload;
@@ -1089,6 +1101,21 @@
       }
     }
 
+    function copyApiKey() {
+      const k = document.getElementById('st-api-key').value;
+      if (k) {
+        navigator.clipboard.writeText(k);
+        showToast('API Secret Key copied to clipboard!');
+      }
+    }
+
+    function generateRandomApiKey() {
+      const chars = "abcdef0123456789";
+      let key = "";
+      for (let i = 0; i < 32; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+      document.getElementById('st-api-key').value = key;
+    }
+
     async function handleSaveSettings(e) {
       e.preventDefault();
       const body = {
@@ -1097,7 +1124,8 @@
         admin_user: document.getElementById('st-admin-user').value,
         admin_pass: document.getElementById('st-admin-pass').value,
         ssh_domain: document.getElementById('st-domain').value,
-        default_payload: document.getElementById('st-payload').value
+        default_payload: document.getElementById('st-payload').value,
+        api_secret: document.getElementById('st-api-key').value
       };
 
       try {
