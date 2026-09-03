@@ -135,19 +135,26 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-# Setup Systemd Service for WS-Proxy
+# Setup panelx-proxy high-speed Rust binary
+if [ -f "bin/panelx-proxy" ]; then
+    cp bin/panelx-proxy "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+else
+    curl -sSL "${REPO_RAW_BASE}/bin/panelx-proxy" -o "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+fi
+chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+
+# Setup Systemd Service for WS-Proxy (Using compiled Rust proxy binary)
 cat <<EOF > /etc/systemd/system/ws-proxy.service
 [Unit]
-Description=PanelX Multi-Port WebSocket Proxy (Ports 80, 8080, 443)
+Description=PanelX High-Speed Rust Proxy (Ports 80, 8080, 443)
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=${INSTALL_DIR}
-ExecStart=/usr/bin/python3 ${INSTALL_DIR}/ws-proxy.py
+ExecStart=/usr/local/bin/panelx-proxy -p 80,8080,443
 Restart=always
-RestartSec=3
+RestartSec=2s
 
 [Install]
 WantedBy=multi-user.target
@@ -160,12 +167,6 @@ else
     curl -sSL "${REPO_RAW_BASE}/core/panelx-limiter.sh" -o "$INSTALL_DIR/panelx-limiter.sh" 2>/dev/null || true
 fi
 chmod +x "$INSTALL_DIR/panelx-limiter.sh" 2>/dev/null || true
-
-# Setup panelx-proxy high-speed binary
-if [ -f "bin/panelx-proxy" ]; then
-    cp bin/panelx-proxy "/usr/local/bin/panelx-proxy" 2>/dev/null || true
-    chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
-fi
 
 # Setup Systemd Service for Limiter
 cat <<EOF > /etc/systemd/system/panelx-limiter.service
