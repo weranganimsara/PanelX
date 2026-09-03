@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 340" width="1000" height="340">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06080e" />
+      <stop offset="50%" stop-color="#0b1120" />
+      <stop offset="100%" stop-color="#04060a" />
+    </linearGradient>
+
+    <!-- Neon Glow Filter -->
+    <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="glowPurple" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Accent Gradients -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#4facfe" />
+    </linearGradient>
+
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9d4edd" />
+      <stop offset="100%" stop-color="#7928ca" />
+    </linearGradient>
+
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#9d4edd" />
+    </linearGradient>
+
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b253b" />
+      <stop offset="100%" stop-color="#0b0f1a" />
+    </linearGradient>
+
+    <!-- Grid Pattern -->
+    <pattern id="cyberGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 242, 254, 0.04)" stroke-width="1" />
+    </pattern>
+  </defs>
+
+  <!-- Background Layer -->
+  <rect width="1000" height="340" rx="20" fill="url(#bgGrad)" />
+  <rect width="1000" height="340" rx="20" fill="url(#cyberGrid)" />
+
+  <!-- Outer Neon Border -->
+  <rect x="2" y="2" width="996" height="336" rx="18" fill="none" stroke="rgba(0, 242, 254, 0.25)" stroke-width="1.5" />
+
+  <!-- Ambient Glow Orbs -->
+  <circle cx="150" cy="90" r="140" fill="rgba(157, 78, 221, 0.12)" filter="url(#glowPurple)" />
+  <circle cx="850" cy="240" r="150" fill="rgba(0, 242, 254, 0.1)" filter="url(#glowCyan)" />
+
+  <!-- LOGO EMBLEM (Shield + Lightning Bolt) -->
+  <g transform="translate(105, 75)">
+    <!-- Outer Hex Glow Shield -->
+    <path d="M 55 5 L 105 25 L 105 85 C 105 130 55 160 55 160 C 55 160 5 130 5 85 L 5 25 Z" 
+          fill="none" stroke="url(#cyanGrad)" stroke-width="3" filter="url(#glowCyan)" />
+
+    <!-- Inner Shield Body -->
+    <path d="M 55 12 L 98 30 L 98 84 C 98 123 55 150 55 150 C 55 150 12 123 12 84 L 12 30 Z" 
+          fill="url(#shieldGrad)" stroke="rgba(255, 255, 255, 0.1)" stroke-width="1" />
+
+    <!-- Core Lightning Bolt -->
+    <path d="M 60 32 L 34 85 L 54 85 L 46 130 L 78 75 L 58 75 Z" 
+          fill="url(#brandGrad)" filter="url(#glowCyan)" />
+  </g>
+
+  <!-- BRAND HEADLINE & TYPOGRAPHY -->
+  <g transform="translate(260, 115)">
+    <!-- Main Title -->
+    <text x="0" y="30" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-weight="900" font-size="64" letter-spacing="3" fill="url(#brandGrad)">
+      PANELX
+    </text>
+
+    <!-- Version Badge -->
+    <rect x="305" y="-12" width="70" height="26" rx="13" fill="rgba(0, 242, 254, 0.15)" stroke="#00f2fe" stroke-width="1" />
+    <text x="340" y="6" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12" fill="#00f2fe" text-anchor="middle">
+      v2.0
+    </text>
+
+    <!-- Subtitle -->
+    <text x="0" y="65" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-weight="600" font-size="16" letter-spacing="1.5" fill="#94a3b8">
+      ENTERPRISE LINUX SERVER &amp; VPN CONTROL PANEL
+    </text>
+
+    <!-- Tagline: Powered by SG Home -->
+    <g transform="translate(0, 85)">
+      <rect x="0" y="0" width="220" height="28" rx="8" fill="rgba(157, 78, 221, 0.18)" stroke="rgba(157, 78, 221, 0.5)" stroke-width="1" />
+      <text x="110" y="19" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12" letter-spacing="1" fill="#c084fc" text-anchor="middle">
+        ⚡ POWERED BY SG HOME
+      </text>
+    </g>
+  </g>
+
+  <!-- FEATURE PILLS / TAGS (Bottom Bar) -->
+  <g transform="translate(105, 270)">
+    <!-- Pill 1: Firewall Center -->
+    <g transform="translate(0, 0)">
+      <rect width="145" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(0, 242, 254, 0.3)" stroke-width="1" />
+      <circle cx="16" cy="16" r="4" fill="#00f2fe" />
+      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">Firewall Center</text>
+    </g>
+
+    <!-- Pill 2: 30s Safety Rollback -->
+    <g transform="translate(155, 0)">
+      <rect width="165" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(255, 183, 3, 0.3)" stroke-width="1" />
+      <circle cx="16" cy="16" r="4" fill="#ffb703" />
+      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">30s Safety Rollback</text>
+    </g>
+
+    <!-- Pill 3: NetMod & HTTP Payloads -->
+    <g transform="translate(330, 0)">
+      <rect width="170" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(0, 245, 155, 0.3)" stroke-width="1" />
+      <circle cx="16" cy="16" r="4" fill="#00f59b" />
+      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">NetMod Payloads</text>
+    </g>
+
+    <!-- Pill 4: Rust High-Speed Proxy -->
+    <g transform="translate(510, 0)">
+      <rect width="145" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(157, 78, 221, 0.3)" stroke-width="1" />
+      <circle cx="16" cy="16" r="4" fill="#c084fc" />
+      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">Rust TCP Proxy</text>
+    </g>
+
+    <!-- Pill 5: SG Home REST API -->
+    <g transform="translate(665, 0)">
+      <rect width="135" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(79, 172, 254, 0.3)" stroke-width="1" />
+      <circle cx="16" cy="16" r="4" fill="#4facfe" />
+      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">REST API Ready</text>
+    </g>
+  </g>
+</svg>

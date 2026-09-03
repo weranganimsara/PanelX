@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#141c30" />
+      <stop offset="60%" stop-color="#090d18" />
+      <stop offset="100%" stop-color="#05070c" />
+    </radialGradient>
+
+    <!-- Neon Glow Filter -->
+    <filter id="glowCyan" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="glowPurple" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Gradients -->
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2c45" />
+      <stop offset="100%" stop-color="#0c121e" />
+    </linearGradient>
+
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#4facfe" />
+    </linearGradient>
+
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#7928ca" />
+    </linearGradient>
+
+    <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#9d4edd" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base App Icon Container with Rounded Corners -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGlow)" />
+  <rect x="4" y="4" width="504" height="504" rx="106" fill="none" stroke="url(#cyanGrad)" stroke-width="4" stroke-opacity="0.35" />
+
+  <!-- Ambient Glow -->
+  <circle cx="256" cy="240" r="180" fill="rgba(157, 78, 221, 0.15)" filter="url(#glowPurple)" />
+  <circle cx="256" cy="240" r="130" fill="rgba(0, 242, 254, 0.12)" filter="url(#glowCyan)" />
+
+  <!-- Outer Glowing Shield -->
+  <path d="M 256 55 L 415 115 C 415 285 256 385 256 385 C 256 385 97 285 97 115 Z" 
+        fill="url(#shieldGrad)" stroke="url(#cyanGrad)" stroke-width="8" filter="url(#glowCyan)" />
+
+  <!-- Inner Shield Accent Line -->
+  <path d="M 256 80 L 385 130 C 385 260 256 350 256 350 C 256 350 127 260 127 130 Z" 
+        fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="3" />
+
+  <!-- Core Lightning Bolt -->
+  <path d="M 275 105 L 180 250 L 250 250 L 220 365 L 340 220 L 270 220 Z" 
+        fill="url(#boltGrad)" filter="url(#glowCyan)" />
+
+  <!-- Tagline: SG HOME -->
+  <text x="256" y="445" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="28" letter-spacing="6" fill="#94a3b8" text-anchor="middle">
+    SG HOME
+  </text>
+  <text x="256" y="475" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="14" letter-spacing="3" fill="#00f2fe" text-anchor="middle">
+    PANELX v2.0
+  </text>
+</svg>
