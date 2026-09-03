@@ -75,6 +75,73 @@ def init_db():
         )
     """)
     
+    # Inbounds / Payload Profiles table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS inbounds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            remark TEXT NOT NULL,
+            host TEXT NOT NULL,
+            port INTEGER DEFAULT 80,
+            proxy_type TEXT DEFAULT 'http',
+            proxy_host TEXT DEFAULT '',
+            proxy_port INTEGER DEFAULT 8080,
+            payload TEXT NOT NULL,
+            is_default INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Seed default inbounds if empty
+    inbound_count = cursor.execute("SELECT COUNT(*) FROM inbounds").fetchone()[0]
+    if inbound_count == 0:
+        default_inbounds = [
+            (
+                "Hutch Zero (NetMod HTTP Proxy)",
+                "hutch.sghome.space",
+                80,
+                "http",
+                "dpkids.lk",
+                8080,
+                "u+fRSFV7ZzQTd2kgWG+TYwyOU6GD+h5lFt/L8DoHMpK0TM7aO3fi7LyQYKk8nlmLsJ1NBmZLzSPO2UzYwvrmmGvn+IzMXibxV0FesEy8A2I59wqplNY8lTZ1xq3RfYR4sY19RGZ4V4fOg71X2SME4kYZsAn4gdwIT/Qa6XlZU5oy59n036GoxBW47tleIaPfleBP2tiVNsO7HK/8gJSuh/G03Q9KTiJ6b8g09QT4BUzSZcYwbUI3ikUIMqhOkrEhirNnSwVBVbXPwVXmBC9C+Rf4HiHjeCVNaezkbsWynnohRMuaM1gQUNNnSDRm9+yZi2gQBCU1fA9ovN2253JgA7+rMPYJ6M3K94Hwpt47GJfzQFwuM+bWIi7sNy/TGtMy04wn6G+U5l4p9hXyjoAae6fpM/HrJ6C+ivbx4xlPoZTNxjKh7ZEiIByyJXe2JtGMbpc8HAiLZiZb4sQE7FX1I/4tD12/6b8LRU1ICSZeHB+nuxjVDN4NSHdyNN07nJkhFHkKvyzgW3EOHdC22TKeMBbFgIDCfB3IA7N/AR5KItw=",
+                1
+            ),
+            (
+                "Hutch Direct CDN (Proxy None)",
+                "hutch.sghome.space",
+                80,
+                "none",
+                "",
+                80,
+                "AuWsAzuCJjFGdg9kSB6w+19GXM9VbHK07H3C/Mjh4dcy8GDUIKQ1DeQJ9ZJbfFTC8EqXZJvvW8tiL9tiJFt0WOSrEEJqQL/a5ziuHIeqYCM0nPQctYjIJEuaRH/QbF07k6PVCGs5KWd+zT62nR8iVviTfIc6xQBgiJHLoOJ7EPZ+jHS0wedBGrVGIO8UJDaJTt6irpEJ3QyecGh0Ubp7ihQjAmWTLWgmuDpYvPiQY2bdeS/TpdOih2lKnEMdOO9HyH2osNuF76TKDC8c4c1w2+2fNHq7rU77j7M1eOgh0qYnasKvxRm19iyZ+97rU6yK6SfOsAsEPo/tkd80J5vVsIUY/oTUE/aFqHGBINItNo=",
+                0
+            ),
+            (
+                "Mobitel All IP (Zoom Payload)",
+                "ssh.sghome.space",
+                80,
+                "http",
+                "partner.zoom.us",
+                80,
+                "GET /cdn-cgi/trace HTTP/1.1[crlf]Host: partner.zoom.us[crlf][crlf][split]UNLOCK /? HTTP/1.1[crlf]Host: [host][crlf]Connection: upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]",
+                0
+            ),
+            (
+                "Dialog Fastly 5G (Port 80 Bypass)",
+                "sghome.global.ssl.fastly.net",
+                80,
+                "http",
+                "wom.co",
+                80,
+                "GET / HTTP/1.1[crlf]Host: wom.co[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]",
+                0
+            )
+        ]
+        for rem, h, p, ptype, phost, pport, payload, isdef in default_inbounds:
+            cursor.execute("""
+                INSERT INTO inbounds (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (rem, h, p, ptype, phost, pport, payload, isdef))
+    
     # Set default settings if not exists
     defaults = {
         "admin_user": "admin",
@@ -422,7 +489,18 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, st)
             return
 
-        # 4. API: Me (Check Session)
+        # 4. API: Inbounds / Payload Profiles List
+        elif path == "/api/inbounds/list":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            conn = get_db()
+            rows = conn.execute("SELECT * FROM inbounds ORDER BY is_default DESC, id ASC").fetchall()
+            conn.close()
+            self.send_json(200, {"inbounds": [dict(r) for r in rows]})
+            return
+
+        # 5. API: Me (Check Session)
         elif path == "/api/auth/me":
             if not self.is_authenticated():
                 self.send_json(401, {"error": "Not authenticated"})
@@ -430,7 +508,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, {"authenticated": True, "admin_user": get_setting("admin_user", "admin")})
             return
 
-        # 5. Serve Web Static Files / UI
+        # 6. Serve Web Static Files / UI
         else:
             self.serve_web_ui(path)
 
@@ -650,6 +728,63 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             if api_secret: set_setting("api_secret", api_secret.strip())
 
             self.send_json(200, {"success": True, "message": "Settings updated successfully"})
+            return
+
+        # 9. Create Inbound Profile
+        elif path == "/api/inbounds/create":
+            remark = body.get("remark", "").strip() or "Custom Inbound"
+            host = body.get("host", "").strip() or get_server_public_ip()
+            port = int(body.get("port", 80))
+            proxy_type = body.get("proxy_type", "http").strip().lower()
+            proxy_host = body.get("proxy_host", "").strip()
+            proxy_port = int(body.get("proxy_port", 8080))
+            payload = body.get("payload", "").strip()
+            is_default = int(body.get("is_default", 0))
+
+            conn = get_db()
+            if is_default:
+                conn.execute("UPDATE inbounds SET is_default = 0")
+            conn.execute("""
+                INSERT INTO inbounds (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default))
+            conn.commit()
+            conn.close()
+            self.send_json(200, {"success": True, "message": "Inbound profile created"})
+            return
+
+        # 10. Update Inbound Profile
+        elif path == "/api/inbounds/update":
+            inbound_id = int(body.get("id", 0))
+            remark = body.get("remark", "").strip() or "Custom Inbound"
+            host = body.get("host", "").strip() or get_server_public_ip()
+            port = int(body.get("port", 80))
+            proxy_type = body.get("proxy_type", "http").strip().lower()
+            proxy_host = body.get("proxy_host", "").strip()
+            proxy_port = int(body.get("proxy_port", 8080))
+            payload = body.get("payload", "").strip()
+            is_default = int(body.get("is_default", 0))
+
+            conn = get_db()
+            if is_default:
+                conn.execute("UPDATE inbounds SET is_default = 0")
+            conn.execute("""
+                UPDATE inbounds SET remark = ?, host = ?, port = ?, proxy_type = ?, proxy_host = ?, proxy_port = ?, payload = ?, is_default = ?
+                WHERE id = ?
+            """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default, inbound_id))
+            conn.commit()
+            conn.close()
+            self.send_json(200, {"success": True, "message": "Inbound profile updated"})
+            return
+
+        # 11. Delete Inbound Profile
+        elif path == "/api/inbounds/delete":
+            inbound_id = int(body.get("id", 0))
+            conn = get_db()
+            conn.execute("DELETE FROM inbounds WHERE id = ?", (inbound_id,))
+            conn.commit()
+            conn.close()
+            self.send_json(200, {"success": True, "message": "Inbound profile deleted"})
             return
 
         self.send_json(404, {"error": "Endpoint not found"})
