@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FALCON FIREWALL X | Complete Linux Server Control</title>
+  <title>PanelX | Powered by SG Home</title>
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -495,9 +495,9 @@
   <!-- 1. LOGIN OVERLAY -->
   <div id="login-view">
     <div class="login-card">
-      <div class="login-brand"><i class="fa-solid fa-shield-halved"></i></div>
-      <h2 style="font-size: 21px; font-weight: 800; margin-bottom: 4px;">FALCON FIREWALL X</h2>
-      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 24px;">Complete Linux Server Control</p>
+      <div class="login-brand"><i class="fa-solid fa-bolt"></i></div>
+      <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.5px;">PANELX</h2>
+      <p style="font-size: 13px; color: var(--accent-cyan); font-weight: 600; margin-bottom: 24px;">Powered by SG Home</p>
 
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="form-group" style="text-align: left;">
@@ -522,10 +522,10 @@
     <aside class="sidebar">
       <div>
         <div class="sidebar-brand">
-          <div class="sidebar-brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="sidebar-brand-icon"><i class="fa-solid fa-bolt"></i></div>
           <div class="sidebar-brand-text">
-            <h1 id="top-title">FALCON X</h1>
-            <span class="tagline">ENTERPRISE NOC</span>
+            <h1 id="top-title">PANELX</h1>
+            <span class="tagline">POWERED BY SG HOME</span>
           </div>
         </div>
 
@@ -537,7 +537,7 @@
           </li>
           <li>
             <a class="sidebar-link" onclick="switchNav('firewall')">
-              <i class="fa-solid fa-shield-virus"></i> Falcon Firewall
+              <i class="fa-solid fa-shield-halved"></i> Firewall Center
             </a>
           </li>
           <li>
@@ -745,7 +745,7 @@
         <div class="content-card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
             <div>
-              <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-shield-virus" style="color: var(--accent-cyan); margin-right: 8px;"></i> Falcon Firewall Controls</h3>
+              <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan); margin-right: 8px;"></i> Firewall Controls</h3>
               <p style="font-size: 12px; color: var(--text-muted);">Managed iptables / ufw packet filtering with automated 30s rollback lockout prevention</p>
             </div>
             <button class="btn btn-primary" onclick="openAddRuleModal()"><i class="fa-solid fa-plus"></i> Add Custom Rule</button>
@@ -1450,7 +1450,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
 
       const headings = {
         'overview': ['Server Overview', 'Real-time Linux VPS health, resource usage and active services'],
-        'firewall': ['Falcon Firewall Center', 'Managed packet filtering, port security and 30-second lockout prevention'],
+        'firewall': ['Firewall Center', 'Managed packet filtering, port security and 30-second lockout prevention'],
         'inbounds': ['Inbounds / Payload Profiles', 'Configure carrier bug hosts, NetMod encrypted strings, and proxies'],
         'clients': ['SSH Client Accounts', 'Manage customer credentials, device limits, renewals and export formats'],
         'services': ['Systemd Service Manager', 'Real-time daemon statuses, restart controls and journalctl logs'],
@@ -1511,7 +1511,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Welcome to Falcon Firewall X!');
+          showToast('Welcome to PanelX!');
           document.getElementById('login-view').style.display = 'none';
           document.getElementById('app-layout').style.display = 'flex';
           initDashboard();
@@ -2069,7 +2069,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
         `📲 *NetMod SSH URI:*\n` +
         `\`${netmodUri}\`\n\n` +
-        `✨ *Powered by Falcon Firewall X*`;
+        `✨ *Powered by SG Home*`;
       document.getElementById('modal-wa-text').innerText = waMsg;
 
       // 5. In-Browser QR Code
@@ -2108,7 +2108,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${currentUser.username}-FalconX-Config.txt`;
+      a.download = `${currentUser.username}-PanelX-Config.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2342,7 +2342,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `falconx-logs.txt`;
+      a.download = `panelx-logs.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2442,7 +2442,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       try {
         const res = await fetch('/api/settings');
         const st = await res.json();
-        document.getElementById('st-title').value = st.panel_title || 'Falcon Firewall X';
+        document.getElementById('st-title').value = st.panel_title || 'PanelX';
         document.getElementById('st-port').value = st.panel_port || '7788';
         document.getElementById('st-admin-user').value = st.admin_user || 'admin';
         document.getElementById('st-admin-pass').value = '';
@@ -2485,7 +2485,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     // Universal Command Palette (Ctrl + K)
     const COMMANDS = [
       { name: 'Overview / Dashboard', action: () => switchNav('overview') },
-      { name: 'Falcon Firewall Center', action: () => switchNav('firewall') },
+      { name: 'Firewall Center', action: () => switchNav('firewall') },
       { name: 'Carrier Inbounds & Payloads', action: () => switchNav('inbounds') },
       { name: 'SSH Client Accounts', action: () => switchNav('clients') },
       { name: 'Systemd Service Manager', action: () => switchNav('services') },

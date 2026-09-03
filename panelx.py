@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 =============================================================================
-FALCON FIREWALL X — World-Class Linux VPS & Firewall Management Control Panel
-"Complete Linux Server Control. One Powerful Interface."
+PANELX — Enterprise Linux Server & VPN Management Control Panel
+"Powered by SG Home"
 =============================================================================
 Features:
 - Enterprise Dark Cyber NOC Interface
 - Real-Time Server Health Score (0 - 100) & Diagnostic Breakdown
-- Full Falcon Firewall Center (iptables / ufw backend, safety rollback timer)
+- Full Firewall Center (iptables / ufw backend, safety rollback timer)
 - Systemd Service Manager (list, filter, start, stop, restart, logs)
 - Process Manager (top CPU/RAM, search, graceful/force kill)
 - Open Port Monitor (ss -tulnp) & Network Diagnostics (Ping, DNS)
@@ -226,7 +226,7 @@ def init_db():
         "admin_user": "admin",
         "admin_pass_hash": hash_password("admin"),
         "panel_port": "7788",
-        "panel_title": "Falcon Firewall X",
+        "panel_title": "PanelX",
         "ssh_domain": "",
         "ssh_port": "80",
         "badvpn_port": "7300",
@@ -875,7 +875,7 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             stats = get_system_stats()
             self.send_json(200, {
                 "status": "online",
-                "service": "Falcon Firewall X",
+                "service": "PanelX",
                 "version": "1.0.0",
                 "uptime": stats["uptime"],
                 "health_score": stats["health"]["score"],
@@ -889,7 +889,7 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json(401, {"error": "Unauthorized"})
                 return
             stats = get_system_stats()
-            stats["panel_title"] = get_setting("panel_title", "Falcon Firewall X")
+            stats["panel_title"] = get_setting("panel_title", "PanelX")
             self.send_json(200, stats)
             return
 
@@ -1475,8 +1475,9 @@ def run_server():
     server_address = ("0.0.0.0", port)
     
     print("=" * 65)
-    print(f"🔥 FALCON FIREWALL X — Running on http://0.0.0.0:{port}")
-    print("   Enterprise Linux VPS, Firewall & Proxy Control Panel")
+    print(f"🚀 PANELX — Running on http://0.0.0.0:{port}")
+    print("   Enterprise Linux Server & VPN Management Control Panel")
+    print("   Powered by SG Home")
     print(f"   API Key: {get_setting('api_secret')}")
     print("=" * 65)
 

@@ -26,14 +26,14 @@ fi
 
 clear
 echo -e "${CYAN}"
-echo "  ███████╗ █████╗ ██╗      ██████╗ ██████╗ ███╗   ██╗    ██╗  ██╗"
-echo "  ██╔════╝██╔══██╗██║     ██╔════╝██╔═══██╗████╗  ██║    ╚██╗██╔╝"
-echo "  █████╗  ███████║██║     ██║     ██║   ██║██╔██╗ ██║     ╚███╔╝ "
-echo "  ██╔══╝  ██╔══██║██║     ██║     ██║   ██║██║╚██╗██║     ██╔██╗ "
-echo "  ██║     ██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║    ██╔╝ ██╗"
-echo "  ╚═╝     ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═╝"
-echo -e "         ${PURPLE}FALCON FIREWALL X — Enterprise Linux Server Control${NC}"
-echo -e "             ${YELLOW}Created by Weranga Nimsara (SG Home)${NC}"
+echo "  ██████╗  █████╗ ███╗   ██╗███████╗██╗     ██╗  ██╗"
+echo "  ██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ╚██╗██╔╝"
+echo "  ██████╔╝███████║██╔██╗ ██║█████╗  ██║      ╚███╔╝ "
+echo "  ██╔═══╝ ██╔══██║██║╚██╗██║██╔══╝  ██║      ██╔██╗ "
+echo "  ██║     ██║  ██║██║ ╚████║███████╗███████╗██╔╝ ██╗"
+echo "  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝"
+echo -e "          ${PURPLE}PanelX — Enterprise Linux Server & VPN Control${NC}"
+echo -e "                   ${YELLOW}Powered by SG Home${NC}"
 echo -e "${CYAN}======================================================${NC}"
 
 echo -e "\n${BLUE}[1/6] Detecting operating system & architecture...${NC}"
@@ -204,7 +204,8 @@ command -v iptables >/dev/null 2>&1 && {
 PUB_IP=$(curl -s -4 ifconfig.me || curl -s -4 icanhazip.com || echo "YOUR_VPS_IP")
 
 echo -e "\n${CYAN}======================================================${NC}"
-echo -e "${GREEN}🎉 FALCON FIREWALL X INSTALLATION COMPLETED! 🎉${NC}"
+echo -e "${GREEN}🎉 PANELX INSTALLATION COMPLETED SUCCESSFULLY! 🎉${NC}"
+echo -e "              ${YELLOW}Powered by SG Home${NC}"
 echo -e "${CYAN}======================================================${NC}"
 echo -e "  ${GREEN}● Web UI URL    :${NC} ${YELLOW}http://${PUB_IP}:7788${NC}"
 echo -e "  ${GREEN}● Default User  :${NC} ${CYAN}admin${NC}"

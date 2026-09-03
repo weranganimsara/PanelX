@@ -1,8 +1,8 @@
-# 🔥 FALCON FIREWALL X
+# 🚀 PANELX
 
 <p align="center">
-  <b>"Complete Linux Server Control. One Powerful Interface."</b><br>
-  <i>World-Class Linux VPS, Firewall, Network & SSH Management Control Panel.</i>
+  <b>Enterprise Linux Server & VPN Management Control Panel</b><br>
+  <i>Powered by SG Home</i>
 </p>
 
 <p align="center">
