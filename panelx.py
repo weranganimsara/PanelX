@@ -898,6 +898,22 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         path = url.path
 
+        # Favicon Handler
+        if path in ["/favicon.ico", "/favicon.svg", "/apple-touch-icon.png"]:
+            fav_path = os.path.join(WEB_DIR, "assets", "logo.svg")
+            if not os.path.exists(fav_path):
+                fav_path = os.path.join(WEB_DIR, "favicon.svg")
+            if os.path.exists(fav_path):
+                with open(fav_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/svg+xml")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         # 1. API: Health Check (SG Home Integration)
         if path == "/api/health":
             stats = get_system_stats()
@@ -1475,6 +1491,8 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             elif file_path.endswith(".js"): content_type = "application/javascript"
             elif file_path.endswith(".svg"): content_type = "image/svg+xml"
             elif file_path.endswith(".png"): content_type = "image/png"
+            elif file_path.endswith(".ico"): content_type = "image/x-icon"
+            elif file_path.endswith(".webp"): content_type = "image/webp"
 
             with open(file_path, "rb") as f:
                 content = f.read()
