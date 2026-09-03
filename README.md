@@ -54,7 +54,7 @@ The installer will automatically detect your OS, install dependencies, configure
 ### 3. 👥 SSH Client Accounts & Universal Exporter
 * Single & Bulk account creation with customizable device limits (`maxlogins`) enforced via Linux `/etc/security/limits.conf`.
 * **Client Configuration Modal**:
-  * 📲 **SSH for NetMod URI:** Generates exact `ssh://user:pass@host:port?payload#remark` URIs for 1-click import into NetMod Syna.
+  * 📲 **SSH for NetMod URI:** Generates exact `ssh://user:pass@host:port/?payload#SG` URIs for 1-click import into NetMod Syna.
   * 📦 **HTTP Custom (`.hc`)**: `proxy:port@user:pass#payload` format.
   * 💬 **WhatsApp / Telegram**: Rich formatted messages with emojis.
   * 🌐 **Direct SSH URL & Live In-Browser QR Code!**
