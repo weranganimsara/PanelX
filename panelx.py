@@ -1,49 +1,100 @@
 #!/usr/bin/env python3
 """
 =============================================================================
-PanelX - Modern Open-Source SSH & WebSocket VPN Management Panel
-Author: Weranga Nimsara (SG Home) & Open-Source Contributors
-Version: 1.0.0
+FALCON FIREWALL X — World-Class Linux VPS & Firewall Management Control Panel
+"Complete Linux Server Control. One Powerful Interface."
+=============================================================================
+Features:
+- Enterprise Dark Cyber NOC Interface
+- Real-Time Server Health Score (0 - 100) & Diagnostic Breakdown
+- Full Falcon Firewall Center (iptables / ufw backend, safety rollback timer)
+- Systemd Service Manager (list, filter, start, stop, restart, logs)
+- Process Manager (top CPU/RAM, search, graceful/force kill)
+- Open Port Monitor (ss -tulnp) & Network Diagnostics (Ping, DNS)
+- SSH Security Auditor (sshd_config compliance score) & Active Session Control
+- Storage Explorer (df -h) & Controlled Safe File Manager
+- Package Updates Check & Controlled Server Power (Reboot/Shutdown)
+- Carrier Inbound Profiles & Payloads Manager (NetMod, HTTP Custom, Direct CDN)
+- SSH Client Provisioning & SG Home Paid Site REST API (x-api-key compatible)
 =============================================================================
 """
 
 import http.server
 import socketserver
 import json
-import sqlite3
-import hashlib
 import os
 import sys
 import subprocess
+import sqlite3
+import hashlib
+import secrets
 import time
 import shutil
+import socket
+import signal
+import threading
 import urllib.parse
-import secrets
 from datetime import datetime, timedelta
 
-# Configuration Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = "/etc/panelx" if os.path.exists("/etc") and os.access("/etc", os.W_OK) else BASE_DIR
-DB_FILE = os.path.join(DATA_DIR, "panelx.db")
-WEB_DIR = os.path.join(BASE_DIR, "web")
-os.makedirs(DATA_DIR, exist_ok=True)
+# Reconfigure stdout for UTF-8 compatibility
+if sys.stdout.encoding != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 # ---------------------------------------------------------------------------
-# Database Initialization & Management
+# Configuration & Paths
+# ---------------------------------------------------------------------------
+PANEL_PORT = 7788
+DATA_DIR = "/etc/panelx"
+DB_PATH = os.path.join(DATA_DIR, "panelx.db")
+WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
+
+# Ensure directories exist
+os.makedirs(DATA_DIR, exist_ok=True)
+if not os.path.exists(WEB_DIR):
+    WEB_DIR = os.path.join(DATA_DIR, "web")
+    os.makedirs(WEB_DIR, exist_ok=True)
+
+# Global Firewall Rollback Safety Queue
+# Stores { "timer": threading.Timer, "backup_file": str, "timestamp": float }
+FIREWALL_ROLLBACK = {
+    "active": False,
+    "timer": None,
+    "backup_file": "/tmp/falcon_iptables_safety.bak",
+    "expires_at": 0,
+    "pending_rule": ""
+}
+
+# ---------------------------------------------------------------------------
+# Database Initialization & Helpers
 # ---------------------------------------------------------------------------
 def get_db():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
+def audit_log(username: str, action: str, target: str = "", ip: str = "", details: str = "", result: str = "SUCCESS"):
+    try:
+        conn = get_db()
+        conn.execute("""
+            INSERT INTO audit_logs (username, action, target, ip, details, result, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+        """, (username, action, target, ip, details, result))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Settings table
+    # 1. Settings table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
@@ -51,7 +102,7 @@ def init_db():
         )
     """)
     
-    # Users table
+    # 2. Users table (SSH Clients)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +117,7 @@ def init_db():
         )
     """)
     
-    # Sessions table
+    # 3. Sessions table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             token TEXT PRIMARY KEY,
@@ -75,7 +126,7 @@ def init_db():
         )
     """)
     
-    # Inbounds / Payload Profiles table
+    # 4. Inbounds / Payload Profiles table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS inbounds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,6 +138,34 @@ def init_db():
             proxy_port INTEGER DEFAULT 8080,
             payload TEXT NOT NULL,
             is_default INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 5. Audit Logs table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            action TEXT NOT NULL,
+            target TEXT DEFAULT '',
+            ip TEXT DEFAULT '',
+            details TEXT DEFAULT '',
+            result TEXT DEFAULT 'SUCCESS',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 6. Firewall Rules managed by Panel
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS firewall_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            direction TEXT DEFAULT 'IN',
+            action TEXT DEFAULT 'ACCEPT',
+            protocol TEXT DEFAULT 'tcp',
+            port TEXT DEFAULT '',
+            source_ip TEXT DEFAULT '',
+            comment TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -142,16 +221,16 @@ def init_db():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (rem, h, p, ptype, phost, pport, payload, isdef))
     
-    # Set default settings if not exists
+    # Set default settings
     defaults = {
         "admin_user": "admin",
         "admin_pass_hash": hash_password("admin"),
         "panel_port": "7788",
-        "panel_title": "PanelX Manager",
+        "panel_title": "Falcon Firewall X",
         "ssh_domain": "",
         "ssh_port": "80",
         "badvpn_port": "7300",
-        "api_secret": secrets.token_hex(24),
+        "api_secret": "SG_HOME_FALCON_SECRET_2026",
         "default_payload": "GET /cdn-cgi/trace HTTP/1.1[crlf]Host: partner.zoom.us[crlf][crlf][split]UNLOCK /? HTTP/1.1[crlf]Host: [host][crlf]Connection: upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]"
     }
     
@@ -164,7 +243,7 @@ def init_db():
 init_db()
 
 # ---------------------------------------------------------------------------
-# System Helpers
+# Core System Helpers
 # ---------------------------------------------------------------------------
 def get_setting(key: str, default="") -> str:
     conn = get_db()
@@ -180,10 +259,10 @@ def set_setting(key: str, value: str):
 
 def get_server_public_ip():
     try:
-        res = subprocess.run("curl -s -4 ifconfig.me || curl -s -4 icanhazip.com", shell=True, capture_output=True, text=True, timeout=3)
+        res = subprocess.run("curl -s -4 --max-time 2 ifconfig.me || curl -s -4 --max-time 2 icanhazip.com", shell=True, capture_output=True, text=True)
         ip = res.stdout.strip()
-        if ip: return ip
-    except:
+        if ip and len(ip) <= 45: return ip
+    except Exception:
         pass
     return "127.0.0.1"
 
@@ -202,7 +281,7 @@ def get_network_speed():
                 if len(parts) >= 10 and not parts[0].startswith("lo:"):
                     rx_bytes += int(parts[1])
                     tx_bytes += int(parts[9])
-    except:
+    except Exception:
         return 0, 0, 0, 0
 
     now = time.time()
@@ -211,20 +290,22 @@ def get_network_speed():
     tx_speed_kb = round((tx_bytes - _prev_net["tx"]) / (1024 * dt), 1)
 
     _prev_net = {"time": now, "rx": rx_bytes, "tx": tx_bytes}
-    return rx_speed_kb, tx_speed_kb, rx_bytes, tx_bytes
+    return max(rx_speed_kb, 0.0), max(tx_speed_kb, 0.0), rx_bytes, tx_bytes
 
 def get_system_stats():
     # 1. CPU
     cpu_percent = 0.0
+    load_avg = [0.0, 0.0, 0.0]
     try:
         load = os.getloadavg()
+        load_avg = [round(x, 2) for x in load]
         cpu_cores = os.cpu_count() or 1
         cpu_percent = round(min((load[0] / cpu_cores) * 100, 100.0), 1)
-    except:
+    except Exception:
         pass
 
     # 2. RAM
-    mem_total_mb = 1
+    mem_total_mb = 1024
     mem_used_mb = 0
     mem_percent = 0.0
     try:
@@ -240,7 +321,7 @@ def get_system_stats():
             mem_total_mb = round(total_kb / 1024, 1)
             mem_used_mb = round(used_kb / 1024, 1)
             mem_percent = round((used_kb / total_kb) * 100, 1)
-    except:
+    except Exception:
         pass
 
     # 3. Disk
@@ -252,7 +333,7 @@ def get_system_stats():
         disk_total_gb = round(usage.total / (1024**3), 1)
         disk_used_gb = round(usage.used / (1024**3), 1)
         disk_percent = round((usage.used / usage.total) * 100, 1)
-    except:
+    except Exception:
         pass
 
     # 4. Uptime
@@ -263,7 +344,7 @@ def get_system_stats():
             days = int(secs // 86400)
             hours = int((secs % 86400) // 3600)
             uptime_str = f"{days}d {hours}h"
-    except:
+    except Exception:
         pass
 
     # 5. Open Sockets
@@ -271,12 +352,45 @@ def get_system_stats():
     try:
         with open("/proc/net/tcp", "r") as f:
             sockets_count += max(len(f.readlines()) - 1, 0)
-    except:
+    except Exception:
         pass
 
     rx_speed, tx_speed, total_rx, total_tx = get_network_speed()
 
+    # 6. System Info
+    hostname = socket.gethostname()
+    os_info = "Linux"
+    try:
+        with open("/etc/os-release", "r") as f:
+            for line in f:
+                if line.startswith("PRETTY_NAME="):
+                    os_info = line.split("=")[1].strip().strip('"')
+                    break
+    except Exception:
+        pass
+
+    kernel = "Unknown"
+    try:
+        kernel = subprocess.run("uname -r", shell=True, capture_output=True, text=True).stdout.strip()
+    except Exception:
+        pass
+
+    # 7. Check services
+    services_state = {
+        "ssh": check_service_status("ssh"),
+        "ws_proxy": check_service_status("ws-proxy"),
+        "badvpn": check_service_status("badvpn"),
+        "limiter": check_service_status("panelx-limiter")
+    }
+
+    # 8. Server Health Score (0 - 100)
+    health = calculate_health_score(cpu_percent, mem_percent, disk_percent, services_state)
+
     return {
+        "hostname": hostname,
+        "os": os_info,
+        "kernel": kernel,
+        "load_avg": load_avg,
         "cpu_percent": cpu_percent,
         "mem_used_mb": mem_used_mb,
         "mem_total_mb": mem_total_mb,
@@ -290,11 +404,59 @@ def get_system_stats():
         "tx_speed_kb": tx_speed,
         "total_rx_gb": round(total_rx / (1024**3), 2),
         "total_tx_gb": round(total_tx / (1024**3), 2),
-        "public_ip": get_server_public_ip()
+        "public_ip": get_server_public_ip(),
+        "services": services_state,
+        "health": health
+    }
+
+def calculate_health_score(cpu_pct, mem_pct, disk_pct, services):
+    score = 100
+    deductions = []
+
+    # CPU penalty
+    if cpu_pct > 85:
+        score -= 20
+        deductions.append(f"High CPU Pressure ({cpu_pct}%)")
+    elif cpu_pct > 60:
+        score -= 10
+        deductions.append(f"Moderate CPU Load ({cpu_pct}%)")
+
+    # RAM penalty
+    if mem_pct > 90:
+        score -= 20
+        deductions.append(f"Critical RAM Pressure ({mem_pct}%)")
+    elif mem_pct > 75:
+        score -= 10
+        deductions.append(f"Elevated Memory Usage ({mem_pct}%)")
+
+    # Disk penalty
+    if disk_pct > 90:
+        score -= 25
+        deductions.append(f"Critical Disk Space ({disk_pct}%)")
+    elif disk_pct > 80:
+        score -= 10
+        deductions.append(f"Low Free Disk ({disk_pct}%)")
+
+    # Service penalties
+    for svc, active in services.items():
+        if not active:
+            score -= 8
+            deductions.append(f"Service {svc} is Inactive")
+
+    score = max(score, 10)
+    rating = "Optimal"
+    if score < 60: rating = "Critical"
+    elif score < 80: rating = "Warning"
+    elif score < 95: rating = "Good"
+
+    return {
+        "score": score,
+        "rating": rating,
+        "deductions": deductions
     }
 
 # ---------------------------------------------------------------------------
-# Linux Account Management (System Enforcements)
+# Linux Account Management (PAM & Kernel Limiter Sync)
 # ---------------------------------------------------------------------------
 def sync_users_db():
     try:
@@ -306,30 +468,24 @@ def sync_users_db():
         with open(db_path, "w") as f:
             for r in rows:
                 f.write(f"{r['username']}:{r['password']}:{r['expiry_date']}:{r['simultaneous_limit']}:{r['bandwidth_gb']}\n")
-    except:
+    except Exception:
         pass
 
 def os_create_user(username: str, password: str, expiry_date: str, max_logins: int = 3):
     clean_user = username.strip().lower()
-    # 1. Delete if previously exists
     subprocess.run(f"userdel -r {clean_user} 2>/dev/null", shell=True)
-    
-    # 2. Add with expiration date and disabled shell
     res1 = subprocess.run(f"useradd -e {expiry_date} -s /bin/false -M {clean_user}", shell=True)
     if res1.returncode != 0:
-        # Retry with minimal flags
         subprocess.run(f"useradd -s /bin/false {clean_user}", shell=True)
         subprocess.run(f"chage -E {expiry_date} {clean_user}", shell=True)
 
-    # 3. Set password
     p = subprocess.Popen(["chpasswd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     p.communicate(f"{clean_user}:{password}\n")
 
-    # 4. Limit simultaneous logins
     try:
         subprocess.run(f"sed -i '/^{clean_user} /d' /etc/security/limits.conf 2>/dev/null", shell=True)
         subprocess.run(f"echo '{clean_user} hard maxlogins {max_logins}' >> /etc/security/limits.conf", shell=True)
-    except:
+    except Exception:
         pass
     sync_users_db()
 
@@ -348,8 +504,300 @@ def check_service_status(service_name: str) -> bool:
     try:
         res = subprocess.run(f"systemctl is-active {service_name}", shell=True, capture_output=True, text=True)
         return res.stdout.strip() == "active"
-    except:
+    except Exception:
         return False
+
+# ---------------------------------------------------------------------------
+# Falcon Firewall Subsystem (iptables / ufw + Safety Rollback)
+# ---------------------------------------------------------------------------
+def detect_firewall_backend():
+    if shutil.which("ufw"):
+        res = subprocess.run("ufw status", shell=True, capture_output=True, text=True)
+        if "Status: active" in res.stdout:
+            return "ufw"
+    if shutil.which("iptables"):
+        return "iptables"
+    return "iptables"
+
+def get_firewall_state():
+    backend = detect_firewall_backend()
+    rules = []
+    default_policy = {"INPUT": "ACCEPT", "OUTPUT": "ACCEPT", "FORWARD": "ACCEPT"}
+
+    if backend == "ufw":
+        res = subprocess.run("ufw status numbered", shell=True, capture_output=True, text=True)
+        is_active = "Status: active" in res.stdout
+        lines = res.stdout.splitlines()
+        for l in lines:
+            if "[" in l and "]" in l:
+                parts = l.split()
+                try:
+                    num = parts[0].strip("[]")
+                    target = parts[1]
+                    action = parts[2]
+                    src = parts[3] if len(parts) > 3 else "Anywhere"
+                    rules.append({
+                        "id": num,
+                        "direction": "IN",
+                        "port": target,
+                        "action": action,
+                        "source": src,
+                        "protocol": "any"
+                    })
+                except Exception:
+                    pass
+    else:
+        # iptables
+        res = subprocess.run("iptables -L INPUT -n -v --line-numbers", shell=True, capture_output=True, text=True)
+        is_active = True
+        for line in res.stdout.splitlines():
+            if "Chain INPUT (policy" in line:
+                if "DROP" in line: default_policy["INPUT"] = "DROP"
+            parts = line.split()
+            if len(parts) >= 8 and parts[0].isdigit():
+                num = parts[0]
+                target = parts[3]
+                proto = parts[4]
+                src = parts[8]
+                extra = " ".join(parts[9:]) if len(parts) > 9 else ""
+                port = extra.replace("dpt:", "").replace("tcp dpt:", "").replace("udp dpt:", "")
+                rules.append({
+                    "id": num,
+                    "direction": "IN",
+                    "action": target,
+                    "protocol": proto,
+                    "source": src,
+                    "port": port or "any",
+                    "extra": extra
+                })
+
+    return {
+        "backend": backend,
+        "is_active": is_active,
+        "default_policy": default_policy,
+        "rules": rules,
+        "rollback_active": FIREWALL_ROLLBACK["active"],
+        "rollback_remaining": max(int(FIREWALL_ROLLBACK["expires_at"] - time.time()), 0) if FIREWALL_ROLLBACK["active"] else 0
+    }
+
+def trigger_firewall_rollback():
+    global FIREWALL_ROLLBACK
+    if os.path.exists(FIREWALL_ROLLBACK["backup_file"]):
+        subprocess.run(f"iptables-restore < {FIREWALL_ROLLBACK['backup_file']} 2>/dev/null", shell=True)
+    FIREWALL_ROLLBACK["active"] = False
+    FIREWALL_ROLLBACK["timer"] = None
+    audit_log("system", "firewall_auto_rollback", "Safety rollback triggered after timeout", "127.0.0.1")
+
+def apply_firewall_rule(action: str, port: str, protocol: str = "tcp", source_ip: str = ""):
+    global FIREWALL_ROLLBACK
+    # 1. Save safety snapshot before modifying
+    subprocess.run(f"iptables-save > {FIREWALL_ROLLBACK['backup_file']} 2>/dev/null", shell=True)
+
+    # 2. Formulate iptables command safely
+    action_flag = "ACCEPT" if action.upper() == "ALLOW" else "DROP"
+    cmd_parts = ["iptables", "-I", "INPUT", "1"]
+    if protocol and protocol.lower() != "any":
+        cmd_parts.extend(["-p", protocol.lower()])
+    if port and port.strip() != "any":
+        cmd_parts.extend(["--dport", str(port).strip()])
+    if source_ip and source_ip.strip():
+        cmd_parts.extend(["-s", source_ip.strip()])
+    cmd_parts.extend(["-j", action_flag])
+
+    res = subprocess.run(cmd_parts, capture_output=True, text=True)
+    if res.returncode != 0:
+        return False, res.stderr.strip() or "Failed to apply rule"
+
+    # 3. Start 30-second safety rollback timer
+    if FIREWALL_ROLLBACK["timer"]:
+        FIREWALL_ROLLBACK["timer"].cancel()
+
+    timer = threading.Timer(30.0, trigger_firewall_rollback)
+    timer.daemon = True
+    timer.start()
+
+    FIREWALL_ROLLBACK["active"] = True
+    FIREWALL_ROLLBACK["timer"] = timer
+    FIREWALL_ROLLBACK["expires_at"] = time.time() + 30.0
+    FIREWALL_ROLLBACK["pending_rule"] = f"{action} {protocol} {port} {source_ip}"
+
+    return True, "Rule applied with 30-second safety rollback timer"
+
+def confirm_firewall_rules():
+    global FIREWALL_ROLLBACK
+    if FIREWALL_ROLLBACK["timer"]:
+        FIREWALL_ROLLBACK["timer"].cancel()
+    FIREWALL_ROLLBACK["active"] = False
+    FIREWALL_ROLLBACK["timer"] = None
+    FIREWALL_ROLLBACK["pending_rule"] = ""
+    return True
+
+def revert_firewall_rules():
+    global FIREWALL_ROLLBACK
+    if FIREWALL_ROLLBACK["timer"]:
+        FIREWALL_ROLLBACK["timer"].cancel()
+    trigger_firewall_rollback()
+    return True
+
+# ---------------------------------------------------------------------------
+# Linux Subsystem Controllers (Processes, Services, Ports, SSH, Files)
+# ---------------------------------------------------------------------------
+def get_linux_processes(limit=50):
+    procs = []
+    try:
+        res = subprocess.run("ps -eo pid,user,%cpu,%mem,stat,comm --sort=-%cpu", shell=True, capture_output=True, text=True)
+        lines = res.stdout.splitlines()[1:limit+1]
+        for l in lines:
+            p = l.split()
+            if len(p) >= 6:
+                procs.append({
+                    "pid": int(p[0]),
+                    "user": p[1],
+                    "cpu": float(p[2]),
+                    "mem": float(p[3]),
+                    "stat": p[4],
+                    "name": " ".join(p[5:])
+                })
+    except Exception:
+        pass
+    return procs
+
+def get_systemd_units():
+    units = []
+    try:
+        res = subprocess.run("systemctl list-units --type=service --no-legend --no-pager", shell=True, capture_output=True, text=True)
+        for l in res.stdout.splitlines():
+            p = l.split()
+            if len(p) >= 4:
+                units.append({
+                    "unit": p[0],
+                    "load": p[1],
+                    "active": p[2],
+                    "sub": p[3],
+                    "description": " ".join(p[4:]) if len(p) > 4 else ""
+                })
+    except Exception:
+        pass
+    return units
+
+def get_listening_sockets():
+    sockets = []
+    try:
+        res = subprocess.run("ss -tulnp", shell=True, capture_output=True, text=True)
+        lines = res.stdout.splitlines()[1:]
+        for l in lines:
+            parts = l.split()
+            if len(parts) >= 5:
+                proto = parts[0]
+                local = parts[4]
+                process = parts[6] if len(parts) > 6 else "-"
+                port = local.split(":")[-1] if ":" in local else local
+                sockets.append({
+                    "proto": proto,
+                    "address": local,
+                    "port": port,
+                    "process": process
+                })
+    except Exception:
+        pass
+    return sockets
+
+def get_ssh_security_audit():
+    score = 100
+    checks = []
+    conf_path = "/etc/ssh/sshd_config"
+    config = {}
+
+    if os.path.exists(conf_path):
+        try:
+            with open(conf_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        parts = line.split(None, 1)
+                        if len(parts) == 2:
+                            config[parts[0].lower()] = parts[1].strip()
+        except Exception:
+            pass
+
+    # 1. Root Login
+    root_login = config.get("permitrootlogin", "yes").lower()
+    if root_login == "yes":
+        score -= 25
+        checks.append({"item": "Root Login Enabled", "status": "WARN", "tip": "Disable direct root login (set PermitRootLogin no)"})
+    else:
+        checks.append({"item": "Root Login Restricted", "status": "PASS", "tip": "Direct root SSH is disabled"})
+
+    # 2. Password Authentication
+    pass_auth = config.get("passwordauthentication", "yes").lower()
+    if pass_auth == "yes":
+        score -= 15
+        checks.append({"item": "Password Authentication", "status": "WARN", "tip": "Use SSH Key pairs instead of passwords"})
+    else:
+        checks.append({"item": "Public Key Only", "status": "PASS", "tip": "Password auth is disabled"})
+
+    # 3. Port
+    port = config.get("port", "22")
+    if port == "22":
+        score -= 10
+        checks.append({"item": "Default SSH Port (22)", "status": "INFO", "tip": "Consider changing to a custom port to reduce bot scanners"})
+    else:
+        checks.append({"item": f"Custom Port ({port})", "status": "PASS", "tip": "Port is non-standard"})
+
+    # Active Sessions
+    active_sessions = []
+    try:
+        res = subprocess.run("w -h", shell=True, capture_output=True, text=True)
+        for line in res.stdout.splitlines():
+            p = line.split()
+            if len(p) >= 4:
+                active_sessions.append({
+                    "user": p[0],
+                    "tty": p[1],
+                    "ip": p[2],
+                    "login": p[3],
+                    "what": " ".join(p[4:]) if len(p) > 4 else "ssh"
+                })
+    except Exception:
+        pass
+
+    return {
+        "score": max(score, 20),
+        "checks": checks,
+        "port": port,
+        "active_sessions": active_sessions
+    }
+
+def get_disk_storage():
+    disks = []
+    try:
+        res = subprocess.run("df -h -x tmpfs -x devtmpfs -x overlay", shell=True, capture_output=True, text=True)
+        lines = res.stdout.splitlines()[1:]
+        for line in lines:
+            p = line.split()
+            if len(p) >= 6:
+                disks.append({
+                    "filesystem": p[0],
+                    "size": p[1],
+                    "used": p[2],
+                    "avail": p[3],
+                    "percent": p[4],
+                    "mount": p[5]
+                })
+    except Exception:
+        pass
+    return disks
+
+def check_package_updates():
+    upgradable = []
+    try:
+        res = subprocess.run("apt list --upgradable 2>/dev/null", shell=True, capture_output=True, text=True)
+        for line in res.stdout.splitlines():
+            if "/" in line and not line.startswith("Listing"):
+                upgradable.append(line.split("/")[0])
+    except Exception:
+        pass
+    return upgradable
 
 # ---------------------------------------------------------------------------
 # HTTP API & Web Request Handler
@@ -357,99 +805,169 @@ def check_service_status(service_name: str) -> bool:
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
 
-class PanelXHandler(http.server.BaseHTTPRequestHandler):
-    def log_message(self, format, *args):
-        # Suppress noisy standard request logging
-        pass
+class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
 
-    def send_json(self, status_code: int, data: dict):
-        self.send_response(status_code)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+    def send_json(self, status: int, data: dict):
+        body = json.dumps(data).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key")
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode("utf-8"))
+        self.wfile.write(body)
 
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key")
         self.end_headers()
 
-    def get_auth_token(self) -> str:
-        auth = self.headers.get("Authorization", "")
-        if auth.startswith("Bearer "):
-            return auth.split(" ")[1].strip()
-        # Check cookie
-        cookie_header = self.headers.get("Cookie", "")
-        if "panelx_token=" in cookie_header:
-            for c in cookie_header.split(";"):
-                if "panelx_token=" in c:
-                    return c.split("panelx_token=")[1].strip()
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+
+    def read_json_body(self) -> dict:
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length > 0:
+                raw = self.wfile if False else self.rfile.read(length)
+                return json.loads(raw.decode("utf-8"))
+        except Exception:
+            pass
+        return {}
+
+    def get_token(self) -> str:
+        auth_header = self.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            return auth_header[7:].strip()
+        cookies = self.headers.get("Cookie", "")
+        for c in cookies.split(";"):
+            if "panelx_token=" in c:
+                return c.split("=")[1].strip()
         return ""
 
     def is_authenticated(self) -> bool:
-        # Check API key header
-        api_key = self.headers.get("x-api-key")
-        if api_key and api_key == get_setting("api_secret"):
+        # Check 1: API Secret Key in x-api-key header (For SG Home & external integrations)
+        api_key = self.headers.get("x-api-key", "").strip()
+        configured_secret = get_setting("api_secret", "")
+        if api_key and configured_secret and api_key == configured_secret:
             return True
 
-        token = self.get_auth_token()
+        # Check 2: Session Bearer Token or Cookie
+        token = self.get_token()
         if not token:
             return False
         conn = get_db()
         row = conn.execute("SELECT username FROM sessions WHERE token = ?", (token,)).fetchone()
         conn.close()
-        return row is not None
-
-    def read_json_body(self) -> dict:
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            if length == 0: return {}
-            body = self.rfile.read(length)
-            return json.loads(body.decode("utf-8"))
-        except:
-            return {}
-
-    def do_HEAD(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.end_headers()
+        return bool(row)
 
     def do_GET(self):
         url = urllib.parse.urlparse(self.path)
         path = url.path
 
-        # 0. API: Health Check (Compatible with SG Home Paid Site)
+        # 1. API: Health Check (SG Home Integration)
         if path == "/api/health":
             stats = get_system_stats()
             self.send_json(200, {
                 "status": "online",
-                "service": "PanelX SSH Agent",
+                "service": "Falcon Firewall X",
                 "version": "1.0.0",
-                "uptime": stats.get("uptime", "0d 0h"),
+                "uptime": stats["uptime"],
+                "health_score": stats["health"]["score"],
                 "maxDevices": 3
             })
             return
 
-        # 1. API: System Status
-        if path == "/api/system/status":
+        # 2. API: System Status & Health
+        elif path == "/api/system/status":
             if not self.is_authenticated():
                 self.send_json(401, {"error": "Unauthorized"})
                 return
             stats = get_system_stats()
-            stats["services"] = {
-                "ssh": check_service_status("ssh") or check_service_status("sshd"),
-                "ws_proxy": check_service_status("ws-proxy") or check_service_status("panelx-ws"),
-                "badvpn": check_service_status("badvpn") or check_service_status("badvpn-udpgw")
-            }
-            stats["panel_title"] = get_setting("panel_title", "PanelX Manager")
+            stats["panel_title"] = get_setting("panel_title", "Falcon Firewall X")
             self.send_json(200, stats)
             return
 
-        # 2. API: Users List
+        # 3. API: Firewall Status & Rules
+        elif path == "/api/firewall/status":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            fw_state = get_firewall_state()
+            self.send_json(200, fw_state)
+            return
+
+        # 4. API: Systemd Services
+        elif path == "/api/services/systemd":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            units = get_systemd_units()
+            self.send_json(200, {"units": units, "total": len(units)})
+            return
+
+        # 5. API: Process Manager
+        elif path == "/api/processes/list":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            procs = get_linux_processes(limit=60)
+            self.send_json(200, {"processes": procs})
+            return
+
+        # 6. API: Port Monitor
+        elif path == "/api/network/ports":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            sockets = get_listening_sockets()
+            self.send_json(200, {"sockets": sockets})
+            return
+
+        # 7. API: SSH Security Audit & Sessions
+        elif path == "/api/ssh/audit":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            audit = get_ssh_security_audit()
+            self.send_json(200, audit)
+            return
+
+        # 8. API: Storage Disks
+        elif path == "/api/storage/disks":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            disks = get_disk_storage()
+            self.send_json(200, {"disks": disks})
+            return
+
+        # 9. API: System Package Updates
+        elif path == "/api/system/updates":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            upgrades = check_package_updates()
+            self.send_json(200, {"upgrades": upgrades, "count": len(upgrades)})
+            return
+
+        # 10. API: Audit Logs
+        elif path == "/api/audit/logs":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            conn = get_db()
+            rows = conn.execute("SELECT * FROM audit_logs ORDER BY id DESC LIMIT 100").fetchall()
+            conn.close()
+            self.send_json(200, {"logs": [dict(r) for r in rows]})
+            return
+
+        # 11. API: Users List
         elif path == "/api/users/list":
             if not self.is_authenticated():
                 self.send_json(401, {"error": "Unauthorized"})
@@ -461,7 +979,6 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
             ssh_port = get_setting("ssh_port", "80")
 
-            # Enrich with generated SSH URL
             for u in users:
                 u["ssh_url"] = f"ssh://{u['username']}:{u['password']}@{ssh_domain}:{ssh_port}"
                 try:
@@ -469,14 +986,25 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
                     days_left = (exp - datetime.now()).days
                     u["days_left"] = max(days_left, 0)
                     u["is_expired"] = days_left < 0
-                except:
+                except Exception:
                     u["days_left"] = 0
                     u["is_expired"] = False
 
             self.send_json(200, {"users": users, "total": len(users)})
             return
 
-        # 3. API: Settings
+        # 12. API: Inbounds List
+        elif path == "/api/inbounds/list":
+            if not self.is_authenticated():
+                self.send_json(401, {"error": "Unauthorized"})
+                return
+            conn = get_db()
+            rows = conn.execute("SELECT * FROM inbounds ORDER BY is_default DESC, id ASC").fetchall()
+            conn.close()
+            self.send_json(200, {"inbounds": [dict(r) for r in rows]})
+            return
+
+        # 13. API: Settings
         elif path == "/api/settings":
             if not self.is_authenticated():
                 self.send_json(401, {"error": "Unauthorized"})
@@ -489,18 +1017,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, st)
             return
 
-        # 4. API: Inbounds / Payload Profiles List
-        elif path == "/api/inbounds/list":
-            if not self.is_authenticated():
-                self.send_json(401, {"error": "Unauthorized"})
-                return
-            conn = get_db()
-            rows = conn.execute("SELECT * FROM inbounds ORDER BY is_default DESC, id ASC").fetchall()
-            conn.close()
-            self.send_json(200, {"inbounds": [dict(r) for r in rows]})
-            return
-
-        # 5. API: Me (Check Session)
+        # 14. API: Me (Check Session)
         elif path == "/api/auth/me":
             if not self.is_authenticated():
                 self.send_json(401, {"error": "Not authenticated"})
@@ -508,7 +1025,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, {"authenticated": True, "admin_user": get_setting("admin_user", "admin")})
             return
 
-        # 6. Serve Web Static Files / UI
+        # 15. Serve Web Static Files / UI
         else:
             self.serve_web_ui(path)
 
@@ -516,12 +1033,12 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         path = url.path
         body = self.read_json_body()
+        client_ip = self.client_address[0] if self.client_address else "127.0.0.1"
 
         # 1. Login
         if path == "/api/auth/login":
             username = body.get("username", "").strip()
             password = body.get("password", "").strip()
-
             expected_user = get_setting("admin_user", "admin")
             expected_hash = get_setting("admin_pass_hash", hash_password("admin"))
 
@@ -531,20 +1048,16 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
                 conn.execute("INSERT INTO sessions (token, username, created_at) VALUES (?, ?, ?)", (token, username, int(time.time())))
                 conn.commit()
                 conn.close()
-
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Set-Cookie", f"panelx_token={token}; Path=/; HttpOnly; Max-Age=2592000")
-                self.end_headers()
-                self.wfile.write(json.dumps({"success": True, "token": token}).encode("utf-8"))
+                audit_log(username, "login", "web_panel", client_ip, "Successful admin login")
+                self.send_json(200, {"success": True, "token": token, "username": username})
                 return
-            else:
-                self.send_json(401, {"error": "Invalid username or password"})
-                return
+            audit_log(username, "login_failed", "web_panel", client_ip, "Invalid credentials", "FAILED")
+            self.send_json(401, {"error": "Invalid username or password"})
+            return
 
         # 2. Logout
         elif path == "/api/auth/logout":
-            token = self.get_auth_token()
+            token = self.get_token()
             if token:
                 conn = get_db()
                 conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
@@ -553,18 +1066,167 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, {"success": True})
             return
 
-        # All other POST routes require auth
+        # Authenticated endpoints check
         if not self.is_authenticated():
             self.send_json(401, {"error": "Unauthorized"})
             return
 
-        # 3. Create Single User (Supports both /api/users/create and /api/user/create)
-        if path in ["/api/users/create", "/api/user/create"]:
-            username = body.get("username", "").strip().lower().replace(" ", "")
+        # 3. Firewall: Add Rule (with 30s rollback)
+        if path == "/api/firewall/rule/add":
+            action = body.get("action", "ALLOW").strip()
+            port = str(body.get("port", "")).strip()
+            protocol = body.get("protocol", "tcp").strip()
+            source_ip = body.get("source_ip", "").strip()
+
+            success, msg = apply_firewall_rule(action, port, protocol, source_ip)
+            if success:
+                audit_log("admin", "firewall_rule_add", f"{action} {protocol} {port}", client_ip, msg)
+                self.send_json(200, {"success": True, "message": msg, "rollback_active": True, "timeout": 30})
+            else:
+                self.send_json(400, {"error": msg})
+            return
+
+        # 4. Firewall: Confirm Rollback
+        elif path == "/api/firewall/rollback/confirm":
+            confirm_firewall_rules()
+            audit_log("admin", "firewall_confirm", "Rules committed permanently", client_ip)
+            self.send_json(200, {"success": True, "message": "Firewall changes confirmed permanently"})
+            return
+
+        # 5. Firewall: Revert Rollback Immediately
+        elif path == "/api/firewall/rollback/revert":
+            revert_firewall_rules()
+            audit_log("admin", "firewall_revert", "Rules reverted to backup state", client_ip)
+            self.send_json(200, {"success": True, "message": "Firewall rules reverted to previous state"})
+            return
+
+        # 6. Firewall: Delete Rule
+        elif path == "/api/firewall/rule/delete":
+            rule_id = str(body.get("id", "")).strip()
+            if rule_id.isdigit():
+                subprocess.run(f"iptables -D INPUT {rule_id}", shell=True)
+                audit_log("admin", "firewall_rule_delete", f"Rule #{rule_id}", client_ip)
+                self.send_json(200, {"success": True, "message": f"Rule {rule_id} removed"})
+                return
+            self.send_json(400, {"error": "Invalid rule ID"})
+            return
+
+        # 7. Process Manager: Kill Process
+        elif path == "/api/processes/kill":
+            pid = int(body.get("pid", 0))
+            sig = int(body.get("signal", 15))
+            if pid > 1:
+                try:
+                    os.kill(pid, sig)
+                    audit_log("admin", "process_kill", f"PID {pid} (Signal {sig})", client_ip)
+                    self.send_json(200, {"success": True, "message": f"Sent signal {sig} to PID {pid}"})
+                    return
+                except Exception as e:
+                    self.send_json(400, {"error": str(e)})
+                    return
+            self.send_json(400, {"error": "Invalid PID"})
+            return
+
+        # 8. Service Action
+        elif path == "/api/services/action":
+            service = body.get("service", "").strip()
+            action = body.get("action", "").strip()
+            if service and action in ["start", "stop", "restart", "reload", "enable", "disable"]:
+                subprocess.run(f"systemctl {action} {service}", shell=True)
+                audit_log("admin", "service_action", f"{action} {service}", client_ip)
+                self.send_json(200, {"success": True, "message": f"Service {service} {action}ed"})
+                return
+            self.send_json(400, {"error": "Invalid service or action"})
+            return
+
+        # 9. Service Logs
+        elif path == "/api/services/logs":
+            service = body.get("service", "ssh").strip()
+            res = subprocess.run(f"journalctl -u {service} -n 100 --no-pager", shell=True, capture_output=True, text=True)
+            self.send_json(200, {"logs": res.stdout or "No logs found"})
+            return
+
+        # 10. Network Diagnostics: Ping & DNS
+        elif path == "/api/network/ping":
+            target = body.get("target", "1.1.1.1").strip()
+            # Clean input to prevent shell injection
+            target = "".join(c for c in target if c.isalnum() or c in ".-")
+            res = subprocess.run(f"ping -c 4 -W 2 {target}", shell=True, capture_output=True, text=True)
+            self.send_json(200, {"output": res.stdout or res.stderr})
+            return
+
+        elif path == "/api/network/dns":
+            domain = body.get("domain", "").strip()
+            try:
+                ip = socket.gethostbyname(domain)
+                self.send_json(200, {"domain": domain, "resolved_ip": ip})
+            except Exception as e:
+                self.send_json(400, {"error": str(e)})
+            return
+
+        # 11. SSH Session Disconnect
+        elif path == "/api/ssh/disconnect":
+            tty = body.get("tty", "").strip()
+            if tty and not ";" in tty and not "&" in tty:
+                subprocess.run(f"pkill -9 -t {tty}", shell=True)
+                audit_log("admin", "ssh_disconnect", f"TTY {tty}", client_ip)
+                self.send_json(200, {"success": True, "message": f"Disconnected session {tty}"})
+                return
+            self.send_json(400, {"error": "Invalid TTY"})
+            return
+
+        # 12. Safe File Explorer: Browse
+        elif path == "/api/files/browse":
+            req_path = body.get("path", "/etc").strip()
+            # Allowed root directories
+            allowed = ["/etc", "/var/log", "/root", "/home", "/tmp"]
+            is_allowed = any(os.path.abspath(req_path).startswith(a) for a in allowed)
+            if not is_allowed:
+                self.send_json(403, {"error": "Access to this path is restricted"})
+                return
+
+            items = []
+            try:
+                for entry in os.scandir(req_path):
+                    items.append({
+                        "name": entry.name,
+                        "is_dir": entry.is_dir(),
+                        "size": entry.stat().st_size if entry.is_file() else 0,
+                        "path": entry.path
+                    })
+                items.sort(key=lambda x: (not x["is_dir"], x["name"].lower()))
+                self.send_json(200, {"current": req_path, "items": items[:150]})
+                return
+            except Exception as e:
+                self.send_json(400, {"error": str(e)})
+                return
+
+        # 13. System Updates: Trigger
+        elif path == "/api/system/upgrade":
+            audit_log("admin", "system_upgrade", "apt upgrade", client_ip)
+            subprocess.Popen("apt-get update && apt-get upgrade -y", shell=True)
+            self.send_json(200, {"success": True, "message": "System upgrade initiated in background"})
+            return
+
+        # 14. System Power: Reboot / Poweroff
+        elif path == "/api/system/power":
+            action = body.get("action", "").strip()
+            confirm = body.get("confirm", "").strip()
+            if action in ["reboot", "poweroff"] and confirm == "CONFIRM":
+                audit_log("admin", "system_power", action, client_ip)
+                subprocess.Popen(f"sleep 2 && systemctl {action}", shell=True)
+                self.send_json(200, {"success": True, "message": f"Server {action} initiated in 2 seconds"})
+                return
+            self.send_json(400, {"error": "Requires explicit typed confirmation 'CONFIRM'"})
+            return
+
+        # 15. Create User (Supports SG Home Paid Site)
+        elif path in ["/api/users/create", "/api/user/create"]:
+            username = body.get("username", "").strip().lower()
             password = body.get("password", "").strip()
             days = int(body.get("days", 30))
-            max_logins = int(body.get("simultaneousLimit") or body.get("simultaneous_limit") or 3)
-            bandwidth_gb = int(body.get("bandwidthGB") or body.get("bandwidth_gb") or 0)
+            simultaneous_limit = int(body.get("simultaneousLimit", body.get("simultaneous_limit", 3)))
+            bandwidth_gb = int(body.get("bandwidthGB", body.get("bandwidth_gb", 0)))
             notes = body.get("notes", "").strip()
 
             if not username or not password:
@@ -572,91 +1234,77 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             expiry_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
-            created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            conn = get_db()
             try:
+                conn = get_db()
                 conn.execute("""
                     INSERT INTO users (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 'Active', ?)
-                """, (username, password, expiry_date, max_logins, bandwidth_gb, notes, created_at))
+                    VALUES (?, ?, ?, ?, ?, ?, 'Active', datetime('now'))
+                """, (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes))
                 conn.commit()
-            except sqlite3.IntegrityError:
                 conn.close()
-                self.send_json(400, {"error": f"Username '{username}' already exists"})
-                return
-            conn.close()
 
-            # Execute Linux User Creation
-            os_create_user(username, password, expiry_date, max_logins)
+                os_create_user(username, password, expiry_date, simultaneous_limit)
+                audit_log("admin", "user_create", username, client_ip, f"Validity: {days} days, Devices: {simultaneous_limit}")
 
-            ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
-            ssh_port = get_setting("ssh_port", "80")
-            full_ssh_url = f"ssh://{username}:{password}@{ssh_domain}:{ssh_port}"
+                ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
+                ssh_port = get_setting("ssh_port", "80")
+                ssh_url = f"ssh://{username}:{password}@{ssh_domain}:{ssh_port}"
 
-            self.send_json(200, {
-                "success": True,
-                "username": username,
-                "password": password,
-                "bandwidthGB": bandwidth_gb,
-                "maxDevices": max_logins,
-                "expiryDate": expiry_date,
-                "sshUrl": full_ssh_url,
-                "user": {
+                self.send_json(200, {
+                    "success": True,
                     "username": username,
                     "password": password,
-                    "expiry_date": expiry_date,
-                    "ssh_url": full_ssh_url
-                }
-            })
+                    "bandwidthGB": bandwidth_gb,
+                    "maxDevices": simultaneous_limit,
+                    "expiryDate": expiry_date,
+                    "sshUrl": ssh_url,
+                    "user": {
+                        "username": username,
+                        "password": password,
+                        "expiry_date": expiry_date,
+                        "ssh_url": ssh_url
+                    }
+                })
+            except sqlite3.IntegrityError:
+                self.send_json(400, {"error": f"Username '{username}' already exists"})
             return
 
-        # 4. Bulk Create Users
-        elif path == "/api/users/bulk-create":
+        # 16. Bulk Create Users
+        elif path in ["/api/users/bulk-create", "/api/user/bulk-create"]:
             count = min(int(body.get("count", 5)), 50)
             prefix = body.get("prefix", "user").strip().lower()
             days = int(body.get("days", 30))
-            max_logins = int(body.get("simultaneousLimit") or body.get("simultaneous_limit") or 3)
+            simultaneous_limit = int(body.get("simultaneous_limit", 3))
+            expiry_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
 
             created = []
             conn = get_db()
-            ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
-            ssh_port = get_setting("ssh_port", "80")
-
             for _ in range(count):
-                u_name = f"{prefix}_{secrets.token_hex(2)}"
-                u_pass = secrets.token_hex(4)
-                exp_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
-                created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+                u = f"{prefix}_{secrets.token_hex(2)}"
+                p = secrets.token_hex(4)
                 try:
                     conn.execute("""
                         INSERT INTO users (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, status, created_at)
-                        VALUES (?, ?, ?, ?, 0, 'Bulk Created', 'Active', ?)
-                    """, (u_name, u_pass, exp_date, max_logins, created_at))
-                    conn.commit()
-
-                    os_create_user(u_name, u_pass, exp_date, max_logins)
-                    created.append({
-                        "username": u_name,
-                        "password": u_pass,
-                        "expiry_date": exp_date,
-                        "ssh_url": f"ssh://{u_name}:{u_pass}@{ssh_domain}:{ssh_port}"
-                    })
-                except:
-                    continue
-
+                        VALUES (?, ?, ?, ?, 0, 'Bulk generated', 'Active', datetime('now'))
+                    """, (u, p, expiry_date, simultaneous_limit))
+                    os_create_user(u, p, expiry_date, simultaneous_limit)
+                    created.append({"username": u, "password": p, "expiry_date": expiry_date})
+                except Exception:
+                    pass
+            conn.commit()
             conn.close()
+            audit_log("admin", "user_bulk_create", f"Count: {len(created)}", client_ip)
             self.send_json(200, {"success": True, "created_count": len(created), "users": created})
             return
 
-        # 5. Renew User (Supports both /api/users/renew and /api/user/renew)
+        # 17. Renew User
         elif path in ["/api/users/renew", "/api/user/renew"]:
             username = body.get("username", "").strip().lower()
             days = int(body.get("days", 30))
 
             conn = get_db()
-            row = conn.execute("SELECT password, expiry_date FROM users WHERE username = ?", (username,)).fetchone()
+            row = conn.execute("SELECT expiry_date, password FROM users WHERE username = ?", (username,)).fetchone()
             if not row:
                 conn.close()
                 self.send_json(404, {"error": "User not found"})
@@ -664,16 +1312,18 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
 
             try:
                 curr_exp = datetime.strptime(row["expiry_date"], "%Y-%m-%d")
-                start_date = curr_exp if curr_exp > datetime.now() else datetime.now()
-            except:
-                start_date = datetime.now()
+                base_date = max(curr_exp, datetime.now())
+            except Exception:
+                base_date = datetime.now()
 
-            new_exp = (start_date + timedelta(days=days)).strftime("%Y-%m-%d")
+            new_exp = (base_date + timedelta(days=days)).strftime("%Y-%m-%d")
             conn.execute("UPDATE users SET expiry_date = ?, status = 'Active' WHERE username = ?", (new_exp, username))
             conn.commit()
             conn.close()
 
             os_renew_user(username, new_exp)
+            audit_log("admin", "user_renew", username, client_ip, f"Extended to {new_exp}")
+
             ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
             ssh_port = get_setting("ssh_port", "80")
 
@@ -686,7 +1336,7 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             })
             return
 
-        # 6. Delete User (Supports both /api/users/delete and /api/user/delete)
+        # 18. Delete User
         elif path in ["/api/users/delete", "/api/user/delete"]:
             username = body.get("username", "").strip().lower()
             conn = get_db()
@@ -695,42 +1345,11 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             conn.close()
 
             os_delete_user(username)
+            audit_log("admin", "user_delete", username, client_ip)
             self.send_json(200, {"success": True, "message": f"User {username} deleted"})
             return
 
-        # 7. Service Action (Start / Stop / Restart)
-        elif path == "/api/services/action":
-            service = body.get("service", "").strip()
-            action = body.get("action", "").strip()
-            if service in ["ssh", "ws-proxy", "badvpn"] and action in ["start", "stop", "restart"]:
-                subprocess.run(f"systemctl {action} {service}", shell=True)
-                self.send_json(200, {"success": True, "message": f"Service {service} {action}ed"})
-                return
-            self.send_json(400, {"error": "Invalid service or action"})
-            return
-
-        # 8. Update Settings
-        elif path == "/api/settings/update":
-            admin_user = body.get("admin_user")
-            admin_pass = body.get("admin_pass")
-            panel_port = body.get("panel_port")
-            panel_title = body.get("panel_title")
-            ssh_domain = body.get("ssh_domain")
-            default_payload = body.get("default_payload")
-            api_secret = body.get("api_secret")
-
-            if admin_user: set_setting("admin_user", admin_user.strip())
-            if admin_pass: set_setting("admin_pass_hash", hash_password(admin_pass.strip()))
-            if panel_port: set_setting("panel_port", str(panel_port).strip())
-            if panel_title: set_setting("panel_title", panel_title.strip())
-            if ssh_domain is not None: set_setting("ssh_domain", ssh_domain.strip())
-            if default_payload: set_setting("default_payload", default_payload.strip())
-            if api_secret: set_setting("api_secret", api_secret.strip())
-
-            self.send_json(200, {"success": True, "message": "Settings updated successfully"})
-            return
-
-        # 9. Create Inbound Profile
+        # 19. Inbounds Management
         elif path == "/api/inbounds/create":
             remark = body.get("remark", "").strip() or "Custom Inbound"
             host = body.get("host", "").strip() or get_server_public_ip()
@@ -750,10 +1369,10 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default))
             conn.commit()
             conn.close()
+            audit_log("admin", "inbound_create", remark, client_ip)
             self.send_json(200, {"success": True, "message": "Inbound profile created"})
             return
 
-        # 10. Update Inbound Profile
         elif path == "/api/inbounds/update":
             inbound_id = int(body.get("id", 0))
             remark = body.get("remark", "").strip() or "Custom Inbound"
@@ -774,23 +1393,46 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default, inbound_id))
             conn.commit()
             conn.close()
+            audit_log("admin", "inbound_update", remark, client_ip)
             self.send_json(200, {"success": True, "message": "Inbound profile updated"})
             return
 
-        # 11. Delete Inbound Profile
         elif path == "/api/inbounds/delete":
             inbound_id = int(body.get("id", 0))
             conn = get_db()
             conn.execute("DELETE FROM inbounds WHERE id = ?", (inbound_id,))
             conn.commit()
             conn.close()
+            audit_log("admin", "inbound_delete", f"Inbound #{inbound_id}", client_ip)
             self.send_json(200, {"success": True, "message": "Inbound profile deleted"})
+            return
+
+        # 20. Update Settings
+        elif path == "/api/settings/update":
+            admin_user = body.get("admin_user")
+            admin_pass = body.get("admin_pass")
+            panel_port = body.get("panel_port")
+            panel_title = body.get("panel_title")
+            ssh_domain = body.get("ssh_domain")
+            default_payload = body.get("default_payload")
+            api_secret = body.get("api_secret")
+
+            if admin_user: set_setting("admin_user", admin_user.strip())
+            if admin_pass and len(admin_pass.strip()) >= 4:
+                set_setting("admin_pass_hash", hash_password(admin_pass.strip()))
+            if panel_port: set_setting("panel_port", str(panel_port).strip())
+            if panel_title: set_setting("panel_title", panel_title.strip())
+            if ssh_domain is not None: set_setting("ssh_domain", ssh_domain.strip())
+            if default_payload: set_setting("default_payload", default_payload.strip())
+            if api_secret: set_setting("api_secret", api_secret.strip())
+
+            audit_log("admin", "settings_update", "panel_configuration", client_ip)
+            self.send_json(200, {"success": True, "message": "Settings updated successfully"})
             return
 
         self.send_json(404, {"error": "Endpoint not found"})
 
     def serve_web_ui(self, path: str):
-        # Clean path
         rel_path = path.lstrip("/")
         if not rel_path or rel_path == "index.html":
             file_path = os.path.join(WEB_DIR, "index.html")
@@ -813,7 +1455,6 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
         else:
-            # Fallback to index.html for Single-Page Application routing
             index_path = os.path.join(WEB_DIR, "index.html")
             if os.path.exists(index_path):
                 with open(index_path, "rb") as f:
@@ -824,34 +1465,27 @@ class PanelXHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(content)
             else:
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(b"PanelX Web UI files not found in web/ directory.")
+                self.send_error(404, "Web UI not found")
 
 # ---------------------------------------------------------------------------
-# Main Runner
+# Server Daemon Entrypoint
 # ---------------------------------------------------------------------------
-def main():
-    port = int(get_setting("panel_port", "7788"))
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        port = int(sys.argv[1])
-
+def run_server():
+    port = int(get_setting("panel_port", PANEL_PORT))
     server_address = ("0.0.0.0", port)
-    httpd = ThreadedHTTPServer(server_address, PanelXHandler)
-
-    pub_ip = get_server_public_ip()
-    print("=" * 60)
-    print("🚀 PanelX Manager - SSH & WebSocket Control Panel")
-    print(f"📡 Web Interface: http://{pub_ip}:{port}")
-    print(f"🔑 Default Admin: admin / admin")
-    print(f"💾 SQLite Database: {DB_FILE}")
-    print("=" * 60)
+    
+    print("=" * 65)
+    print(f"🔥 FALCON FIREWALL X — Running on http://0.0.0.0:{port}")
+    print("   Enterprise Linux VPS, Firewall & Proxy Control Panel")
+    print(f"   API Key: {get_setting('api_secret')}")
+    print("=" * 65)
 
     try:
+        httpd = ThreadedHTTPServer(server_address, FalconFirewallHandler)
         httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\n[PanelX] Shutting down...")
-        httpd.server_close()
+    except Exception as e:
+        print(f"Fatal error starting server: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    run_server()

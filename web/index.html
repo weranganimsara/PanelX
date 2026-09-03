@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PanelX Manager | SSH & WebSocket Control Panel</title>
+  <title>FALCON FIREWALL X | Complete Linux Server Control</title>
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,9 +17,9 @@
     :root {
       --bg-dark: #07090e;
       --sidebar-bg: #090d16;
-      --card-bg: rgba(14, 18, 28, 0.75);
+      --card-bg: rgba(14, 18, 28, 0.78);
       --card-border: rgba(0, 242, 254, 0.12);
-      --card-hover: rgba(0, 242, 254, 0.25);
+      --card-hover: rgba(0, 242, 254, 0.28);
       --accent-cyan: #00f2fe;
       --accent-blue: #4facfe;
       --accent-purple: #9d4edd;
@@ -37,9 +37,9 @@
     body {
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(0, 242, 254, 0.06) 0%, transparent 40%),
-        linear-gradient(180deg, #07090e 0%, #0b0f19 100%);
+        radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(0, 242, 254, 0.07) 0%, transparent 45%),
+        linear-gradient(180deg, #07090e 0%, #0a0e18 100%);
       color: var(--text-main);
       font-family: var(--font-main);
       min-height: 100vh;
@@ -47,23 +47,23 @@
       display: flex;
     }
 
-    /* Scrollbar */
+    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-    ::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.25); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
 
-    /* Layout Wrapper */
+    /* Layout */
     #app-layout {
       display: flex;
       width: 100vw;
       min-height: 100vh;
     }
 
-    /* 3X-UI Style Sidebar */
+    /* Left Sidebar */
     .sidebar {
-      width: 250px;
-      min-width: 250px;
+      width: 260px;
+      min-width: 260px;
       background: var(--sidebar-bg);
       border-right: 1px solid var(--card-border);
       display: flex;
@@ -77,7 +77,7 @@
     }
 
     .sidebar-brand {
-      padding: 24px 20px;
+      padding: 22px 20px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -85,56 +85,54 @@
     }
 
     .sidebar-brand-icon {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
-      border-radius: 10px;
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, #7928ca, #00f2fe);
+      border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px; color: #fff;
-      box-shadow: 0 0 16px rgba(0, 242, 254, 0.35);
+      font-size: 22px; color: #fff;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
     }
 
     .sidebar-brand-text h1 {
-      font-size: 18px; font-weight: 800;
+      font-size: 16.5px; font-weight: 800;
       background: linear-gradient(90deg, #fff, var(--accent-cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
     }
 
-    .sidebar-brand-text .version {
-      font-family: var(--font-mono); font-size: 10px;
-      color: var(--accent-purple); font-weight: 700;
+    .sidebar-brand-text .tagline {
+      font-size: 10px; color: var(--accent-purple); font-weight: 700;
+      letter-spacing: 0.3px;
     }
 
     .sidebar-menu {
-      padding: 16px 12px;
+      padding: 14px 10px;
       list-style: none;
       flex: 1;
       overflow-y: auto;
     }
 
-    .sidebar-menu li {
-      margin-bottom: 4px;
-    }
+    .sidebar-menu li { margin-bottom: 3px; }
 
     .sidebar-link {
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 12px 16px;
+      gap: 12px;
+      padding: 10px 14px;
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 600;
-      border-radius: 10px;
+      border-radius: 9px;
       transition: all 0.2s ease;
       cursor: pointer;
       position: relative;
     }
 
     .sidebar-link i {
-      font-size: 16px;
-      width: 20px;
+      font-size: 15px;
+      width: 18px;
       text-align: center;
       color: var(--text-muted);
       transition: color 0.2s ease;
@@ -145,9 +143,7 @@
       color: #fff;
     }
 
-    .sidebar-link:hover i {
-      color: var(--accent-cyan);
-    }
+    .sidebar-link:hover i { color: var(--accent-cyan); }
 
     .sidebar-link.active {
       background: rgba(0, 242, 254, 0.1);
@@ -155,85 +151,63 @@
       font-weight: 700;
     }
 
-    .sidebar-link.active i {
-      color: var(--accent-cyan);
-    }
+    .sidebar-link.active i { color: var(--accent-cyan); }
 
     .sidebar-link.active::before {
       content: '';
       position: absolute;
-      left: 0;
-      top: 20%;
-      height: 60%;
-      width: 3px;
+      left: 0; top: 15%; height: 70%; width: 3.5px;
       background: var(--accent-cyan);
       border-radius: 0 4px 4px 0;
-      box-shadow: 0 0 10px var(--accent-cyan);
+      box-shadow: 0 0 12px var(--accent-cyan);
     }
 
     .sidebar-footer {
-      padding: 16px 20px;
+      padding: 14px 18px;
       border-top: 1px solid rgba(255,255,255,0.06);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .sidebar-footer a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: color 0.2s;
+      color: var(--text-muted); text-decoration: none; font-size: 12px;
+      display: flex; align-items: center; gap: 8px; transition: color 0.2s;
     }
+    .sidebar-footer a:hover { color: var(--accent-cyan); }
 
-    .sidebar-footer a:hover {
-      color: var(--accent-cyan);
-    }
-
-    /* Main Content Viewport */
+    /* Main Viewport */
     .main-viewport {
       flex: 1;
       height: 100vh;
       overflow-y: auto;
-      padding: 24px 32px;
+      padding: 22px 30px;
     }
 
-    /* Top Bar Header inside Viewport */
+    /* Top Navigation Bar */
     .top-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 14px;
     }
 
-    .page-title h2 {
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-    }
+    .page-title h2 { font-size: 21px; font-weight: 800; color: #fff; }
+    .page-title p { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
 
-    .page-title p {
-      font-size: 12.5px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+    .top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .status-pill {
+    /* Health Score Pill */
+    .health-pill {
       display: flex; align-items: center; gap: 8px;
-      padding: 8px 14px; background: rgba(0, 245, 155, 0.1);
+      padding: 7px 14px; background: rgba(0, 245, 155, 0.1);
       border: 1px solid rgba(0, 245, 155, 0.3);
-      border-radius: 10px; font-size: 13px; font-weight: 600;
-      color: var(--accent-green);
+      border-radius: 10px; font-size: 13px; font-weight: 700;
+      color: var(--accent-green); cursor: pointer; transition: all 0.2s;
     }
+    .health-pill:hover { background: rgba(0, 245, 155, 0.18); transform: translateY(-1px); }
 
     .status-dot {
       width: 8px; height: 8px; background: var(--accent-green);
@@ -241,21 +215,21 @@
       animation: pulse 2s infinite;
     }
 
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-    /* Button Styles */
+    /* Buttons */
     .btn {
-      padding: 9px 16px; border-radius: 10px; font-size: 13px;
+      padding: 8px 15px; border-radius: 9px; font-size: 12.5px;
       font-weight: 600; cursor: pointer; border: none;
-      display: inline-flex; align-items: center; gap: 8px;
+      display: inline-flex; align-items: center; gap: 7px;
       transition: all 0.2s ease;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-      color: #040914; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+      color: #040914; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.25);
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4); }
 
     .btn-outline {
       background: rgba(255,255,255,0.04);
@@ -272,7 +246,7 @@
     /* Stat Cards Grid */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -295,66 +269,61 @@
       background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
     }
 
-    .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .stat-title { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .stat-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .stat-icon { font-size: 18px; color: var(--accent-cyan); }
 
-    .stat-value { font-size: 24px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin-bottom: 8px; }
+    .stat-value { font-size: 23px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin-bottom: 6px; }
     .stat-sub { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; }
 
     .progress-bar-wrap {
-      width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+      width: 100%; height: 5px; background: rgba(255,255,255,0.08);
       border-radius: 10px; overflow: hidden; margin-top: 10px;
     }
-    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan)); border-radius: 10px; width: 0%; transition: width 0.5s ease; }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+      border-radius: 10px; width: 0%; transition: width 0.5s ease;
+    }
 
-    /* Content Area Card */
+    /* Content Cards */
     .content-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: 15px;
       backdrop-filter: blur(16px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      padding: 24px;
-      margin-bottom: 24px;
+      padding: 22px;
+      margin-bottom: 22px;
     }
 
     .toolbar {
       display: flex; justify-content: space-between; align-items: center;
-      gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+      gap: 14px; margin-bottom: 18px; flex-wrap: wrap;
     }
 
     .search-box {
       display: flex; align-items: center; gap: 10px;
       background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px; padding: 8px 14px; min-width: 260px;
+      border-radius: 9px; padding: 7px 14px; min-width: 260px;
     }
     .search-box input {
       background: transparent; border: none; outline: none;
-      color: var(--text-main); font-size: 13px; width: 100%;
+      color: var(--text-main); font-size: 12.5px; width: 100%;
     }
 
-    .toolbar-actions { display: flex; gap: 10px; }
-
-    /* Table Styles */
+    /* Tables */
     .table-responsive { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th {
-      padding: 14px 16px; font-size: 12px; font-weight: 700;
+      padding: 12px 14px; font-size: 11.5px; font-weight: 700;
       color: var(--text-muted); text-transform: uppercase;
       letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.08);
     }
     td {
-      padding: 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 14px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.05);
       vertical-align: middle;
     }
     tr:hover td { background: rgba(0, 242, 254, 0.02); }
-
-    .user-pill {
-      font-weight: 700; font-size: 14px; color: #fff;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .user-pill i { color: var(--accent-cyan); font-size: 12px; }
 
     .tag {
       font-size: 11px; font-family: var(--font-mono); font-weight: 600;
@@ -375,62 +344,100 @@
     .icon-btn:hover { color: var(--accent-cyan); border-color: var(--accent-cyan); background: rgba(0, 242, 254, 0.1); }
     .icon-btn.delete:hover { color: var(--accent-red); border-color: var(--accent-red); background: rgba(255, 51, 102, 0.1); }
 
+    /* Firewall Safety Rollback Banner */
+    #rollback-banner {
+      background: linear-gradient(90deg, rgba(255, 183, 3, 0.15), rgba(255, 51, 102, 0.15));
+      border: 1px solid var(--accent-amber);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(255, 183, 3, 0.2);
+      animation: pulse 2s infinite;
+    }
+
     /* Modals */
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(4, 7, 14, 0.85); backdrop-filter: blur(12px);
+      background: rgba(4, 7, 14, 0.85); backdrop-filter: blur(14px);
       display: none; align-items: center; justify-content: center;
       z-index: 1000; padding: 20px;
     }
 
     .modal-card {
       background: #0d121f; border: 1px solid var(--card-border);
-      border-radius: 18px; width: 100%; max-width: 620px;
+      border-radius: 16px; width: 100%; max-width: 650px;
       max-height: 90vh; overflow-y: auto;
-      padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-      animation: modalIn 0.25s ease;
+      padding: 26px; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      animation: modalIn 0.2s ease;
     }
 
-    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
 
     .modal-header {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-bottom: 14px;
+      margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 12px;
     }
-    .modal-header h2 { font-size: 18px; font-weight: 700; color: #fff; }
+    .modal-header h2 { font-size: 17px; font-weight: 700; color: #fff; }
     .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
     .modal-close:hover { color: #fff; }
 
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
     .form-input {
-      width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
-      color: #fff; font-size: 13px; font-family: var(--font-main); outline: none;
+      width: 100%; padding: 9px 13px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 9px;
+      color: #fff; font-size: 12.5px; font-family: var(--font-main); outline: none;
     }
     .form-input:focus { border-color: var(--accent-cyan); background: rgba(255,255,255,0.06); }
     select.form-input option { background: #0d121f; color: #fff; }
 
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* Tabs inside Config Modal */
-    .tab-nav { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; flex-wrap: wrap; }
+    .tab-nav { display: flex; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; flex-wrap: wrap; }
     .tab-btn {
       background: transparent; border: none; color: var(--text-muted);
-      font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px;
       cursor: pointer; transition: all 0.2s;
     }
     .tab-btn.active { color: var(--accent-cyan); background: rgba(0, 242, 254, 0.1); }
 
     .code-box {
-      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px; padding: 14px; font-family: var(--font-mono);
+      background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 9px; padding: 12px; font-family: var(--font-mono);
       font-size: 12px; color: #00f2fe; word-break: break-all;
-      max-height: 180px; overflow-y: auto; user-select: all;
+      max-height: 200px; overflow-y: auto; user-select: all;
     }
 
-    /* Login View Overlay */
+    /* Universal Command Palette (Ctrl + K) */
+    #cmd-palette {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(4, 7, 14, 0.85); backdrop-filter: blur(12px);
+      display: none; align-items: flex-start; justify-content: center;
+      z-index: 2000; padding-top: 15vh;
+    }
+    .cmd-box {
+      background: #0d121f; border: 1px solid var(--accent-cyan);
+      border-radius: 16px; width: 100%; max-width: 560px;
+      padding: 16px; box-shadow: 0 20px 60px rgba(0, 242, 254, 0.25);
+    }
+    .cmd-input {
+      width: 100%; background: transparent; border: none; outline: none;
+      color: #fff; font-size: 16px; font-weight: 600; padding: 8px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px;
+    }
+    .cmd-list { list-style: none; max-height: 280px; overflow-y: auto; }
+    .cmd-item {
+      padding: 10px 14px; border-radius: 8px; font-size: 13px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; color: var(--text-muted);
+    }
+    .cmd-item:hover { background: rgba(0, 242, 254, 0.1); color: #fff; }
+
+    /* Login Overlay */
     #login-view {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: var(--bg-dark);
@@ -438,7 +445,7 @@
         radial-gradient(circle at 50% 30%, rgba(157, 78, 221, 0.2) 0%, transparent 60%),
         radial-gradient(circle at 80% 80%, rgba(0, 242, 254, 0.15) 0%, transparent 50%);
       display: flex; align-items: center; justify-content: center;
-      z-index: 2000; padding: 20px;
+      z-index: 3000; padding: 20px;
     }
 
     .login-card {
@@ -448,15 +455,21 @@
       text-align: center;
     }
 
-    .login-brand { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); font-size: 32px; color: #fff; margin-bottom: 20px; box-shadow: 0 0 30px rgba(0, 242, 254, 0.4); }
+    .login-brand {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 64px; height: 64px; border-radius: 18px;
+      background: linear-gradient(135deg, #7928ca, #00f2fe);
+      font-size: 30px; color: #fff; margin-bottom: 20px;
+      box-shadow: 0 0 30px rgba(0, 242, 254, 0.4);
+    }
 
-    /* Toast Notification */
+    /* Toast */
     .toast {
       position: fixed; bottom: 24px; right: 24px;
       background: #111827; border: 1px solid var(--accent-cyan);
       color: #fff; padding: 12px 20px; border-radius: 10px;
       font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      z-index: 3000; display: none; align-items: center; gap: 10px;
+      z-index: 4000; display: none; align-items: center; gap: 10px;
     }
   </style>
 </head>
@@ -469,12 +482,22 @@
     <span id="toast-msg">Success!</span>
   </div>
 
+  <!-- Command Palette Modal (Ctrl + K) -->
+  <div id="cmd-palette" onclick="if(event.target===this)closeModal('cmd-palette')">
+    <div class="cmd-box">
+      <input type="text" id="cmd-input" class="cmd-input" placeholder="Type a command or jump to page... (e.g. firewall, ssh, logs)" oninput="filterCommands()">
+      <ul class="cmd-list" id="cmd-list">
+        <!-- Filled by JS -->
+      </ul>
+    </div>
+  </div>
+
   <!-- 1. LOGIN OVERLAY -->
   <div id="login-view">
     <div class="login-card">
       <div class="login-brand"><i class="fa-solid fa-shield-halved"></i></div>
-      <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">PanelX Manager</h2>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Open-Source SSH & WebSocket Control Panel</p>
+      <h2 style="font-size: 21px; font-weight: 800; margin-bottom: 4px;">FALCON FIREWALL X</h2>
+      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 24px;">Complete Linux Server Control</p>
 
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="form-group" style="text-align: left;">
@@ -485,14 +508,14 @@
           <label class="form-label">Password</label>
           <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">
-          <i class="fa-solid fa-right-to-bracket"></i> Login to Dashboard
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 11px; font-size: 13.5px;">
+          <i class="fa-solid fa-right-to-bracket"></i> Login to Console
         </button>
       </form>
     </div>
   </div>
 
-  <!-- 2. MAIN APPLICATION (3X-UI Sidebar Layout) -->
+  <!-- 2. MAIN APPLICATION (3X-UI + CloudPanel Style Sidebar) -->
   <div id="app-layout" style="display: none;">
 
     <!-- Left Sidebar -->
@@ -501,8 +524,8 @@
         <div class="sidebar-brand">
           <div class="sidebar-brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
           <div class="sidebar-brand-text">
-            <h1 id="top-title">PanelX</h1>
-            <span class="version">v1.0.0 OPEN-SOURCE</span>
+            <h1 id="top-title">FALCON X</h1>
+            <span class="tagline">ENTERPRISE NOC</span>
           </div>
         </div>
 
@@ -513,28 +536,58 @@
             </a>
           </li>
           <li>
+            <a class="sidebar-link" onclick="switchNav('firewall')">
+              <i class="fa-solid fa-shield-virus"></i> Falcon Firewall
+            </a>
+          </li>
+          <li>
             <a class="sidebar-link" onclick="switchNav('inbounds')">
               <i class="fa-solid fa-arrow-down-up-lock"></i> Inbounds / Payloads
             </a>
           </li>
           <li>
             <a class="sidebar-link" onclick="switchNav('clients')">
-              <i class="fa-solid fa-users"></i> Clients
+              <i class="fa-solid fa-users"></i> SSH Clients
             </a>
           </li>
           <li>
             <a class="sidebar-link" onclick="switchNav('services')">
-              <i class="fa-solid fa-server"></i> Core Services
+              <i class="fa-solid fa-server"></i> System Services
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" onclick="switchNav('processes')">
+              <i class="fa-solid fa-microchip"></i> Process Manager
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" onclick="switchNav('network')">
+              <i class="fa-solid fa-network-wired"></i> Network & Ports
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" onclick="switchNav('ssh')">
+              <i class="fa-solid fa-terminal"></i> SSH Security
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" onclick="switchNav('logs')">
+              <i class="fa-solid fa-file-waveform"></i> Live Logs
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" onclick="switchNav('storage')">
+              <i class="fa-solid fa-hard-drive"></i> File & Storage
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" onclick="switchNav('power')">
+              <i class="fa-solid fa-bolt"></i> Updates & Power
             </a>
           </li>
           <li>
             <a class="sidebar-link" onclick="switchNav('settings')">
-              <i class="fa-solid fa-gear"></i> Panel Settings
-            </a>
-          </li>
-          <li>
-            <a class="sidebar-link" onclick="switchNav('apidocs')">
-              <i class="fa-solid fa-code"></i> API Docs
+              <i class="fa-solid fa-gear"></i> Settings & API
             </a>
           </li>
         </ul>
@@ -553,25 +606,47 @@
     <!-- Main Viewport -->
     <main class="main-viewport">
 
-      <!-- View: Overview (Dashboard Stats) -->
-      <div id="view-overview">
-        <div class="top-header">
-          <div class="page-title">
-            <h2>Overview</h2>
-            <p>Real-time system load, memory, sockets and network traffic</p>
+      <!-- Top Header Action Bar -->
+      <div class="top-header">
+        <div class="page-title">
+          <h2 id="view-heading">Server Overview</h2>
+          <p id="view-subheading">Real-time Linux VPS health, resource usage and active services</p>
+        </div>
+        <div class="top-actions">
+          <!-- Server Health Score Pill -->
+          <div class="health-pill" onclick="openHealthModal()" title="Click to view full health diagnostic breakdown">
+            <div class="status-dot"></div>
+            <span>HEALTH: <strong id="health-score-val">100</strong>/100</span>
           </div>
-          <div class="top-actions">
-            <div class="status-pill">
-              <div class="status-dot"></div>
-              <span id="sys-uptime">0d 0h</span>
+
+          <button class="btn btn-outline" onclick="openModal('cmd-palette')" title="Quick Actions (Ctrl + K)">
+            <i class="fa-solid fa-magnifying-glass"></i> <span style="font-family: var(--font-mono); font-size: 11px;">Ctrl+K</span>
+          </button>
+          <button class="btn btn-outline" onclick="toggleNocMode()" title="Toggle NOC Fullscreen Mode">
+            <i class="fa-solid fa-expand"></i> NOC Mode
+          </button>
+        </div>
+      </div>
+
+      <!-- Firewall Safety Rollback Banner -->
+      <div id="rollback-banner">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-amber); font-size: 22px;"></i>
+          <div>
+            <div style="font-weight: 700; color: #fff;">Firewall Safety Rollback Timer Active!</div>
+            <div style="font-size: 12px; color: var(--text-muted);">
+              Changes will automatically revert in <strong id="rollback-countdown" style="color: var(--accent-amber);">30s</strong> to prevent lockout.
             </div>
-            <button class="btn btn-outline" onclick="restartAllServices()">
-              <i class="fa-solid fa-rotate"></i> Restart Services
-            </button>
           </div>
         </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" onclick="confirmRollback()"><i class="fa-solid fa-check"></i> Confirm & Keep</button>
+          <button class="btn btn-danger" onclick="revertRollback()"><i class="fa-solid fa-rotate-left"></i> Revert Now</button>
+        </div>
+      </div>
 
-        <!-- Real-Time Metrics -->
+      <!-- VIEW 1: OVERVIEW / DASHBOARD -->
+      <div id="view-overview">
         <div class="stats-grid">
           <!-- CPU -->
           <div class="stat-card">
@@ -582,7 +657,7 @@
             <div class="stat-value" id="stat-cpu">0%</div>
             <div class="stat-sub">
               <span>Active Sockets</span>
-              <span id="stat-sockets">0 Sockets</span>
+              <span id="stat-sockets">0</span>
             </div>
             <div class="progress-bar-wrap">
               <div class="progress-bar-fill" id="bar-cpu"></div>
@@ -605,10 +680,26 @@
             </div>
           </div>
 
-          <!-- Live Speed -->
+          <!-- DISK -->
           <div class="stat-card">
             <div class="stat-header">
-              <span class="stat-title">LIVE NETWORK SPEED</span>
+              <span class="stat-title">DISK STORAGE</span>
+              <i class="fa-solid fa-hard-drive stat-icon"></i>
+            </div>
+            <div class="stat-value" id="stat-disk">0 GB</div>
+            <div class="stat-sub">
+              <span id="stat-disk-detail">0 / 0 GB</span>
+              <span id="stat-disk-pct">0%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="bar-disk"></div>
+            </div>
+          </div>
+
+          <!-- LIVE SPEED -->
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">NETWORK TRAFFIC</span>
               <i class="fa-solid fa-bolt stat-icon"></i>
             </div>
             <div class="stat-value" id="stat-speed">0 KB/s</div>
@@ -617,51 +708,89 @@
               <span><i class="fa-solid fa-arrow-down" style="color: var(--accent-green);"></i> <span id="stat-rx">0 KB/s</span></span>
             </div>
             <div class="progress-bar-wrap">
-              <div class="progress-bar-fill" style="width: 45%;"></div>
-            </div>
-          </div>
-
-          <!-- Total Bandwidth -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-title">TOTAL DATA TRANSFERRED</span>
-              <i class="fa-solid fa-database stat-icon"></i>
-            </div>
-            <div class="stat-value" id="stat-total-data">0 GB</div>
-            <div class="stat-sub">
-              <span>Server Public IP</span>
-              <span id="stat-public-ip">127.0.0.1</span>
-            </div>
-            <div class="progress-bar-wrap">
-              <div class="progress-bar-fill" style="width: 70%;"></div>
+              <div class="progress-bar-fill" style="width: 50%;"></div>
             </div>
           </div>
         </div>
 
-        <!-- Quick Summary Card -->
+        <!-- Server Spec Card -->
         <div class="content-card">
-          <h3 style="font-size: 16px; margin-bottom: 14px;"><i class="fa-solid fa-circle-nodes" style="color: var(--accent-cyan);"></i> Server Inbounds & Services Status</h3>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">OpenSSH daemon, Rust WebSocket proxy and BadVPN gateway are actively running.</p>
-          <div style="display: flex; gap: 14px; flex-wrap: wrap;">
-            <div class="status-pill"><i class="fa-solid fa-terminal"></i> OpenSSH (Port 22) Online</div>
-            <div class="status-pill"><i class="fa-solid fa-shuffle"></i> WS-Proxy (80, 8080, 443) Online</div>
-            <div class="status-pill"><i class="fa-solid fa-gamepad"></i> BadVPN (Port 7300) Online</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-server" style="color: var(--accent-cyan); margin-right: 8px;"></i> System Telemetry</h3>
+            <span class="tag tag-blue" id="stat-public-ip">127.0.0.1</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 12.5px;">
+            <div><span style="color: var(--text-muted);">OS:</span> <strong id="stat-os" style="color: #fff;">Linux</strong></div>
+            <div><span style="color: var(--text-muted);">Kernel:</span> <code id="stat-kernel" style="color: var(--accent-cyan);">Unknown</code></div>
+            <div><span style="color: var(--text-muted);">Uptime:</span> <strong id="stat-uptime" style="color: #fff;">0d 0h</strong></div>
+            <div><span style="color: var(--text-muted);">Load Avg:</span> <code id="stat-load" style="color: var(--accent-amber);">0.0, 0.0, 0.0</code></div>
+          </div>
+        </div>
+
+        <!-- Core Gateways Status -->
+        <div class="content-card">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 14px;"><i class="fa-solid fa-circle-nodes" style="color: var(--accent-purple); margin-right: 8px;"></i> Core Gateway States</h3>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <div class="health-pill"><i class="fa-solid fa-terminal"></i> OpenSSH (Port 22) <span id="svc-ssh-badge">Active</span></div>
+            <div class="health-pill"><i class="fa-solid fa-shuffle"></i> WS-Proxy (80, 8080, 443) <span id="svc-ws-badge">Active</span></div>
+            <div class="health-pill"><i class="fa-solid fa-gamepad"></i> BadVPN UDP (7300) <span id="svc-badvpn-badge">Active</span></div>
+            <div class="health-pill"><i class="fa-solid fa-gauge-high"></i> PAM Limiter <span id="svc-limiter-badge">Active</span></div>
           </div>
         </div>
       </div>
 
-      <!-- View: Inbounds / Payloads -->
+      <!-- VIEW 2: FALCON FIREWALL CENTER -->
+      <div id="view-firewall" style="display: none;">
+        <!-- Quick Action Bar -->
+        <div class="content-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-shield-virus" style="color: var(--accent-cyan); margin-right: 8px;"></i> Falcon Firewall Controls</h3>
+              <p style="font-size: 12px; color: var(--text-muted);">Managed iptables / ufw packet filtering with automated 30s rollback lockout prevention</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddRuleModal()"><i class="fa-solid fa-plus"></i> Add Custom Rule</button>
+          </div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-outline" onclick="quickAllow('22', 'tcp')"><i class="fa-solid fa-lock-open"></i> Allow SSH (22)</button>
+            <button class="btn btn-outline" onclick="quickAllow('80', 'tcp')"><i class="fa-solid fa-globe"></i> Allow HTTP (80)</button>
+            <button class="btn btn-outline" onclick="quickAllow('443', 'tcp')"><i class="fa-solid fa-shield"></i> Allow HTTPS (443)</button>
+            <button class="btn btn-outline" onclick="quickAllow('7300', 'udp')"><i class="fa-solid fa-gamepad"></i> Allow BadVPN (7300)</button>
+            <button class="btn btn-danger" onclick="openBlockIpModal()"><i class="fa-solid fa-ban"></i> Block Malicious IP</button>
+          </div>
+        </div>
+
+        <!-- Rules Table -->
+        <div class="content-card">
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rule ID</th>
+                  <th>Direction</th>
+                  <th>Action</th>
+                  <th>Protocol</th>
+                  <th>Port</th>
+                  <th>Source IP</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="firewall-table-body">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading firewall rules...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: INBOUNDS / PAYLOADS -->
       <div id="view-inbounds" style="display: none;">
-        <div class="top-header">
-          <div class="page-title">
-            <h2>Inbounds / Payload Profiles</h2>
-            <p>Configure and manage carrier payloads, bug hosts and proxy profiles for NetMod & HTTP Custom</p>
+        <div class="toolbar">
+          <div>
+            <h3 style="font-size: 15px; color: #fff;">Carrier Inbound Profiles</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Manage bug hosts, NetMod encrypted strings, and HTTP proxy profiles</p>
           </div>
-          <div class="top-actions">
-            <button class="btn btn-primary" onclick="openInboundModal()">
-              <i class="fa-solid fa-plus"></i> Add Inbound Profile
-            </button>
-          </div>
+          <button class="btn btn-primary" onclick="openInboundModal()"><i class="fa-solid fa-plus"></i> Add Inbound Profile</button>
         </div>
 
         <div class="content-card">
@@ -672,49 +801,33 @@
                   <th>Profile Remark</th>
                   <th>SSH Host / Port</th>
                   <th>Proxy Type</th>
-                  <th>Proxy Target (Host:Port)</th>
+                  <th>Proxy Target</th>
                   <th>Default</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="inbounds-table-body">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading inbounds...</td></tr>
+                <!-- Filled by JS -->
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- View: Clients -->
+      <!-- VIEW 4: SSH CLIENTS -->
       <div id="view-clients" style="display: none;">
-        <div class="top-header">
-          <div class="page-title">
-            <h2>Client Accounts</h2>
-            <p>Manage SSH credentials, device limits, expiry dates and export configurations</p>
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="search-input" placeholder="Search clients..." oninput="filterUsers()">
           </div>
-          <div class="top-actions">
-            <button class="btn btn-outline" onclick="openBulkModal()">
-              <i class="fa-solid fa-users"></i> Bulk Create
-            </button>
-            <button class="btn btn-primary" onclick="openCreateModal()">
-              <i class="fa-solid fa-user-plus"></i> Add Single Client
-            </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline" onclick="openBulkModal()"><i class="fa-solid fa-users"></i> Bulk Generate</button>
+            <button class="btn btn-primary" onclick="openCreateModal()"><i class="fa-solid fa-user-plus"></i> Add Client</button>
           </div>
         </div>
 
         <div class="content-card">
-          <div class="toolbar">
-            <div class="search-box">
-              <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-              <input type="text" id="search-input" placeholder="Search clients by username..." oninput="filterUsers()">
-            </div>
-            <div class="toolbar-actions">
-              <button class="btn btn-outline" onclick="loadUsers()">
-                <i class="fa-solid fa-arrows-rotate"></i> Refresh
-              </button>
-            </div>
-          </div>
-
           <div class="table-responsive">
             <table>
               <thead>
@@ -722,80 +835,256 @@
                   <th>Client Username</th>
                   <th>Password</th>
                   <th>Expiry Date</th>
-                  <th>Simultaneous Limit</th>
+                  <th>Device Limit</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="user-table-body">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">Loading clients...</td></tr>
+                <!-- Filled by JS -->
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- View: Core Services -->
+      <!-- VIEW 5: SYSTEMD SERVICES -->
       <div id="view-services" style="display: none;">
-        <div class="top-header">
-          <div class="page-title">
-            <h2>Core Services</h2>
-            <p>Manage daemon states for SSH, WebSocket Proxy and BadVPN UDP Gateway</p>
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="svc-search" placeholder="Search systemd services..." oninput="filterServices()">
           </div>
+          <button class="btn btn-outline" onclick="loadSystemdServices()"><i class="fa-solid fa-rotate"></i> Refresh</button>
         </div>
 
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-title">OPENSSH DAEMON</span>
-              <i class="fa-solid fa-terminal stat-icon"></i>
-            </div>
-            <div class="stat-value" id="svc-status-ssh">Active</div>
-            <div class="stat-sub">
-              <span>Port: 22</span>
-              <span>Linux PAM</span>
-            </div>
-            <button class="btn btn-outline" style="width: 100%; margin-top: 14px;" onclick="serviceAction('ssh', 'restart')">Restart OpenSSH</button>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-title">RUST WS-PROXY</span>
-              <i class="fa-solid fa-shuffle stat-icon"></i>
-            </div>
-            <div class="stat-value" id="svc-status-ws">Active</div>
-            <div class="stat-sub">
-              <span>Ports: 80, 8080, 443</span>
-              <span>101 Protocols</span>
-            </div>
-            <button class="btn btn-outline" style="width: 100%; margin-top: 14px;" onclick="serviceAction('ws-proxy', 'restart')">Restart WS-Proxy</button>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-header">
-              <span class="stat-title">BADVPN UDPGW</span>
-              <i class="fa-solid fa-gamepad stat-icon"></i>
-            </div>
-            <div class="stat-value" id="svc-status-badvpn">Active</div>
-            <div class="stat-sub">
-              <span>Port: 7300</span>
-              <span>VoIP & Gaming</span>
-            </div>
-            <button class="btn btn-outline" style="width: 100%; margin-top: 14px;" onclick="serviceAction('badvpn', 'restart')">Restart BadVPN</button>
+        <div class="content-card">
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Unit Name</th>
+                  <th>Load</th>
+                  <th>Active</th>
+                  <th>Substate</th>
+                  <th>Description</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="systemd-table-body">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading services...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- View: Panel Settings -->
-      <div id="view-settings" style="display: none;">
-        <div class="top-header">
-          <div class="page-title">
-            <h2>Panel Settings</h2>
-            <p>Configure panel credentials, ports, custom domain and API secret keys</p>
+      <!-- VIEW 6: PROCESS MANAGER -->
+      <div id="view-processes" style="display: none;">
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="proc-search" placeholder="Filter processes..." oninput="filterProcesses()">
+          </div>
+          <button class="btn btn-outline" onclick="loadProcesses()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+
+        <div class="content-card">
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>PID</th>
+                  <th>User</th>
+                  <th>CPU %</th>
+                  <th>Memory %</th>
+                  <th>State</th>
+                  <th>Command</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="processes-table-body">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading processes...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 7: NETWORK & OPEN PORTS -->
+      <div id="view-network" style="display: none;">
+        <!-- Network Diagnostics -->
+        <div class="content-card">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-vial" style="color: var(--accent-cyan); margin-right: 8px;"></i> Network Diagnostics</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ping IP / Host</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="text" id="ping-target" class="form-input" placeholder="e.g. 1.1.1.1 or google.com">
+                <button class="btn btn-primary" onclick="runPing()"><i class="fa-solid fa-play"></i> Ping</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">DNS Lookup</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="text" id="dns-target" class="form-input" placeholder="e.g. cloudflare.com">
+                <button class="btn btn-primary" onclick="runDns()"><i class="fa-solid fa-search"></i> Resolve</button>
+              </div>
+            </div>
+          </div>
+          <div id="diag-output-box" class="code-box" style="display: none; margin-top: 10px;"></div>
+        </div>
+
+        <!-- Listening Sockets -->
+        <div class="content-card">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 14px;"><i class="fa-solid fa-door-open" style="color: var(--accent-green); margin-right: 8px;"></i> Open Listening Sockets (ss -tulnp)</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Protocol</th>
+                  <th>Port</th>
+                  <th>Local Address</th>
+                  <th>Process / Service</th>
+                </tr>
+              </thead>
+              <tbody id="ports-table-body">
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading listening sockets...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 8: SSH SECURITY CENTER -->
+      <div id="view-ssh" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">SSH HARDENING SCORE</span>
+              <i class="fa-solid fa-shield-halved stat-icon"></i>
+            </div>
+            <div class="stat-value" id="ssh-score-val">100 / 100</div>
+            <div class="stat-sub"><span>Port</span> <code id="ssh-port-val">22</code></div>
           </div>
         </div>
 
+        <div class="content-card">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 12px;">sshd Configuration Audit</h3>
+          <div id="ssh-checks-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+
+        <div class="content-card">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 12px;">Active SSH Sessions</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>TTY</th>
+                  <th>Remote IP</th>
+                  <th>Login Time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="ssh-sessions-body">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No active SSH sessions</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 9: LIVE LOGS -->
+      <div id="view-logs" style="display: none;">
+        <div class="toolbar">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <select id="log-svc-select" class="form-input" style="width: 200px;" onchange="loadLogs()">
+              <option value="ssh">ssh.service</option>
+              <option value="panelx">panelx.service</option>
+              <option value="ws-proxy">ws-proxy.service</option>
+              <option value="badvpn">badvpn.service</option>
+              <option value="systemd-journald">systemd-journald</option>
+            </select>
+            <button class="btn btn-outline" onclick="loadLogs()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+          </div>
+          <button class="btn btn-outline" onclick="downloadLogs()"><i class="fa-solid fa-download"></i> Download</button>
+        </div>
+
+        <div class="content-card">
+          <div class="code-box" id="live-log-box" style="height: 500px; max-height: 500px;">Loading journalctl stream...</div>
+        </div>
+      </div>
+
+      <!-- VIEW 10: FILE & STORAGE EXPLORER -->
+      <div id="view-storage" style="display: none;">
+        <div class="content-card">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-hard-drive" style="color: var(--accent-cyan); margin-right: 8px;"></i> Disk Mount Points (df -h)</h3>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Filesystem</th>
+                  <th>Mount</th>
+                  <th>Size</th>
+                  <th>Used</th>
+                  <th>Available</th>
+                  <th>Capacity</th>
+                </tr>
+              </thead>
+              <tbody id="storage-table-body">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-folder-tree" style="color: var(--accent-purple); margin-right: 8px;"></i> Sandboxed File Explorer</h3>
+            <code id="current-browse-path" style="color: var(--accent-cyan);">/etc</code>
+          </div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="files-table-body">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 11: UPDATES & POWER -->
+      <div id="view-power" style="display: none;">
+        <div class="content-card" style="max-width: 600px;">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-cube" style="color: var(--accent-cyan); margin-right: 8px;"></i> System Package Updates</h3>
+          <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">Checks apt repository for pending security and kernel updates</p>
+          <div id="updates-summary" style="margin-bottom: 14px; font-weight: 700; color: #fff;">0 packages upgradable</div>
+          <button class="btn btn-primary" onclick="triggerUpgrade()"><i class="fa-solid fa-download"></i> Upgrade All Packages</button>
+        </div>
+
+        <div class="content-card" style="max-width: 600px; border-color: rgba(255, 51, 102, 0.3);">
+          <h3 style="font-size: 15px; color: var(--accent-red); margin-bottom: 12px;"><i class="fa-solid fa-power-off"></i> Server Power Management</h3>
+          <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">Initiate controlled server reboot or power off. Requires typed confirmation.</p>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-danger" onclick="openPowerModal('reboot')"><i class="fa-solid fa-rotate-right"></i> Reboot Server</button>
+            <button class="btn btn-danger" onclick="openPowerModal('poweroff')"><i class="fa-solid fa-power-off"></i> Shutdown Server</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 12: SETTINGS & API -->
+      <div id="view-settings" style="display: none;">
         <div class="content-card" style="max-width: 700px;">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 14px;"><i class="fa-solid fa-sliders" style="color: var(--accent-cyan); margin-right: 8px;"></i> Panel Configuration</h3>
           <form onsubmit="handleSaveSettings(event)">
             <div class="form-row">
               <div class="form-group">
@@ -813,64 +1102,30 @@
                 <input type="text" id="st-admin-user" class="form-input" required>
               </div>
               <div class="form-group">
-                <label class="form-label">New Password (Optional)</label>
+                <label class="form-label">Change Password (Optional)</label>
                 <input type="password" id="st-admin-pass" class="form-input" placeholder="Leave blank to keep current">
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">SSH Domain / Custom Host</label>
-              <input type="text" id="st-domain" class="form-input" placeholder="e.g. ssh.sghome.space (Leave blank for VPS IP)">
+              <input type="text" id="st-domain" class="form-input" placeholder="e.g. ssh.sghome.space">
             </div>
             <div class="form-group">
-              <label class="form-label"><i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> API Secret Key (For External Sites & Automation)</label>
+              <label class="form-label"><i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> API Secret Key (SG Home & External Sites)</label>
               <div style="display: flex; gap: 6px;">
-                <input type="text" id="st-api-key" class="form-input" style="font-family: var(--font-mono); color: var(--accent-amber);" placeholder="API Secret Key">
-                <button type="button" class="btn btn-outline" onclick="copyApiKey()" title="Copy API Key"><i class="fa-solid fa-copy"></i></button>
-                <button type="button" class="btn btn-outline" onclick="generateRandomApiKey()" title="Regenerate"><i class="fa-solid fa-rotate"></i></button>
-              </div>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                Use this in your paid site as <code>x-api-key: YOUR_KEY</code> or set to <code>SG_HOME_FALCON_SECRET_2026</code>.
+                <input type="text" id="st-api-key" class="form-input" style="font-family: var(--font-mono); color: var(--accent-amber);">
+                <button type="button" class="btn btn-outline" onclick="copyApiKey()"><i class="fa-solid fa-copy"></i></button>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Default Bug Host / Payload</label>
-              <textarea id="st-payload" class="form-input" rows="3" style="font-family: var(--font-mono); font-size: 11px;"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
-              <i class="fa-solid fa-floppy-disk"></i> Save Settings
-            </button>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
           </form>
         </div>
-      </div>
 
-      <!-- View: API Docs -->
-      <div id="view-apidocs" style="display: none;">
-        <div class="top-header">
-          <div class="page-title">
-            <h2>REST API Documentation</h2>
-            <p>Connect your Paid Site or Bot directly to PanelX for automated account creation</p>
-          </div>
-        </div>
-
-        <div class="content-card" style="max-width: 800px;">
-          <h3 style="font-size: 15px; color: #fff; margin-bottom: 8px;">1. Health Check Endpoint</h3>
-          <div class="code-box">curl -X GET http://YOUR_VPS_IP:7788/api/health \
-  -H "x-api-key: YOUR_SECRET_KEY"</div>
-
-          <h3 style="font-size: 15px; color: #fff; margin: 20px 0 8px 0;">2. Create Client Account</h3>
-          <div class="code-box">curl -X POST http://YOUR_VPS_IP:7788/api/user/create \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_SECRET_KEY" \
-  -d '{
-    "username": "customer101",
-    "password": "pass1234",
-    "days": 30,
-    "bandwidthGB": 100,
-    "simultaneousLimit": 3
-  }'</div>
-
-          <h3 style="font-size: 15px; color: #fff; margin: 20px 0 8px 0;">3. SG Home Paid Site (.env) Setup</h3>
-          <div class="code-box" style="color: var(--accent-green);">FALCON_API_URL=http://YOUR_VPS_IP:7788
+        <!-- SG Home Integration Docs -->
+        <div class="content-card" style="max-width: 700px;">
+          <h3 style="font-size: 15px; color: #fff; margin-bottom: 8px;">SG Home Paid Site (.env Integration)</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Copy these exact values into your SG Home Paid Site <code>.env</code> file:</p>
+          <div class="code-box" style="color: var(--accent-green);">FALCON_API_URL=http://34.21.211.234:7788
 FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         </div>
       </div>
@@ -878,11 +1133,70 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     </main>
   </div>
 
-  <!-- MODAL: ADD / EDIT INBOUND -->
+  <!-- MODAL: HEALTH BREAKDOWN -->
+  <div id="health-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-heart-pulse" style="color: var(--accent-green); margin-right: 8px;"></i> Server Health Diagnostic</h2>
+        <button class="modal-close" onclick="closeModal('health-modal')">&times;</button>
+      </div>
+      <div style="text-align: center; padding: 20px 0;">
+        <div style="font-size: 48px; font-weight: 800; font-family: var(--font-mono); color: var(--accent-green);" id="modal-health-score">100</div>
+        <div style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px;" id="modal-health-rating">Optimal Performance</div>
+      </div>
+      <h4 style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">DIAGNOSTIC FINDINGS:</h4>
+      <div id="modal-health-deductions" style="display: flex; flex-direction: column; gap: 6px;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD FIREWALL RULE -->
+  <div id="firewall-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-shield-virus" style="color: var(--accent-cyan); margin-right: 8px;"></i> Add Firewall Rule</h2>
+        <button class="modal-close" onclick="closeModal('firewall-modal')">&times;</button>
+      </div>
+      <form onsubmit="handleSaveFirewallRule(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Action</label>
+            <select id="fw-action" class="form-input">
+              <option value="ALLOW">ALLOW (Accept Traffic)</option>
+              <option value="DENY">DENY (Drop Traffic)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Protocol</label>
+            <select id="fw-proto" class="form-input">
+              <option value="tcp">TCP</option>
+              <option value="udp">UDP</option>
+              <option value="any">ANY</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Port / Port Range</label>
+            <input type="text" id="fw-port" class="form-input" placeholder="e.g. 443 or 8000:9000" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Source IP (Optional)</label>
+            <input type="text" id="fw-src" class="form-input" placeholder="e.g. 192.168.1.1 or leave blank">
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('firewall-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-shield"></i> Apply with 30s Rollback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: INBOUND PROFILE -->
   <div id="inbound-modal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="inbound-modal-title"><i class="fa-solid fa-arrow-down-up-lock" style="color: var(--accent-cyan); margin-right: 8px;"></i> Add Inbound Profile</h2>
+        <h2><i class="fa-solid fa-arrow-down-up-lock" style="color: var(--accent-cyan); margin-right: 8px;"></i> Carrier Inbound Profile</h2>
         <button class="modal-close" onclick="closeModal('inbound-modal')">&times;</button>
       </div>
       <form onsubmit="handleSaveInbound(event)">
@@ -893,7 +1207,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">SSH Host / Domain</label>
+            <label class="form-label">SSH Host</label>
             <input type="text" id="inb-host" class="form-input" placeholder="hutch.sghome.space" required>
           </div>
           <div class="form-group">
@@ -904,23 +1218,23 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Proxy Type</label>
-            <select id="inb-proxy-type" class="form-input" onchange="toggleProxyInputs()">
+            <select id="inb-proxy-type" class="form-input" onchange="toggleProxyRow()">
               <option value="http">HTTP Proxy (Custom Proxy Host & Port)</option>
               <option value="none">None (Direct / Cloudflare CDN)</option>
             </select>
           </div>
-          <div class="form-group" id="inb-default-wrap">
+          <div class="form-group">
             <label class="form-label">Default Profile</label>
             <select id="inb-default" class="form-input">
               <option value="0">No</option>
-              <option value="1">Yes (Default for Client Configs)</option>
+              <option value="1">Yes (Default)</option>
             </select>
           </div>
         </div>
-        <div class="form-row" id="proxy-settings-row">
+        <div class="form-row" id="inb-proxy-row">
           <div class="form-group">
-            <label class="form-label">Proxy Host / SNI</label>
-            <input type="text" id="inb-proxy-host" class="form-input" placeholder="e.g. dpkids.lk or partner.zoom.us">
+            <label class="form-label">Proxy Host</label>
+            <input type="text" id="inb-proxy-host" class="form-input" placeholder="dpkids.lk">
           </div>
           <div class="form-group">
             <label class="form-label">Proxy Port</label>
@@ -928,8 +1242,8 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Payload String / Encrypted URI</label>
-          <textarea id="inb-payload" class="form-input" rows="4" style="font-family: var(--font-mono); font-size: 11px;" placeholder="u+fRSFV7... or GET / HTTP/1.1..."></textarea>
+          <label class="form-label">Payload String</label>
+          <textarea id="inb-payload" class="form-input" rows="4" style="font-family: var(--font-mono); font-size: 11px;"></textarea>
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
           <button type="button" class="btn btn-outline" onclick="closeModal('inbound-modal')">Cancel</button>
@@ -939,7 +1253,49 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     </div>
   </div>
 
-  <!-- MODAL: CREATE CLIENT -->
+  <!-- MODAL: CLIENT CONFIG & QR (With NetMod Exporter) -->
+  <div id="config-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-qrcode" style="color: var(--accent-cyan); margin-right: 8px;"></i> Client Configuration</h2>
+        <button class="modal-close" onclick="closeModal('config-modal')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="color: var(--accent-cyan); font-weight: 700;">
+          <i class="fa-solid fa-arrow-down-up-lock"></i> SELECT INBOUND / PAYLOAD PROFILE:
+        </label>
+        <select id="config-inbound-select" class="form-input" onchange="updateConfigOutputs()"></select>
+      </div>
+
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchConfigTab('netmod')">SSH for NetMod</button>
+        <button class="tab-btn" onclick="switchConfigTab('hc')">HTTP Custom (.hc)</button>
+        <button class="tab-btn" onclick="switchConfigTab('wa')">WhatsApp / Telegram</button>
+        <button class="tab-btn" onclick="switchConfigTab('direct')">Direct SSH URL</button>
+        <button class="tab-btn" onclick="switchConfigTab('qr')">QR Code</button>
+      </div>
+
+      <div id="tab-netmod">
+        <div class="code-box" id="modal-netmod-text"></div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+          Direct 1-click import into NetMod Syna (SSH payload format).
+        </div>
+      </div>
+      <div id="tab-hc" style="display: none;"><div class="code-box" id="modal-hc-text"></div></div>
+      <div id="tab-wa" style="display: none;"><div class="code-box" id="modal-wa-text" style="white-space: pre-line; color: #fff;"></div></div>
+      <div id="tab-direct" style="display: none;"><div class="code-box" id="modal-direct-text"></div></div>
+      <div id="tab-qr" style="display: none; text-align: center; padding: 20px 0;">
+        <div id="modal-qrcode" style="display: inline-block; background: #fff; padding: 12px; border-radius: 12px;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+        <button class="btn btn-outline" onclick="downloadConfigText()"><i class="fa-solid fa-download"></i> Save as TXT</button>
+        <button class="btn btn-primary" onclick="copyActiveConfig()"><i class="fa-solid fa-copy"></i> Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD CLIENT -->
   <div id="create-modal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
@@ -950,12 +1306,12 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Username</label>
-            <input type="text" id="cu-username" class="form-input" placeholder="e.g. user101" required>
+            <input type="text" id="cu-username" class="form-input" placeholder="user101" required>
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
             <div style="display: flex; gap: 6px;">
-              <input type="text" id="cu-password" class="form-input" placeholder="Password" required>
+              <input type="text" id="cu-password" class="form-input" required>
               <button type="button" class="btn btn-outline" onclick="generateRandomPass('cu-password')"><i class="fa-solid fa-shuffle"></i></button>
             </div>
           </div>
@@ -966,7 +1322,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
             <input type="number" id="cu-days" class="form-input" value="30" min="1" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Device Limit (Max Logins)</label>
+            <label class="form-label">Device Limit</label>
             <input type="number" id="cu-limit" class="form-input" value="3" min="1" max="10" required>
           </div>
         </div>
@@ -982,7 +1338,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     </div>
   </div>
 
-  <!-- MODAL: BULK CREATE -->
+  <!-- MODAL: BULK GENERATE -->
   <div id="bulk-modal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
@@ -1018,91 +1374,51 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     </div>
   </div>
 
-  <!-- MODAL: CONFIG & QR CODE (With Dynamic Inbound Selection) -->
-  <div id="config-modal" class="modal-backdrop">
+  <!-- MODAL: SERVER POWER CONFIRMATION -->
+  <div id="power-modal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
-        <h2><i class="fa-solid fa-qrcode" style="color: var(--accent-cyan); margin-right: 8px;"></i> Client Configuration</h2>
-        <button class="modal-close" onclick="closeModal('config-modal')">&times;</button>
+        <h2 style="color: var(--accent-red);"><i class="fa-solid fa-triangle-exclamation"></i> Confirm Server Power Action</h2>
+        <button class="modal-close" onclick="closeModal('power-modal')">&times;</button>
       </div>
-
-      <!-- Inbound Profile Selector -->
-      <div class="form-group" style="margin-bottom: 20px;">
-        <label class="form-label" style="color: var(--accent-cyan); font-weight: 700;">
-          <i class="fa-solid fa-arrow-down-up-lock"></i> SELECT INBOUND / PAYLOAD PROFILE:
-        </label>
-        <select id="config-inbound-select" class="form-input" onchange="updateConfigOutputs()">
-          <!-- Populated dynamically -->
-        </select>
-      </div>
-      
-      <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchConfigTab('netmod')">SSH for NetMod</button>
-        <button class="tab-btn" onclick="switchConfigTab('hc')">HTTP Custom (.hc)</button>
-        <button class="tab-btn" onclick="switchConfigTab('wa')">WhatsApp / Telegram</button>
-        <button class="tab-btn" onclick="switchConfigTab('direct')">Direct SSH URL</button>
-        <button class="tab-btn" onclick="switchConfigTab('qr')">QR Code</button>
-      </div>
-
-      <!-- Tab: SSH for NetMod -->
-      <div id="tab-netmod">
-        <div class="code-box" id="modal-netmod-text">ssh://user:pass@host:80?...</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-          Import directly into NetMod Syna (SSH format). Supports both HTTP Proxy and Direct CDN.
-        </div>
-      </div>
-
-      <!-- Tab: HC String -->
-      <div id="tab-hc" style="display: none;">
-        <div class="code-box" id="modal-hc-text">ssh.host:80@user:pass#payload</div>
-      </div>
-
-      <!-- Tab: WA Formatted -->
-      <div id="tab-wa" style="display: none;">
-        <div class="code-box" id="modal-wa-text" style="white-space: pre-line; color: #fff;"></div>
-      </div>
-
-      <!-- Tab: Direct SSH URL -->
-      <div id="tab-direct" style="display: none;">
-        <div class="code-box" id="modal-direct-text">ssh://user:pass@host:80</div>
-      </div>
-
-      <!-- Tab: QR Code -->
-      <div id="tab-qr" style="display: none; text-align: center; padding: 20px 0;">
-        <div id="modal-qrcode" style="display: inline-block; background: #fff; padding: 12px; border-radius: 12px;"></div>
-      </div>
-
-      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button type="button" class="btn btn-outline" onclick="downloadConfigText()"><i class="fa-solid fa-download"></i> Save as TXT</button>
-        <button type="button" class="btn btn-primary" onclick="copyActiveConfig()"><i class="fa-solid fa-copy"></i> Copy to Clipboard</button>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+        To prevent accidental disruption, type <strong style="color: #fff;">CONFIRM</strong> below:
+      </p>
+      <input type="hidden" id="power-action">
+      <input type="text" id="power-confirm-input" class="form-input" placeholder="Type CONFIRM" style="margin-bottom: 20px;">
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" onclick="closeModal('power-modal')">Cancel</button>
+        <button class="btn btn-danger" onclick="executePowerAction()"><i class="fa-solid fa-power-off"></i> Proceed</button>
       </div>
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT APPLICATION CORE -->
   <script>
     let allUsers = [];
     let allInbounds = [];
+    let allServices = [];
+    let allProcesses = [];
     let currentUser = null;
     let activeConfigTab = 'netmod';
-    let defaultPayload = "GET /cdn-cgi/trace HTTP/1.1[crlf]Host: partner.zoom.us[crlf][crlf][split]UNLOCK /? HTTP/1.1[crlf]Host: [host][crlf]Connection: upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]";
-    let sshHostDomain = "";
+    let defaultPayload = "";
+    let rollbackInterval = null;
 
-    // Toast Utility
+    // Toast Notification
     function showToast(msg, isError = false) {
       const t = document.getElementById('toast');
       const m = document.getElementById('toast-msg');
       m.innerText = msg;
       t.style.borderColor = isError ? 'var(--accent-red)' : 'var(--accent-cyan)';
       t.style.display = 'flex';
-      setTimeout(() => { t.style.display = 'none'; }, 3000);
+      setTimeout(() => { t.style.display = 'none'; }, 3200);
     }
 
-    // Modal Handlers
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function openCreateModal() { generateRandomPass('cu-password'); openModal('create-modal'); }
     function openBulkModal() { openModal('bulk-modal'); }
+    function openAddRuleModal() { openModal('firewall-modal'); }
 
     function generateRandomPass(id) {
       const chars = "abcdefghjkmnpqrstuvwxyz23456789";
@@ -1111,14 +1427,14 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       document.getElementById(id).value = p;
     }
 
-    function toggleProxyInputs() {
+    function toggleProxyRow() {
       const type = document.getElementById('inb-proxy-type').value;
-      document.getElementById('proxy-settings-row').style.display = (type === 'http') ? 'grid' : 'none';
+      document.getElementById('inb-proxy-row').style.display = (type === 'http') ? 'grid' : 'none';
     }
 
-    // Sidebar Navigation
+    // Navigation Switcher
     function switchNav(view) {
-      const views = ['overview', 'inbounds', 'clients', 'services', 'settings', 'apidocs'];
+      const views = ['overview', 'firewall', 'inbounds', 'clients', 'services', 'processes', 'network', 'ssh', 'logs', 'storage', 'power', 'settings'];
       views.forEach(v => {
         const el = document.getElementById(`view-${v}`);
         if (el) el.style.display = (v === view) ? 'block' : 'none';
@@ -1132,12 +1448,40 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         }
       });
 
+      const headings = {
+        'overview': ['Server Overview', 'Real-time Linux VPS health, resource usage and active services'],
+        'firewall': ['Falcon Firewall Center', 'Managed packet filtering, port security and 30-second lockout prevention'],
+        'inbounds': ['Inbounds / Payload Profiles', 'Configure carrier bug hosts, NetMod encrypted strings, and proxies'],
+        'clients': ['SSH Client Accounts', 'Manage customer credentials, device limits, renewals and export formats'],
+        'services': ['Systemd Service Manager', 'Real-time daemon statuses, restart controls and journalctl logs'],
+        'processes': ['Process Manager', 'Inspect top CPU and memory consumers with graceful/force termination'],
+        'network': ['Network & Open Ports', 'Inspect listening sockets (ss -tulnp) and run network diagnostics'],
+        'ssh': ['SSH Security Center', 'Audit sshd_config hardening compliance and monitor active sessions'],
+        'logs': ['Live System Logs', 'Controlled journalctl streaming across core services'],
+        'storage': ['File & Storage Explorer', 'Disk filesystem mount points and sandboxed directory browser'],
+        'power': ['System Updates & Power', 'Check upgradable apt packages and controlled reboot/shutdown'],
+        'settings': ['Settings & REST API', 'Configure panel port, domain, credentials and SG Home API Secret Key']
+      };
+
+      if (headings[view]) {
+        document.getElementById('view-heading').innerText = headings[view][0];
+        document.getElementById('view-subheading').innerText = headings[view][1];
+      }
+
+      if (view === 'firewall') loadFirewallStatus();
       if (view === 'inbounds') loadInbounds();
       if (view === 'clients') loadUsers();
+      if (view === 'services') loadSystemdServices();
+      if (view === 'processes') loadProcesses();
+      if (view === 'network') loadNetworkInfo();
+      if (view === 'ssh') loadSshAudit();
+      if (view === 'logs') loadLogs();
+      if (view === 'storage') loadStorage();
+      if (view === 'power') loadUpdates();
       if (view === 'settings') loadSettingsToForm();
     }
 
-    // Authentication Checks
+    // Authentication
     async function checkAuth() {
       try {
         const res = await fetch('/api/auth/me');
@@ -1167,7 +1511,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Welcome to PanelX!');
+          showToast('Welcome to Falcon Firewall X!');
           document.getElementById('login-view').style.display = 'none';
           document.getElementById('app-layout').style.display = 'flex';
           initDashboard();
@@ -1175,7 +1519,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
           showToast(data.error || 'Login failed', true);
         }
       } catch (e) {
-        showToast('Login request error: ' + e.message, true);
+        showToast('Login request error', true);
       }
     }
 
@@ -1184,40 +1528,225 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       window.location.reload();
     }
 
-    // Live Metrics Polling
+    // Telemetry Polling
     async function fetchSystemStats() {
       try {
         const res = await fetch('/api/system/status');
         if (!res.ok) return;
         const s = await res.json();
 
+        // CPU & Load
         document.getElementById('stat-cpu').innerText = `${s.cpu_percent}%`;
         document.getElementById('bar-cpu').style.width = `${s.cpu_percent}%`;
         document.getElementById('stat-sockets').innerText = `${s.open_sockets} Sockets`;
+        document.getElementById('stat-load').innerText = s.load_avg.join(', ');
 
+        // RAM
         document.getElementById('stat-ram').innerText = `${s.mem_used_mb} MB`;
         document.getElementById('stat-ram-detail').innerText = `${s.mem_used_mb} / ${s.mem_total_mb} MB`;
         document.getElementById('stat-ram-pct').innerText = `${s.mem_percent}%`;
         document.getElementById('bar-ram').style.width = `${s.mem_percent}%`;
 
+        // Disk
+        document.getElementById('stat-disk').innerText = `${s.disk_used_gb} GB`;
+        document.getElementById('stat-disk-detail').innerText = `${s.disk_used_gb} / ${s.disk_total_gb} GB`;
+        document.getElementById('stat-disk-pct').innerText = `${s.disk_percent}%`;
+        document.getElementById('bar-disk').style.width = `${s.disk_percent}%`;
+
+        // Live Speed
         document.getElementById('stat-speed').innerText = `${Math.max(s.rx_speed_kb, s.tx_speed_kb)} KB/s`;
         document.getElementById('stat-rx').innerText = `${s.rx_speed_kb} KB/s`;
         document.getElementById('stat-tx').innerText = `${s.tx_speed_kb} KB/s`;
 
-        document.getElementById('stat-total-data').innerText = `${(s.total_rx_gb + s.total_tx_gb).toFixed(2)} GB`;
+        // System Specs
+        document.getElementById('stat-os').innerText = s.os;
+        document.getElementById('stat-kernel').innerText = s.kernel;
+        document.getElementById('stat-uptime').innerText = s.uptime;
         document.getElementById('stat-public-ip').innerText = s.public_ip;
-        document.getElementById('sys-uptime').innerText = s.uptime;
 
-        if (s.panel_title) document.getElementById('top-title').innerText = s.panel_title;
+        // Health Score
+        if (s.health) {
+          document.getElementById('health-score-val').innerText = s.health.score;
+          document.getElementById('modal-health-score').innerText = s.health.score;
+          document.getElementById('modal-health-rating').innerText = `${s.health.rating} Performance`;
 
-        // Services Status
-        document.getElementById('svc-status-ssh').innerText = s.services.ssh ? 'Active' : 'Inactive';
-        document.getElementById('svc-status-ws').innerText = s.services.ws_proxy ? 'Active' : 'Inactive';
-        document.getElementById('svc-status-badvpn').innerText = s.services.badvpn ? 'Active' : 'Inactive';
+          const dList = document.getElementById('modal-health-deductions');
+          if (s.health.deductions.length === 0) {
+            dList.innerHTML = '<div style="color: var(--accent-green);"><i class="fa-solid fa-circle-check"></i> All subsystems operating within optimal thresholds.</div>';
+          } else {
+            dList.innerHTML = s.health.deductions.map(d => `<div style="color: var(--accent-amber);"><i class="fa-solid fa-triangle-exclamation"></i> ${d}</div>`).join('');
+          }
+        }
+
+        // Service indicators
+        document.getElementById('svc-ssh-badge').innerText = s.services.ssh ? 'Active' : 'Inactive';
+        document.getElementById('svc-ws-badge').innerText = s.services.ws_proxy ? 'Active' : 'Inactive';
+        document.getElementById('svc-badvpn-badge').innerText = s.services.badvpn ? 'Active' : 'Inactive';
+        document.getElementById('svc-limiter-badge').innerText = s.services.limiter ? 'Active' : 'Inactive';
       } catch (e) {}
     }
 
-    // Inbounds Management
+    function openHealthModal() { openModal('health-modal'); }
+
+    // Falcon Firewall Subsystem
+    async function loadFirewallStatus() {
+      try {
+        const res = await fetch('/api/firewall/status');
+        const data = await res.json();
+        renderFirewallRules(data.rules || []);
+
+        if (data.rollback_active && data.rollback_remaining > 0) {
+          startRollbackTimer(data.rollback_remaining);
+        } else {
+          document.getElementById('rollback-banner').style.display = 'none';
+        }
+      } catch (e) {
+        showToast('Failed to load firewall status', true);
+      }
+    }
+
+    function renderFirewallRules(rules) {
+      const tbody = document.getElementById('firewall-table-body');
+      if (rules.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">No custom firewall rules configured. Click "Add Custom Rule" or use quick actions above.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rules.map(r => `
+        <tr>
+          <td><span class="tag tag-blue">#${r.id}</span></td>
+          <td>${r.direction}</td>
+          <td><span class="tag ${r.action === 'ACCEPT' || r.action === 'ALLOW' ? 'tag-active' : 'tag-danger'}">${r.action}</span></td>
+          <td><span class="tag tag-blue">${r.protocol.toUpperCase()}</span></td>
+          <td><code>${r.port}</code></td>
+          <td><code>${r.source}</code></td>
+          <td>
+            <button class="icon-btn delete" title="Delete Rule" onclick="deleteFirewallRule('${r.id}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function startRollbackTimer(remaining) {
+      const banner = document.getElementById('rollback-banner');
+      const countEl = document.getElementById('rollback-countdown');
+      banner.style.display = 'flex';
+      let sec = remaining;
+      countEl.innerText = `${sec}s`;
+
+      clearInterval(rollbackInterval);
+      rollbackInterval = setInterval(() => {
+        sec--;
+        if (sec <= 0) {
+          clearInterval(rollbackInterval);
+          banner.style.display = 'none';
+          showToast('Rollback expired: Firewall rules restored');
+          loadFirewallStatus();
+        } else {
+          countEl.innerText = `${sec}s`;
+        }
+      }, 1000);
+    }
+
+    async function confirmRollback() {
+      await fetch('/api/firewall/rollback/confirm', { method: 'POST' });
+      clearInterval(rollbackInterval);
+      document.getElementById('rollback-banner').style.display = 'none';
+      showToast('Firewall rules confirmed permanently!');
+      loadFirewallStatus();
+    }
+
+    async function revertRollback() {
+      await fetch('/api/firewall/rollback/revert', { method: 'POST' });
+      clearInterval(rollbackInterval);
+      document.getElementById('rollback-banner').style.display = 'none';
+      showToast('Firewall rules reverted to previous snapshot!');
+      loadFirewallStatus();
+    }
+
+    async function quickAllow(port, proto) {
+      const res = await fetch('/api/firewall/rule/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'ALLOW', port, protocol: proto })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Allowed ${proto.toUpperCase()} port ${port}! (30s safety rollback active)`);
+        startRollbackTimer(30);
+        loadFirewallStatus();
+      } else {
+        showToast(data.error || 'Failed to apply rule', true);
+      }
+    }
+
+    function openBlockIpModal() {
+      const ip = prompt('Enter IP address to block:');
+      if (ip) {
+        quickBlockIp(ip);
+      }
+    }
+
+    async function quickBlockIp(ip) {
+      const res = await fetch('/api/firewall/rule/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DENY', port: 'any', protocol: 'any', source_ip: ip })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Blocked IP ${ip}!`);
+        startRollbackTimer(30);
+        loadFirewallStatus();
+      } else {
+        showToast(data.error || 'Failed to block IP', true);
+      }
+    }
+
+    async function handleSaveFirewallRule(e) {
+      e.preventDefault();
+      const body = {
+        action: document.getElementById('fw-action').value,
+        protocol: document.getElementById('fw-proto').value,
+        port: document.getElementById('fw-port').value,
+        source_ip: document.getElementById('fw-src').value
+      };
+
+      const res = await fetch('/api/firewall/rule/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Rule applied! (30s safety rollback active)');
+        closeModal('firewall-modal');
+        startRollbackTimer(30);
+        loadFirewallStatus();
+      } else {
+        showToast(data.error || 'Failed to apply rule', true);
+      }
+    }
+
+    async function deleteFirewallRule(id) {
+      if (!confirm(`Delete firewall rule #${id}?`)) return;
+      const res = await fetch('/api/firewall/rule/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Rule #${id} removed`);
+        loadFirewallStatus();
+      } else {
+        showToast(data.error || 'Failed to delete rule', true);
+      }
+    }
+
+    // Inbounds / Payload Profiles
     async function loadInbounds() {
       try {
         const res = await fetch('/api/inbounds/list');
@@ -1232,61 +1761,47 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     function renderInboundsTable(inbounds) {
       const tbody = document.getElementById('inbounds-table-body');
       if (inbounds.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No inbound profiles configured yet. Click "Add Inbound Profile" to create one!</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No inbound profiles configured. Click "Add Inbound Profile" to create one!</td></tr>';
         return;
       }
 
-      let html = '';
-      inbounds.forEach(inb => {
-        const proxyBadge = inb.proxy_type === 'http' ? '<span class="tag tag-blue">HTTP Proxy</span>' : '<span class="tag tag-active">None (Direct)</span>';
-        const proxyTarget = inb.proxy_type === 'http' ? `<code style="color: var(--accent-cyan);">${inb.proxy_host}:${inb.proxy_port}</code>` : '<span style="color: var(--text-muted);">-</span>';
-        const defaultBadge = inb.is_default ? '<span class="tag tag-active">Default</span>' : '<span style="color: var(--text-muted); font-size: 11px;">Secondary</span>';
-
-        html += `
-          <tr>
-            <td>
-              <div style="font-weight: 700; color: #fff;">${inb.remark}</div>
-              <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${inb.payload.substring(0, 45)}...</div>
-            </td>
-            <td><code>${inb.host}:${inb.port}</code></td>
-            <td>${proxyBadge}</td>
-            <td>${proxyTarget}</td>
-            <td>${defaultBadge}</td>
-            <td>
-              <div class="action-btn-group">
-                <button class="icon-btn" title="Edit Profile" onclick="openEditInboundModal(${inb.id})">
-                  <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="icon-btn delete" title="Delete Profile" onclick="deleteInbound(${inb.id})">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
-      tbody.innerHTML = html;
+      tbody.innerHTML = inbounds.map(inb => `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff;">${inb.remark}</div>
+            <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${inb.payload.substring(0, 45)}...</div>
+          </td>
+          <td><code>${inb.host}:${inb.port}</code></td>
+          <td><span class="tag ${inb.proxy_type === 'http' ? 'tag-blue' : 'tag-active'}">${inb.proxy_type === 'http' ? 'HTTP Proxy' : 'Direct CDN'}</span></td>
+          <td>${inb.proxy_type === 'http' ? `<code>${inb.proxy_host}:${inb.proxy_port}</code>` : '<span style="color: var(--text-muted);">-</span>'}</td>
+          <td>${inb.is_default ? '<span class="tag tag-active">Default</span>' : '<span style="color: var(--text-muted); font-size: 11px;">Secondary</span>'}</td>
+          <td>
+            <div class="action-btn-group">
+              <button class="icon-btn" title="Edit Profile" onclick="openEditInboundModal(${inb.id})"><i class="fa-solid fa-pen"></i></button>
+              <button class="icon-btn delete" title="Delete Profile" onclick="deleteInbound(${inb.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
     }
 
     function openInboundModal() {
       document.getElementById('inb-id').value = '';
       document.getElementById('inb-remark').value = '';
-      document.getElementById('inb-host').value = sshHostDomain || document.getElementById('stat-public-ip').innerText || '';
+      document.getElementById('inb-host').value = document.getElementById('stat-public-ip').innerText || '';
       document.getElementById('inb-port').value = '80';
       document.getElementById('inb-proxy-type').value = 'http';
       document.getElementById('inb-proxy-host').value = '';
       document.getElementById('inb-proxy-port').value = '8080';
       document.getElementById('inb-payload').value = defaultPayload;
       document.getElementById('inb-default').value = '0';
-      document.getElementById('inbound-modal-title').innerText = 'Add Inbound Profile';
-      toggleProxyInputs();
+      toggleProxyRow();
       openModal('inbound-modal');
     }
 
     function openEditInboundModal(id) {
       const inb = allInbounds.find(i => i.id === id);
       if (!inb) return;
-
       document.getElementById('inb-id').value = inb.id;
       document.getElementById('inb-remark').value = inb.remark;
       document.getElementById('inb-host').value = inb.host;
@@ -1296,8 +1811,7 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       document.getElementById('inb-proxy-port').value = inb.proxy_port || 8080;
       document.getElementById('inb-payload').value = inb.payload;
       document.getElementById('inb-default').value = inb.is_default ? '1' : '0';
-      document.getElementById('inbound-modal-title').innerText = 'Edit Inbound Profile';
-      toggleProxyInputs();
+      toggleProxyRow();
       openModal('inbound-modal');
     }
 
@@ -1317,42 +1831,34 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       };
 
       const endpoint = id ? '/api/inbounds/update' : '/api/inbounds/create';
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Inbound saved successfully!');
-          closeModal('inbound-modal');
-          loadInbounds();
-        } else {
-          showToast(data.error || 'Failed to save', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Inbound saved successfully!');
+        closeModal('inbound-modal');
+        loadInbounds();
+      } else {
+        showToast(data.error || 'Failed to save', true);
       }
     }
 
     async function deleteInbound(id) {
-      if (!confirm('Are you sure you want to delete this inbound profile?')) return;
-      try {
-        const res = await fetch('/api/inbounds/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Inbound deleted');
-          loadInbounds();
-        } else {
-          showToast(data.error || 'Delete failed', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      if (!confirm('Delete this inbound profile?')) return;
+      const res = await fetch('/api/inbounds/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Inbound deleted');
+        loadInbounds();
+      } else {
+        showToast(data.error || 'Delete failed', true);
       }
     }
 
@@ -1371,31 +1877,23 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     function renderUsers(users) {
       const tbody = document.getElementById('user-table-body');
       if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No clients configured yet. Click "Add Single Client" to create one!</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No client accounts configured. Click "Add Client" to create one!</td></tr>';
         return;
       }
 
-      let html = '';
-      users.forEach(u => {
+      tbody.innerHTML = users.map(u => {
         let tagClass = 'tag-active';
         let tagText = `${u.days_left} Days Left`;
-        if (u.is_expired) {
-          tagClass = 'tag-danger';
-          tagText = 'Expired';
-        } else if (u.days_left <= 3) {
-          tagClass = 'tag-warning';
-        }
+        if (u.is_expired) { tagClass = 'tag-danger'; tagText = 'Expired'; }
+        else if (u.days_left <= 3) { tagClass = 'tag-warning'; }
 
-        html += `
+        return `
           <tr>
             <td>
-              <div class="user-pill">
-                <i class="fa-solid fa-user"></i>
-                <span>${u.username}</span>
-              </div>
+              <div style="font-weight: 700; color: #fff;"><i class="fa-solid fa-user" style="color: var(--accent-cyan); margin-right: 6px;"></i> ${u.username}</div>
               ${u.notes ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${u.notes}</div>` : ''}
             </td>
-            <td><code style="font-family: var(--font-mono); color: var(--accent-cyan);">${u.password}</code></td>
+            <td><code style="color: var(--accent-cyan);">${u.password}</code></td>
             <td>
               <span class="tag ${tagClass}">${tagText}</span>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${u.expiry_date}</div>
@@ -1404,21 +1902,14 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
             <td><span class="tag tag-active">Active</span></td>
             <td>
               <div class="action-btn-group">
-                <button class="icon-btn" title="View Config / QR Code" onclick="openConfigModal('${u.username}')">
-                  <i class="fa-solid fa-qrcode"></i>
-                </button>
-                <button class="icon-btn" title="Renew Client (+30 Days)" onclick="renewClient('${u.username}')">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                </button>
-                <button class="icon-btn delete" title="Delete Client" onclick="deleteClient('${u.username}')">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+                <button class="icon-btn" title="View Config / QR Code" onclick="openConfigModal('${u.username}')"><i class="fa-solid fa-qrcode"></i></button>
+                <button class="icon-btn" title="Renew Client (+30 Days)" onclick="renewClient('${u.username}')"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                <button class="icon-btn delete" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           </tr>
         `;
-      });
-      tbody.innerHTML = html;
+      }).join('');
     }
 
     function filterUsers() {
@@ -1429,55 +1920,51 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
 
     async function handleCreateUser(e) {
       e.preventDefault();
-      const username = document.getElementById('cu-username').value;
-      const password = document.getElementById('cu-password').value;
-      const days = document.getElementById('cu-days').value;
-      const simultaneous_limit = document.getElementById('cu-limit').value;
-      const notes = document.getElementById('cu-notes').value;
+      const body = {
+        username: document.getElementById('cu-username').value,
+        password: document.getElementById('cu-password').value,
+        days: document.getElementById('cu-days').value,
+        simultaneous_limit: document.getElementById('cu-limit').value,
+        notes: document.getElementById('cu-notes').value
+      };
 
-      try {
-        const res = await fetch('/api/users/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, days, simultaneous_limit, notes })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`Client "${username}" created!`);
-          closeModal('create-modal');
-          loadUsers();
-          openConfigModal(username);
-        } else {
-          showToast(data.error || 'Create failed', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      const res = await fetch('/api/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Client "${body.username}" created!`);
+        closeModal('create-modal');
+        loadUsers();
+        openConfigModal(body.username);
+      } else {
+        showToast(data.error || 'Create failed', true);
       }
     }
 
     async function handleBulkCreate(e) {
       e.preventDefault();
-      const count = document.getElementById('bu-count').value;
-      const prefix = document.getElementById('bu-prefix').value;
-      const days = document.getElementById('bu-days').value;
-      const simultaneous_limit = document.getElementById('bu-limit').value;
+      const body = {
+        count: document.getElementById('bu-count').value,
+        prefix: document.getElementById('bu-prefix').value,
+        days: document.getElementById('bu-days').value,
+        simultaneous_limit: document.getElementById('bu-limit').value
+      };
 
-      try {
-        const res = await fetch('/api/users/bulk-create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ count, prefix, days, simultaneous_limit })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`Generated ${data.created_count} accounts!`);
-          closeModal('bulk-modal');
-          loadUsers();
-        } else {
-          showToast(data.error || 'Bulk create failed', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      const res = await fetch('/api/users/bulk-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Generated ${data.created_count} accounts!`);
+        closeModal('bulk-modal');
+        loadUsers();
+      } else {
+        showToast(data.error || 'Bulk create failed', true);
       }
     }
 
@@ -1485,67 +1972,53 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       const days = prompt(`Extend "${username}" by how many days?`, "30");
       if (!days) return;
 
-      try {
-        const res = await fetch('/api/users/renew', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, days })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`Extended "${username}" until ${data.new_expiry_date}`);
-          loadUsers();
-        } else {
-          showToast(data.error || 'Renew failed', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      const res = await fetch('/api/users/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, days })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Extended "${username}" until ${data.new_expiry_date}`);
+        loadUsers();
+      } else {
+        showToast(data.error || 'Renew failed', true);
       }
     }
 
     async function deleteClient(username) {
-      if (!confirm(`Are you sure you want to permanently delete client "${username}"?`)) return;
-
-      try {
-        const res = await fetch('/api/users/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`Client "${username}" deleted`);
-          loadUsers();
-        } else {
-          showToast(data.error || 'Delete failed', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      if (!confirm(`Delete client "${username}" permanently?`)) return;
+      const res = await fetch('/api/users/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Client "${username}" deleted`);
+        loadUsers();
+      } else {
+        showToast(data.error || 'Delete failed', true);
       }
     }
 
-    // Config Modal with Dynamic Inbound Profiles
+    // Config Modal & NetMod Exporter
     async function openConfigModal(username) {
       currentUser = allUsers.find(u => u.username === username);
       if (!currentUser) return;
 
-      // Ensure inbounds are loaded
       if (allInbounds.length === 0) {
         const res = await fetch('/api/inbounds/list');
         const data = await res.json();
         allInbounds = data.inbounds || [];
       }
 
-      // Populate Inbounds Select
       const select = document.getElementById('config-inbound-select');
-      select.innerHTML = '';
-      allInbounds.forEach((inb, index) => {
-        const opt = document.createElement('option');
-        opt.value = inb.id;
-        opt.innerText = `${inb.remark} (${inb.proxy_type === 'http' ? 'Proxy: ' + inb.proxy_host + ':' + inb.proxy_port : 'Direct CDN'})`;
-        if (inb.is_default) opt.selected = true;
-        select.appendChild(opt);
-      });
+      select.innerHTML = allInbounds.map(inb => `
+        <option value="${inb.id}" ${inb.is_default ? 'selected' : ''}>
+          ${inb.remark} (${inb.proxy_type === 'http' ? 'Proxy: ' + inb.proxy_host + ':' + inb.proxy_port : 'Direct CDN'})
+        </option>
+      `).join('');
 
       updateConfigOutputs();
       switchConfigTab('netmod');
@@ -1555,9 +2028,9 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     function updateConfigOutputs() {
       if (!currentUser) return;
       const select = document.getElementById('config-inbound-select');
-      const inboundId = parseInt(select.value);
-      const selectedInbound = allInbounds.find(i => i.id === inboundId) || allInbounds[0] || {
-        host: sshHostDomain || document.getElementById('stat-public-ip').innerText || '127.0.0.1',
+      const inbId = parseInt(select.value);
+      const inb = allInbounds.find(i => i.id === inbId) || allInbounds[0] || {
+        host: document.getElementById('stat-public-ip').innerText || '127.0.0.1',
         port: 80,
         proxy_type: 'http',
         proxy_host: 'dpkids.lk',
@@ -1567,37 +2040,36 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       };
 
       const u = currentUser;
-      const host = selectedInbound.host || sshHostDomain || document.getElementById('stat-public-ip').innerText || '127.0.0.1';
-      const port = selectedInbound.port || 80;
-      const remark = encodeURIComponent(`${selectedInbound.remark} - ${u.username}`);
+      const host = inb.host || document.getElementById('stat-public-ip').innerText || '127.0.0.1';
+      const port = inb.port || 80;
+      const remark = encodeURIComponent(`${inb.remark} - ${u.username}`);
 
       // 1. SSH for NetMod URI
-      // Format: ssh://username:password@host:port?payload#remark
-      const netmodUri = `ssh://${u.username}:${u.password}@${host}:${port}?${selectedInbound.payload}#${remark}`;
+      const netmodUri = `ssh://${u.username}:${u.password}@${host}:${port}?${inb.payload}#${remark}`;
       document.getElementById('modal-netmod-text').innerText = netmodUri;
 
-      // 2. HTTP Custom Format
-      const hcTarget = selectedInbound.proxy_type === 'http' && selectedInbound.proxy_host ? `${selectedInbound.proxy_host}:${selectedInbound.proxy_port}` : `${host}:${port}`;
-      document.getElementById('modal-hc-text').innerText = `${hcTarget}@${u.username}:${u.password}#${selectedInbound.payload}`;
+      // 2. HTTP Custom
+      const hcTarget = inb.proxy_type === 'http' && inb.proxy_host ? `${inb.proxy_host}:${inb.proxy_port}` : `${host}:${port}`;
+      document.getElementById('modal-hc-text').innerText = `${hcTarget}@${u.username}:${u.password}#${inb.payload}`;
 
-      // 3. Direct SSH URI
+      // 3. Direct SSH URL
       document.getElementById('modal-direct-text').innerText = `ssh://${u.username}:${u.password}@${host}:${port}`;
 
-      // 4. WhatsApp / Telegram Message
+      // 4. WhatsApp / Telegram Format
       const waMsg = 
-        `🚀 *${selectedInbound.remark.toUpperCase()}*\n` +
+        `🚀 *${inb.remark.toUpperCase()}*\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
         `👤 *Username:* ${u.username}\n` +
         `🔑 *Password:* ${u.password}\n` +
         `🌐 *SSH Host:* ${host}\n` +
         `🚪 *SSH Port:* ${port}\n` +
-        (selectedInbound.proxy_type === 'http' ? `🔄 *Proxy:* ${selectedInbound.proxy_host}:${selectedInbound.proxy_port}\n` : `🔄 *Proxy:* None (Direct CDN)\n`) +
+        (inb.proxy_type === 'http' ? `🔄 *Proxy:* ${inb.proxy_host}:${inb.proxy_port}\n` : `🔄 *Proxy:* None (Direct CDN)\n`) +
         `📱 *Max Devices:* ${u.simultaneous_limit}\n` +
         `⏳ *Expiry Date:* ${u.expiry_date}\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
         `📲 *NetMod SSH URI:*\n` +
         `\`${netmodUri}\`\n\n` +
-        `✨ *Powered by PanelX Manager*`;
+        `✨ *Powered by Falcon Firewall X*`;
       document.getElementById('modal-wa-text').innerText = waMsg;
 
       // 5. In-Browser QR Code
@@ -1622,13 +2094,10 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     }
 
     function copyActiveConfig() {
-      let text = '';
-      if (activeConfigTab === 'netmod') text = document.getElementById('modal-netmod-text').innerText;
-      else if (activeConfigTab === 'hc') text = document.getElementById('modal-hc-text').innerText;
+      let text = document.getElementById('modal-netmod-text').innerText;
+      if (activeConfigTab === 'hc') text = document.getElementById('modal-hc-text').innerText;
       else if (activeConfigTab === 'wa') text = document.getElementById('modal-wa-text').innerText;
       else if (activeConfigTab === 'direct') text = document.getElementById('modal-direct-text').innerText;
-      else text = document.getElementById('modal-netmod-text').innerText;
-
       navigator.clipboard.writeText(text);
       showToast('Copied to clipboard!');
     }
@@ -1639,11 +2108,333 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${currentUser.username}-PanelX-Config.txt`;
+      a.download = `${currentUser.username}-FalconX-Config.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showToast('Config file downloaded!');
+      showToast('Config downloaded!');
+    }
+
+    // Systemd Services
+    async function loadSystemdServices() {
+      try {
+        const res = await fetch('/api/services/systemd');
+        const data = await res.json();
+        allServices = data.units || [];
+        renderServices(allServices);
+      } catch (e) {
+        showToast('Failed to load systemd services', true);
+      }
+    }
+
+    function renderServices(services) {
+      const tbody = document.getElementById('systemd-table-body');
+      tbody.innerHTML = services.slice(0, 50).map(s => `
+        <tr>
+          <td><strong style="color: #fff;">${s.unit}</strong></td>
+          <td><span class="tag tag-blue">${s.load}</span></td>
+          <td><span class="tag ${s.active === 'active' ? 'tag-active' : 'tag-danger'}">${s.active}</span></td>
+          <td><code>${s.sub}</code></td>
+          <td style="font-size: 11.5px; color: var(--text-muted);">${s.description}</td>
+          <td>
+            <div class="action-btn-group">
+              <button class="icon-btn" title="Restart Service" onclick="serviceAction('${s.unit}', 'restart')"><i class="fa-solid fa-rotate"></i></button>
+              <button class="icon-btn" title="Stop Service" onclick="serviceAction('${s.unit}', 'stop')"><i class="fa-solid fa-stop"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterServices() {
+      const q = document.getElementById('svc-search').value.toLowerCase();
+      renderServices(allServices.filter(s => s.unit.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)));
+    }
+
+    async function serviceAction(service, action) {
+      showToast(`${action.toUpperCase()} on ${service}...`);
+      const res = await fetch('/api/services/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service, action })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Service ${service} ${action}ed!`);
+        loadSystemdServices();
+        fetchSystemStats();
+      } else {
+        showToast(data.error || 'Action failed', true);
+      }
+    }
+
+    // Process Manager
+    async function loadProcesses() {
+      try {
+        const res = await fetch('/api/processes/list');
+        const data = await res.json();
+        allProcesses = data.processes || [];
+        renderProcesses(allProcesses);
+      } catch (e) {
+        showToast('Failed to load processes', true);
+      }
+    }
+
+    function renderProcesses(procs) {
+      const tbody = document.getElementById('processes-table-body');
+      tbody.innerHTML = procs.map(p => `
+        <tr>
+          <td><span class="tag tag-blue">#${p.pid}</span></td>
+          <td><strong>${p.user}</strong></td>
+          <td><span class="tag ${p.cpu > 50 ? 'tag-danger' : 'tag-active'}">${p.cpu}%</span></td>
+          <td><span class="tag tag-blue">${p.mem}%</span></td>
+          <td><code>${p.stat}</code></td>
+          <td style="font-family: var(--font-mono); font-size: 11.5px; color: #fff;">${p.name}</td>
+          <td>
+            <button class="icon-btn delete" title="Kill Process" onclick="killProcess(${p.pid})"><i class="fa-solid fa-skull"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterProcesses() {
+      const q = document.getElementById('proc-search').value.toLowerCase();
+      renderProcesses(allProcesses.filter(p => p.name.toLowerCase().includes(q) || p.user.toLowerCase().includes(q)));
+    }
+
+    async function killProcess(pid) {
+      if (!confirm(`Terminate PID #${pid}?`)) return;
+      const res = await fetch('/api/processes/kill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pid, signal: 15 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Sent SIGTERM to PID ${pid}`);
+        loadProcesses();
+      } else {
+        showToast(data.error || 'Failed to kill process', true);
+      }
+    }
+
+    // Network & Ports
+    async function loadNetworkInfo() {
+      try {
+        const res = await fetch('/api/network/ports');
+        const data = await res.json();
+        const tbody = document.getElementById('ports-table-body');
+        tbody.innerHTML = (data.sockets || []).map(s => `
+          <tr>
+            <td><span class="tag tag-blue">${s.proto.toUpperCase()}</span></td>
+            <td><strong style="color: var(--accent-cyan); font-family: var(--font-mono);">${s.port}</strong></td>
+            <td><code>${s.address}</code></td>
+            <td style="font-size: 12px; color: #fff;">${s.process}</td>
+          </tr>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function runPing() {
+      const target = document.getElementById('ping-target').value;
+      if (!target) return;
+      showToast(`Pinging ${target}...`);
+      const outBox = document.getElementById('diag-output-box');
+      outBox.style.display = 'block';
+      outBox.innerText = 'Pinging...';
+      const res = await fetch('/api/network/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target })
+      });
+      const data = await res.json();
+      outBox.innerText = data.output || 'No output';
+    }
+
+    async function runDns() {
+      const domain = document.getElementById('dns-target').value;
+      if (!domain) return;
+      showToast(`Resolving ${domain}...`);
+      const outBox = document.getElementById('diag-output-box');
+      outBox.style.display = 'block';
+      outBox.innerText = 'Resolving DNS...';
+      const res = await fetch('/api/network/dns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain })
+      });
+      const data = await res.json();
+      if (data.resolved_ip) {
+        outBox.innerText = `Domain: ${data.domain}\nIP Address: ${data.resolved_ip}`;
+      } else {
+        outBox.innerText = `Failed to resolve: ${data.error}`;
+      }
+    }
+
+    // SSH Security Audit
+    async function loadSshAudit() {
+      try {
+        const res = await fetch('/api/ssh/audit');
+        const data = await res.json();
+        document.getElementById('ssh-score-val').innerText = `${data.score} / 100`;
+        document.getElementById('ssh-port-val').innerText = data.port;
+
+        document.getElementById('ssh-checks-list').innerHTML = data.checks.map(c => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <div>
+              <strong style="color: #fff;">${c.item}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">${c.tip}</div>
+            </div>
+            <span class="tag ${c.status === 'PASS' ? 'tag-active' : (c.status === 'WARN' ? 'tag-warning' : 'tag-blue')}">${c.status}</span>
+          </div>
+        `).join('');
+
+        const sBody = document.getElementById('ssh-sessions-body');
+        if (!data.active_sessions || data.active_sessions.length === 0) {
+          sBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No active SSH sessions</td></tr>';
+        } else {
+          sBody.innerHTML = data.active_sessions.map(s => `
+            <tr>
+              <td><strong>${s.user}</strong></td>
+              <td><code>${s.tty}</code></td>
+              <td><code>${s.ip}</code></td>
+              <td>${s.login}</td>
+              <td><button class="icon-btn delete" onclick="disconnectSsh('${s.tty}')"><i class="fa-solid fa-power-off"></i></button></td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {}
+    }
+
+    async function disconnectSsh(tty) {
+      if (!confirm(`Disconnect active SSH session on ${tty}?`)) return;
+      const res = await fetch('/api/ssh/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tty })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Disconnected ${tty}`);
+        loadSshAudit();
+      } else {
+        showToast(data.error || 'Failed to disconnect', true);
+      }
+    }
+
+    // Live Logs
+    async function loadLogs() {
+      const svc = document.getElementById('log-svc-select').value;
+      const box = document.getElementById('live-log-box');
+      box.innerText = 'Loading logs...';
+      const res = await fetch('/api/services/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: svc })
+      });
+      const data = await res.json();
+      box.innerText = data.logs || 'No logs found.';
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function downloadLogs() {
+      const text = document.getElementById('live-log-box').innerText;
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `falconx-logs.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // Storage & File Explorer
+    async function loadStorage() {
+      try {
+        const res = await fetch('/api/storage/disks');
+        const data = await res.json();
+        document.getElementById('storage-table-body').innerHTML = (data.disks || []).map(d => `
+          <tr>
+            <td><code>${d.filesystem}</code></td>
+            <td><strong>${d.mount}</strong></td>
+            <td>${d.size}</td>
+            <td>${d.used}</td>
+            <td>${d.avail}</td>
+            <td><span class="tag tag-active">${d.percent}</span></td>
+          </tr>
+        `).join('');
+      } catch (e) {}
+
+      browsePath('/etc');
+    }
+
+    async function browsePath(p) {
+      document.getElementById('current-browse-path').innerText = p;
+      const tbody = document.getElementById('files-table-body');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Reading directory...</td></tr>';
+      try {
+        const res = await fetch('/api/files/browse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: p })
+        });
+        const data = await res.json();
+        if (data.items) {
+          tbody.innerHTML = data.items.map(item => `
+            <tr>
+              <td>
+                <i class="${item.is_dir ? 'fa-solid fa-folder' : 'fa-solid fa-file'}" style="color: ${item.is_dir ? 'var(--accent-amber)' : 'var(--accent-cyan)'}; margin-right: 8px;"></i>
+                <a style="color: #fff; cursor: pointer; text-decoration: none;" onclick="${item.is_dir ? `browsePath('${item.path}')` : `alert('File: ${item.name}')`}">${item.name}</a>
+              </td>
+              <td><span class="tag tag-blue">${item.is_dir ? 'Directory' : 'File'}</span></td>
+              <td>${item.is_dir ? '-' : (item.size / 1024).toFixed(1) + ' KB'}</td>
+              <td>
+                ${item.is_dir ? `<button class="btn btn-outline" style="padding: 4px 8px; font-size: 11px;" onclick="browsePath('${item.path}')">Open</button>` : ''}
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--accent-red); padding: 20px;">Failed to read directory</td></tr>';
+      }
+    }
+
+    // Updates & Power
+    async function loadUpdates() {
+      try {
+        const res = await fetch('/api/system/updates');
+        const data = await res.json();
+        document.getElementById('updates-summary').innerText = `${data.count} packages upgradable (${data.upgrades.slice(0, 5).join(', ')}${data.count > 5 ? '...' : ''})`;
+      } catch (e) {}
+    }
+
+    async function triggerUpgrade() {
+      if (!confirm('Initiate background apt upgrade?')) return;
+      const res = await fetch('/api/system/upgrade', { method: 'POST' });
+      const data = await res.json();
+      showToast(data.message || 'Upgrade triggered');
+    }
+
+    function openPowerModal(act) {
+      document.getElementById('power-action').value = act;
+      document.getElementById('power-confirm-input').value = '';
+      openModal('power-modal');
+    }
+
+    async function executePowerAction() {
+      const act = document.getElementById('power-action').value;
+      const conf = document.getElementById('power-confirm-input').value.trim();
+      if (conf !== 'CONFIRM') {
+        showToast("You must type 'CONFIRM'", true);
+        return;
+      }
+      closeModal('power-modal');
+      showToast(`Initiating server ${act}...`);
+      await fetch('/api/system/power', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: act, confirm: conf })
+      });
     }
 
     // Settings
@@ -1651,34 +2442,19 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       try {
         const res = await fetch('/api/settings');
         const st = await res.json();
-        document.getElementById('st-title').value = st.panel_title || 'PanelX';
+        document.getElementById('st-title').value = st.panel_title || 'Falcon Firewall X';
         document.getElementById('st-port').value = st.panel_port || '7788';
         document.getElementById('st-admin-user').value = st.admin_user || 'admin';
         document.getElementById('st-admin-pass').value = '';
         document.getElementById('st-domain').value = st.ssh_domain || '';
-        document.getElementById('st-payload').value = st.default_payload || defaultPayload;
         document.getElementById('st-api-key').value = st.api_secret || '';
-
-        sshHostDomain = st.ssh_domain || '';
         defaultPayload = st.default_payload || defaultPayload;
-      } catch (e) {
-        showToast('Failed to load settings', true);
-      }
+      } catch (e) {}
     }
 
     function copyApiKey() {
       const k = document.getElementById('st-api-key').value;
-      if (k) {
-        navigator.clipboard.writeText(k);
-        showToast('API Secret Key copied to clipboard!');
-      }
-    }
-
-    function generateRandomApiKey() {
-      const chars = "abcdef0123456789";
-      let key = "";
-      for (let i = 0; i < 32; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
-      document.getElementById('st-api-key').value = key;
+      if (k) { navigator.clipboard.writeText(k); showToast('API Key copied!'); }
     }
 
     async function handleSaveSettings(e) {
@@ -1689,55 +2465,92 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         admin_user: document.getElementById('st-admin-user').value,
         admin_pass: document.getElementById('st-admin-pass').value,
         ssh_domain: document.getElementById('st-domain').value,
-        default_payload: document.getElementById('st-payload').value,
         api_secret: document.getElementById('st-api-key').value
       };
 
-      try {
-        const res = await fetch('/api/settings/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Settings saved successfully!');
-          loadSettingsToForm();
-        } else {
-          showToast(data.error || 'Save failed', true);
-        }
-      } catch (e) {
-        showToast(e.message, true);
+      const res = await fetch('/api/settings/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Settings saved successfully!');
+        loadSettingsToForm();
+      } else {
+        showToast(data.error || 'Failed to save', true);
       }
     }
 
-    async function serviceAction(svc, act) {
-      showToast(`Executing ${act} on ${svc}...`);
-      await fetch('/api/services/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service: svc, action: act })
-      });
-      showToast(`Service ${svc} ${act} completed!`);
-      fetchSystemStats();
+    // Universal Command Palette (Ctrl + K)
+    const COMMANDS = [
+      { name: 'Overview / Dashboard', action: () => switchNav('overview') },
+      { name: 'Falcon Firewall Center', action: () => switchNav('firewall') },
+      { name: 'Carrier Inbounds & Payloads', action: () => switchNav('inbounds') },
+      { name: 'SSH Client Accounts', action: () => switchNav('clients') },
+      { name: 'Systemd Service Manager', action: () => switchNav('services') },
+      { name: 'Process Manager', action: () => switchNav('processes') },
+      { name: 'Network Ports & Diagnostics', action: () => switchNav('network') },
+      { name: 'SSH Security Audit', action: () => switchNav('ssh') },
+      { name: 'Live journalctl Logs', action: () => switchNav('logs') },
+      { name: 'File & Storage Explorer', action: () => switchNav('storage') },
+      { name: 'System Updates & Power', action: () => switchNav('power') },
+      { name: 'Panel Settings & API', action: () => switchNav('settings') },
+      { name: 'Allow Port 22 (SSH)', action: () => quickAllow('22', 'tcp') },
+      { name: 'Allow Port 80 (HTTP)', action: () => quickAllow('80', 'tcp') },
+      { name: 'Allow Port 443 (HTTPS)', action: () => quickAllow('443', 'tcp') },
+      { name: 'Add Single Client', action: () => openCreateModal() },
+      { name: 'Add Inbound Profile', action: () => openInboundModal() }
+    ];
+
+    function filterCommands() {
+      const q = document.getElementById('cmd-input').value.toLowerCase();
+      const list = document.getElementById('cmd-list');
+      const filtered = COMMANDS.filter(c => c.name.toLowerCase().includes(q));
+      list.innerHTML = filtered.map((c, idx) => `
+        <li class="cmd-item" onclick="executeCmd(${idx})">
+          <span>${c.name}</span>
+          <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+        </li>
+      `).join('');
     }
 
-    async function restartAllServices() {
-      showToast('Restarting all core services...');
-      await serviceAction('ws-proxy', 'restart');
-      await serviceAction('badvpn', 'restart');
-      showToast('All services restarted!');
-      fetchSystemStats();
+    function executeCmd(idx) {
+      const q = document.getElementById('cmd-input').value.toLowerCase();
+      const filtered = COMMANDS.filter(c => c.name.toLowerCase().includes(q));
+      if (filtered[idx]) {
+        closeModal('cmd-palette');
+        filtered[idx].action();
+      }
+    }
+
+    // Keyboard Shortcuts (Ctrl + K)
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        openModal('cmd-palette');
+        document.getElementById('cmd-input').focus();
+        filterCommands();
+      }
+    });
+
+    function toggleNocMode() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
     }
 
     function initDashboard() {
       fetchSystemStats();
-      loadUsers();
       loadInbounds();
+      loadUsers();
+      filterCommands();
       setInterval(fetchSystemStats, 3000);
     }
 
-    // Start App
+    // Start
     checkAuth();
   </script>
 </body>
