@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# =============================================================================
+# PanelX CLI - Command Line Management Tool for PanelX
+# Author: Weranga Nimsara (SG Home) & Open-Source Contributors
+# =============================================================================
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
+
+DB_FILE="/etc/panelx/panelx.db"
+
+get_public_ip() {
+    curl -s -4 ifconfig.me || curl -s -4 icanhazip.com || echo "127.0.0.1"
+}
+
+get_db_setting() {
+    local key="$1"
+    local default_val="$2"
+    if [ -f "$DB_FILE" ]; then
+        local val=$(python3 -c "import sqlite3; conn=sqlite3.connect('$DB_FILE'); r=conn.execute('SELECT value FROM settings WHERE key=?', ('$key',)).fetchone(); print(r[0] if r else '$default_val')" 2>/dev/null)
+        echo "$val"
+    else
+        echo "$default_val"
+    fi
+}
+
+show_banner() {
+    clear
+    echo -e "${CYAN}"
+    echo "  ██████╗  █████╗ ███╗   ██╗███████╗██╗     ██╗  ██╗"
+    echo "  ██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ╚██╗██╔╝"
+    echo "  ██████╔╝███████║██╔██╗ ██║█████╗  ██║      ╚███╔╝ "
+    echo "  ██╔═══╝ ██╔══██║██║╚██╗██║██╔══╝  ██║      ██╔██╗ "
+    echo "  ██║     ██║  ██║██║ ╚████║███████╗███████╗██╔╝ ██╗"
+    echo "  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝"
+    echo -e "       ${PURPLE}SSH & WebSocket Management Panel v1.0.0${NC}"
+    echo -e "       ${YELLOW}Created by Weranga Nimsara (SG Home)${NC}"
+    echo -e "${CYAN}======================================================${NC}"
+}
+
+show_info() {
+    local ip=$(get_public_ip)
+    local port=$(get_db_setting "panel_port" "7788")
+    local user=$(get_db_setting "admin_user" "admin")
+
+    echo ""
+    echo -e "  ${GREEN}● Web Access URL :${NC} ${CYAN}http://${ip}:${port}${NC}"
+    echo -e "  ${GREEN}● Admin Username :${NC} ${YELLOW}${user}${NC}"
+    echo -e "  ${GREEN}● Status         :${NC} $(systemctl is-active panelx)"
+    echo -e "${CYAN}======================================================${NC}"
+}
+
+menu() {
+    show_banner
+    show_info
+    echo -e "  ${PURPLE}[1]${NC} Start PanelX"
+    echo -e "  ${PURPLE}[2]${NC} Stop PanelX"
+    echo -e "  ${PURPLE}[3]${NC} Restart PanelX"
+    echo -e "  ${PURPLE}[4]${NC} Check Full Service Status"
+    echo -e "  ${PURPLE}[5]${NC} Reset Admin Username & Password"
+    echo -e "  ${PURPLE}[6]${NC} Change Panel Port"
+    echo -e "  ${PURPLE}[7]${NC} Restart WebSocket Proxy & BadVPN"
+    echo -e "  ${PURPLE}[8]${NC} View Live Logs"
+    echo -e "  ${PURPLE}[0]${NC} Exit"
+    echo -e "${CYAN}======================================================${NC}"
+    read -p "Select an option [0-8]: " choice
+
+    case $choice in
+        1)
+            systemctl start panelx
+            echo -e "${GREEN}PanelX started.${NC}"
+            sleep 2; menu
+            ;;
+        2)
+            systemctl stop panelx
+            echo -e "${YELLOW}PanelX stopped.${NC}"
+            sleep 2; menu
+            ;;
+        3)
+            systemctl restart panelx
+            systemctl restart ws-proxy
+            echo -e "${GREEN}Services restarted successfully.${NC}"
+            sleep 2; menu
+            ;;
+        4)
+            echo -e "${CYAN}--- PanelX Service Status ---${NC}"
+            systemctl status panelx --no-pager
+            echo -e "${CYAN}--- WS-Proxy Status ---${NC}"
+            systemctl status ws-proxy --no-pager
+            read -p "Press Enter to return to menu..."
+            menu
+            ;;
+        5)
+            read -p "Enter new Admin Username: " new_user
+            read -sp "Enter new Admin Password: " new_pass
+            echo ""
+            if [ -n "$new_user" ] && [ -n "$new_pass" ]; then
+                python3 -c "
+import sqlite3, hashlib
+conn = sqlite3.connect('$DB_FILE')
+p_hash = hashlib.sha256('$new_pass'.encode('utf-8')).hexdigest()
+conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'admin_user\', \'$new_user\')')
+conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'admin_pass_hash\', \'' + p_hash + '\')')
+conn.commit()
+conn.close()
+"
+                echo -e "${GREEN}Admin credentials updated successfully!${NC}"
+                systemctl restart panelx
+            else
+                echo -e "${RED}Invalid username or password!${NC}"
+            fi
+            sleep 2; menu
+            ;;
+        6)
+            read -p "Enter new Panel Port (e.g. 7788, 8888, 54321): " new_port
+            if [[ "$new_port" =~ ^[0-9]+$ ]] && [ "$new_port" -gt 0 ] && [ "$new_port" -lt 65536 ]; then
+                python3 -c "
+import sqlite3
+conn = sqlite3.connect('$DB_FILE')
+conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'panel_port\', \'$new_port\')')
+conn.commit()
+conn.close()
+"
+                # Open UFW/iptables if installed
+                command -v ufw >/dev/null 2>&1 && ufw allow $new_port/tcp >/dev/null 2>&1
+                command -v iptables >/dev/null 2>&1 && iptables -I INPUT -p tcp --dport $new_port -j ACCEPT 2>/dev/null
+
+                systemctl restart panelx
+                echo -e "${GREEN}Panel port changed to $new_port!${NC}"
+            else
+                echo -e "${RED}Invalid port number!${NC}"
+            fi
+            sleep 2; menu
+            ;;
+        7)
+            systemctl restart ws-proxy
+            systemctl restart badvpn 2>/dev/null
+            echo -e "${GREEN}WS-Proxy and BadVPN restarted.${NC}"
+            sleep 2; menu
+            ;;
+        8)
+            journalctl -u panelx -f
+            menu
+            ;;
+        0)
+            echo "Exiting..."
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Invalid option!${NC}"
+            sleep 1; menu
+            ;;
+    esac
+}
+
+menu

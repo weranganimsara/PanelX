@@ -1,0 +1,5 @@
+FirewallFalcon_COMPLETE.zip
+*.db
+__pycache__/
+*.pyc
+.DS_Store
