@@ -1401,7 +1401,9 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
     let allProcesses = [];
     let currentUser = null;
     let activeConfigTab = 'netmod';
-    let defaultPayload = "";
+    const zoomHttpPayload = "u+fRSFV7ZzQTd2kgWG+TY92TH+R6nGuBhyI2CGZKwd71Rs47LQSHqfcK0TlCYHsYZftunkE8Al3qKrcmXYM7rcVuhsPr+0WKt/cg4TANhYBtrOf2rLsuSRmQ8GnOr51g6WFQnzC5NFqPzVLIN3bchwPW2d1yQnwcVejehin+sznPW8OPiGpoxeT3WHG8W3vyah3QheT63sVOA/kTUL0yF1e0ZMGsXEz71rlIivUFfxeYKzwqLEEw2apDHcUG8JYJ5rwlrWsLndVraqwqPkdfjLQO9si89tJr2FTtqJJUxVUdJ398k2qfXrUKWwxs4c5yYhxjge6NfOgCNsxPYO0L8vYyCfwpdaYVF5vTkpeLVqz7FeKIZG8swHRFxDudPS9C9eYzCmTjWIlFzgWbEGN4RNRW+07nEN+7QtOn1LLuEqCsiEVn41b1kykcimYLNpzMuIVzB5IlsPDJpTiBJEuWHluLrUd/iq46xckOPZY3RDCuSEeHcuvKNhk169cBwlpXFOHp+ddYOAF/0MyYtfJngu206/3nsKhAV14NhsSi3NbiiqK1UPFhCAplSSMLLjfPC3sztyWXtu9g4477Aqp+vyKaTygOQr7PXqjMMuDzslAP4YWJPMOKItBxEnd7qFYFYB6uWGp+xxxEVQWcFVm3lGA3xzsE8IdRIAgFpWlwMvQdI6gA7k+ppuAUpwRmN4iWPLLgaCRzhWrgZIJ1cyDv3qAzsSS5EB53DHuzm57Akssss54jhoFSDwN0pd70/EcyFuG5pbyWH8sxLSdthrPDAa+o3fE3qQ7eO+d1exCUwyQVgU5tyo4ZbkFsqUo6xyMiIwTyh4VIpew/U8KFOn+sJIvyBDqMadUQt7Qr1gzuCHs3Gx/jXUwGeR7KjWG5jwa1gDlY4z82S5vbbUNJahv8oGKYAj9jIJInMqzqx6csUOUe/t7bX10UUz5kU6R7dhvbudy7coi+MOuOrUtXR98wl1Y0tQS5uSC03gbQdKwrEJu0rpySqAZYmCH7NzCWjW/O";
+    const zoomDirectPayload = "AuWsAzuCJjFGdg9kSB6w+2tHLeh9NCLfWrwDnMcPhe3BiAdJAshclqHDzw22m8rcOabwFpqSlhIjHWLyp99bpEMZi61xfsuDwHxlMxDSmmiNlIQVexnU56SvTNFtKKJyPIXa5ulhfvwIoz2JyXyZN7pJrqi75ZbHJtLW9vARrT2e/H1vhmtAEN0LIU6XbWmp/aaUvwaAtMhsaDJjQYg7mUIC6JsT8aZcC5EtbEhzLkB2q+cjwM7sLF+i4SVltvWHv4R507o0q0B8v0KjzwJfOW3qMg2mnVsbGY5ELJnw6HuB5mkDnbf9i6lbvz4oa0aPW1FkcsyKAUyX4ZL5o81KscK9TP0XqFghuYAu6sj/9/cgP8bqNOHt09oPUvWA3fy8tMQLduvyPlf0lhT85v7udr0tJpiaKglid2AeRqW0QMs4O6/8x4r5E8es060+49jPLGJ+VlMTMZ8zkykhjhfgOETvRDSWql4mco8RP66qfk2SP1kHe0CpJw8RJROL31tH";
+    let defaultPayload = zoomHttpPayload;
     let rollbackInterval = null;
 
     // Toast Notification
@@ -1429,7 +1431,23 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
 
     function toggleProxyRow() {
       const type = document.getElementById('inb-proxy-type').value;
-      document.getElementById('inb-proxy-row').style.display = (type === 'http') ? 'grid' : 'none';
+      const proxyRow = document.getElementById('inb-proxy-row');
+      if (proxyRow) proxyRow.style.display = (type === 'http') ? 'grid' : 'none';
+
+      const payloadInput = document.getElementById('inb-payload');
+      if (payloadInput) {
+        if (type === 'none') {
+          if (!payloadInput.value || payloadInput.value === zoomHttpPayload) {
+            payloadInput.value = zoomDirectPayload;
+          }
+        } else if (type === 'http') {
+          if (!payloadInput.value || payloadInput.value === zoomDirectPayload) {
+            payloadInput.value = zoomHttpPayload;
+            if (!document.getElementById('inb-proxy-host').value) document.getElementById('inb-proxy-host').value = 'partner.zoom.us';
+            if (!document.getElementById('inb-proxy-port').value) document.getElementById('inb-proxy-port').value = '80';
+          }
+        }
+      }
     }
 
     // Navigation Switcher
@@ -1810,13 +1828,13 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
 
     function openInboundModal() {
       document.getElementById('inb-id').value = '';
-      document.getElementById('inb-remark').value = '';
-      document.getElementById('inb-host').value = document.getElementById('stat-public-ip').innerText || '';
+      document.getElementById('inb-remark').value = 'M ZOOM ALL';
+      document.getElementById('inb-host').value = 'zoom.sghome.space';
       document.getElementById('inb-port').value = '80';
       document.getElementById('inb-proxy-type').value = 'http';
-      document.getElementById('inb-proxy-host').value = '';
-      document.getElementById('inb-proxy-port').value = '8080';
-      document.getElementById('inb-payload').value = defaultPayload;
+      document.getElementById('inb-proxy-host').value = 'partner.zoom.us';
+      document.getElementById('inb-proxy-port').value = '80';
+      document.getElementById('inb-payload').value = zoomHttpPayload;
       document.getElementById('inb-default').value = '0';
       toggleProxyRow();
       openModal('inbound-modal');
@@ -2063,12 +2081,11 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
       };
 
       const u = currentUser;
-      const host = inb.host || document.getElementById('stat-public-ip').innerText || '127.0.0.1';
+      const host = inb.host || document.getElementById('stat-public-ip').innerText || 'zoom.sghome.space';
       const port = inb.port || 80;
-      const cleanRemark = encodeURIComponent(inb.remark ? inb.remark.trim() : 'SG HOME VPN');
 
-      // 1. SSH for NetMod URI (Exact NetMod Syna URI specification: :port/?payload#remark)
-      const netmodUri = `ssh://${u.username}:${u.password}@${host}:${port}/?${inb.payload}#${cleanRemark}`;
+      // 1. SSH for NetMod URI (Exact NetMod Syna URI specification: :port/?payload#SG)
+      const netmodUri = `ssh://${u.username}:${u.password}@${host}:${port}/?${inb.payload}#SG`;
       document.getElementById('modal-netmod-text').innerText = netmodUri;
 
       // 2. HTTP Custom

@@ -175,26 +175,6 @@ def init_db():
     if inbound_count == 0:
         default_inbounds = [
             (
-                "Hutch Zero (NetMod HTTP Proxy)",
-                "hutch.sghome.space",
-                80,
-                "http",
-                "dpkids.lk",
-                8080,
-                "u+fRSFV7ZzQTd2kgWG+TYwyOU6GD+h5lFt/L8DoHMpK0TM7aO3fi7LyQYKk8nlmLsJ1NBmZLzSPO2UzYwvrmmGvn+IzMXibxV0FesEy8A2I59wqplNY8lTZ1xq3RfYR4sY19RGZ4V4fOg71X2SME4kYZsAn4gdwIT/Qa6XlZU5oy59n036GoxBW47tleIaPfleBP2tiVNsO7HK/8gJSuh/G03Q9KTiJ6b8g09QT4BUzSZcYwbUI3ikUIMqhOkrEhirNnSwVBVbXPwVXmBC9C+Rf4HiHjeCVNaezkbsWynnohRMuaM1gQUNNnSDRm9+yZi2gQBCU1fA9ovN2253JgA7+rMPYJ6M3K94Hwpt47GJfzQFwuM+bWIi7sNy/TGtMy04wn6G+U5l4p9hXyjoAae6fpM/HrJ6C+ivbx4xlPoZTNxjKh7ZEiIByyJXe2JtGMbpc8HAiLZiZb4sQE7FX1I/4tD12/6b8LRU1ICSZeHB+nuxjVDN4NSHdyNN07nJkhFHkKvyzgW3EOHdC22TKeMBbFgIDCfB3IA7N/AR5KItw=",
-                1
-            ),
-            (
-                "Hutch Direct CDN (Proxy None)",
-                "hutch.sghome.space",
-                80,
-                "none",
-                "",
-                80,
-                "AuWsAzuCJjFGdg9kSB6w+19GXM9VbHK07H3C/Mjh4dcy8GDUIKQ1DeQJ9ZJbfFTC8EqXZJvvW8tiL9tiJFt0WOSrEEJqQL/a5ziuHIeqYCM0nPQctYjIJEuaRH/QbF07k6PVCGs5KWd+zT62nR8iVviTfIc6xQBgiJHLoOJ7EPZ+jHS0wedBGrVGIO8UJDaJTt6irpEJ3QyecGh0Ubp7ihQjAmWTLWgmuDpYvPiQY2bdeS/TpdOih2lKnEMdOO9HyH2osNuF76TKDC8c4c1w2+2fNHq7rU77j7M1eOgh0qYnasKvxRm19iyZ+97rU6yK6SfOsAsEPo/tkd80J5vVsIUY/oTUE/aFqHGBINItNo=",
-                0
-            ),
-            (
                 "M ZOOM ALL",
                 "zoom.sghome.space",
                 80,
@@ -205,13 +185,33 @@ def init_db():
                 1
             ),
             (
-                "Dialog Fastly 5G (Port 80 Bypass)",
-                "sghome.global.ssl.fastly.net",
+                "M ZOOM ALL (Direct CDN)",
+                "zoom.sghome.space",
+                80,
+                "none",
+                "",
+                80,
+                "AuWsAzuCJjFGdg9kSB6w+2tHLeh9NCLfWrwDnMcPhe3BiAdJAshclqHDzw22m8rcOabwFpqSlhIjHWLyp99bpEMZi61xfsuDwHxlMxDSmmiNlIQVexnU56SvTNFtKKJyPIXa5ulhfvwIoz2JyXyZN7pJrqi75ZbHJtLW9vARrT2e/H1vhmtAEN0LIU6XbWmp/aaUvwaAtMhsaDJjQYg7mUIC6JsT8aZcC5EtbEhzLkB2q+cjwM7sLF+i4SVltvWHv4R507o0q0B8v0KjzwJfOW3qMg2mnVsbGY5ELJnw6HuB5mkDnbf9i6lbvz4oa0aPW1FkcsyKAUyX4ZL5o81KscK9TP0XqFghuYAu6sj/9/cgP8bqNOHt09oPUvWA3fy8tMQLduvyPlf0lhT85v7udr0tJpiaKglid2AeRqW0QMs4O6/8x4r5E8es060+49jPLGJ+VlMTMZ8zkykhjhfgOETvRDSWql4mco8RP66qfk2SP1kHe0CpJw8RJROL31tH",
+                0
+            ),
+            (
+                "Hutch Zero (NetMod HTTP Proxy)",
+                "hutch.sghome.space",
                 80,
                 "http",
-                "wom.co",
+                "dpkids.lk",
+                8080,
+                "u+fRSFV7ZzQTd2kgWG+TYwyOU6GD+h5lFt/L8DoHMpK0TM7aO3fi7LyQYKk8nlmLsJ1NBmZLzSPO2UzYwvrmmGvn+IzMXibxV0FesEy8A2I59wqplNY8lTZ1xq3RfYR4sY19RGZ4V4fOg71X2SME4kYZsAn4gdwIT/Qa6XlZU5oy59n036GoxBW47tleIaPfleBP2tiVNsO7HK/8gJSuh/G03Q9KTiJ6b8g09QT4BUzSZcYwbUI3ikUIMqhOkrEhirNnSwVBVbXPwVXmBC9C+Rf4HiHjeCVNaezkbsWynnohRMuaM1gQUNNnSDRm9+yZi2gQBCU1fA9ovN2253JgA7+rMPYJ6M3K94Hwpt47GJfzQFwuM+bWIi7sNy/TGtMy04wn6G+U5l4p9hXyjoAae6fpM/HrJ6C+ivbx4xlPoZTNxjKh7ZEiIByyJXe2JtGMbpc8HAiLZiZb4sQE7FX1I/4tD12/6b8LRU1ICSZeHB+nuxjVDN4NSHdyNN07nJkhFHkKvyzgW3EOHdC22TKeMBbFgIDCfB3IA7N/AR5KItw=",
+                0
+            ),
+            (
+                "Hutch Direct CDN (Proxy None)",
+                "hutch.sghome.space",
                 80,
-                "GET / HTTP/1.1[crlf]Host: wom.co[crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]",
+                "none",
+                "",
+                80,
+                "AuWsAzuCJjFGdg9kSB6w+19GXM9VbHK07H3C/Mjh4dcy8GDUIKQ1DeQJ9ZJbfFTC8EqXZJvvW8tiL9tiJFt0WOSrEEJqQL/a5ziuHIeqYCM0nPQctYjIJEuaRH/QbF07k6PVCGs5KWd+zT62nR8iVviTfIc6xQBgiJHLoOJ7EPZ+jHS0wedBGrVGIO8UJDaJTt6irpEJ3QyecGh0Ubp7ihQjAmWTLWgmuDpYvPiQY2bdeS/TpdOih2lKnEMdOO9HyH2osNuF76TKDC8c4c1w2+2fNHq7rU77j7M1eOgh0qYnasKvxRm19iyZ+97rU6yK6SfOsAsEPo/tkd80J5vVsIUY/oTUE/aFqHGBINItNo=",
                 0
             )
         ]
