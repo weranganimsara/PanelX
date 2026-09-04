@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/panelx-banner.svg" alt="SGPX — SG Home PanelX Banner" width="100%">
+  <img src="assets/sgpx-banner.png" alt="SGPX — SG Home PanelX Banner" width="100%">
 </p>
 
 <p align="center">
