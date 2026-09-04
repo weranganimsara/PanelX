@@ -100,25 +100,43 @@ REPO_RAW_BASE="https://raw.githubusercontent.com/WerangaNimsara/PanelX/main"
 # Check if installing from local directory
 if [ -f "panelx.py" ] && [ -f "ws-proxy.py" ]; then
     echo -e "${CYAN}→ Installing from local directory files...${NC}"
-    cp panelx.py "$INSTALL_DIR/"
+    cp panelx.py "$INSTALL_DIR/" 2>/dev/null || true
     cp ws-proxy.py "$INSTALL_DIR/"
     cp -r web/* "$INSTALL_DIR/web/" 2>/dev/null || true
     cp panelx-cli /usr/local/bin/panelx 2>/dev/null || true
+    if [ -f "bin/panelx-core" ]; then
+        echo -e "${GREEN}✓ Installing compiled panelx-core binary...${NC}"
+        cp bin/panelx-core /usr/local/bin/panelx-core
+        chmod +x /usr/local/bin/panelx-core
+    fi
 else
     mkdir -p "$INSTALL_DIR/web/assets"
-    curl -sSL "${REPO_RAW_BASE}/panelx.py" -o "$INSTALL_DIR/panelx.py"
+    curl -sSL "${REPO_RAW_BASE}/panelx.py" -o "$INSTALL_DIR/panelx.py" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/ws-proxy.py" -o "$INSTALL_DIR/ws-proxy.py"
     curl -sSL "${REPO_RAW_BASE}/web/index.html" -o "$INSTALL_DIR/web/index.html"
     curl -sSL "${REPO_RAW_BASE}/web/favicon.svg" -o "$INSTALL_DIR/web/favicon.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/favicon.ico" -o "$INSTALL_DIR/web/favicon.ico" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/assets/logo.svg" -o "$INSTALL_DIR/web/assets/logo.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/panelx-cli" -o "/usr/local/bin/panelx"
+    # Download compiled binary if available
+    echo -e "${CYAN}→ Downloading compiled panelx-core binary...${NC}"
+    curl -sSL "${REPO_RAW_BASE}/bin/panelx-core" -o "/usr/local/bin/panelx-core" 2>/dev/null || true
+    chmod +x "/usr/local/bin/panelx-core" 2>/dev/null || true
 fi
 
-chmod +x "$INSTALL_DIR/panelx.py"
+chmod +x "$INSTALL_DIR/panelx.py" 2>/dev/null || true
 chmod +x "$INSTALL_DIR/ws-proxy.py"
 chmod +x "/usr/local/bin/panelx"
 ln -sf /usr/local/bin/panelx /usr/bin/panelx 2>/dev/null || true
+
+# Determine ExecStart target (Binary preferred, Python fallback)
+EXEC_TARGET="/usr/bin/python3 ${INSTALL_DIR}/panelx.py"
+if [ -f "/usr/local/bin/panelx-core" ] && [ -x "/usr/local/bin/panelx-core" ]; then
+    EXEC_TARGET="/usr/local/bin/panelx-core"
+    echo -e "${GREEN}✓ Engine Execution Mode: Standalone Compiled Binary${NC}"
+else
+    echo -e "${YELLOW}! Engine Execution Mode: Python Runtime Fallback${NC}"
+fi
 
 # Setup Systemd Service for PanelX
 cat <<EOF > /etc/systemd/system/panelx.service
@@ -130,7 +148,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=/usr/bin/python3 ${INSTALL_DIR}/panelx.py
+ExecStart=${EXEC_TARGET}
 Restart=always
 RestartSec=3
 
