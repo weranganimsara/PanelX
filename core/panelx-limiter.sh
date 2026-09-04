@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# PanelX Real-Time Session & Bandwidth Limiter Daemon
+# SGPX Real-Time Session & Bandwidth Limiter Daemon
 # Automatically enforces simultaneous device logins & bandwidth quotas
 # Author: Weranga Nimsara (SG Home) & Open-Source Community
 # =============================================================================
@@ -9,9 +9,11 @@ DB_FILE="/etc/panelx/users.db"
 BW_DIR="/etc/panelx/bandwidth"
 PID_DIR="$BW_DIR/pidtrack"
 BANNER_DIR="/etc/panelx/banners"
-SCAN_INTERVAL=15
+SCAN_INTERVAL=5
 
 mkdir -p "$BW_DIR" "$PID_DIR" "$BANNER_DIR"
+mkdir -p /var/log/panelx
+ln -sfn "$BW_DIR" /var/log/panelx/bw 2>/dev/null || true
 shopt -s nullglob
 
 write_banner_if_changed() {
@@ -38,23 +40,30 @@ while true; do
     dynamic_banners_enabled=false
 
     # Reset associative arrays each cycle
-    unset session_pids locked_users uid_to_user loginuid_pids
+    unset session_pids locked_users uid_to_user loginuid_pids user_proc_pids user_db_list
     declare -A session_pids=()
     declare -A locked_users=()
     declare -A uid_to_user=()
     declare -A loginuid_pids=()
+    declare -A user_proc_pids=()
+    declare -A user_db_list=()
+
+    # Preload users from users.db
+    while IFS=: read -r u _p _e _l _b _r; do
+        [[ -n "$u" && "$u" != \#* ]] && user_db_list["$u"]=1
+    done < "$DB_FILE"
 
     while IFS=: read -r username _ uid _rest; do
         [[ -n "$username" && "$uid" =~ ^[0-9]+$ ]] && uid_to_user["$uid"]="$username"
     done < /etc/passwd
 
-    # Method 1: Process owner from ps
+    # Method 1: Process owner from ps (matches sshd and sshd-session on Ubuntu 20/22/24 & Debian)
     while read -r ssh_pid ssh_owner; do
         [[ "$ssh_pid" =~ ^[0-9]+$ ]] || continue
         if [[ -n "$ssh_owner" && "$ssh_owner" != "root" && "$ssh_owner" != "sshd" ]]; then
             session_pids["$ssh_owner"]+="$ssh_pid "
         fi
-    done < <(ps -C sshd -o pid=,user= 2>/dev/null)
+    done < <(ps -C sshd,sshd-session -o pid=,user= 2>/dev/null)
 
     # Method 2: Kernel loginuid (reliable even when sshd privsep runs as root)
     for p in /proc/[0-9]*/loginuid; do
@@ -70,7 +79,7 @@ while true; do
         pid_num=$(basename "$pid_dir")
         comm=""
         read -r comm < "$pid_dir/comm" || comm=""
-        [[ "$comm" == "sshd" ]] || continue
+        [[ "$comm" == sshd* ]] || continue
 
         ppid_val=""
         while read -r key value; do
@@ -82,6 +91,13 @@ while true; do
         [[ "$ppid_val" == "1" ]] && continue
 
         loginuid_pids["$session_user"]+="$pid_num "
+    done
+
+    # Method 3: Direct User Process Detection (Finds any process owned by client user)
+    for uname in "${!user_db_list[@]}"; do
+        for upid in $(pgrep -u "$uname" 2>/dev/null); do
+            [[ "$upid" =~ ^[0-9]+$ ]] && user_proc_pids["$uname"]+="$upid "
+        done
     done
 
     # Detect locked users via /etc/shadow
@@ -107,8 +123,8 @@ while true; do
         unset unique_pids
         declare -A unique_pids=()
 
-        # Merge both process detection sources
-        for pid in ${session_pids[$user]} ${loginuid_pids[$user]}; do
+        # Merge all three process detection sources
+        for pid in ${session_pids[$user]} ${loginuid_pids[$user]} ${user_proc_pids[$user]}; do
             [[ "$pid" =~ ^[0-9]+$ ]] && unique_pids["$pid"]=1
         done
 
@@ -174,17 +190,15 @@ while true; do
                 bw_info="${used_gb}/${bandwidth_gb} GB"
             fi
 
-            banner_content="<br><font color=\"#00f2fe\"><b>=== PanelX VIP SSH Status ===</b></font><br>"
-            banner_content+="<font color=\"white\">Username: $user</font><br>"
-            banner_content+="<font color=\"white\">Expiry: $expiry ($days_left)</font><br>"
-            banner_content+="<font color=\"white\">Bandwidth: $bw_info</font><br>"
-            banner_content+="<font color=\"white\">Active Devices: $online_count/$limit</font><br><br>"
+            banner_content="<br><font color="#00f2fe"><b>=== SGPX VIP SSH Status ===</b></font><br>"
+            banner_content+="<font color="white">Username: $user</font><br>"
+            banner_content+="<font color="white">Expiry: $expiry ($days_left)</font><br>"
+            banner_content+="<font color="white">Bandwidth: $bw_info</font><br>"
+            banner_content+="<font color="white">Active Devices: $online_count/$limit</font><br><br>"
             write_banner_if_changed "$user" "$banner_content"
         fi
 
-        # 4. Check Bandwidth Quotas
-        [[ -z "$bandwidth_gb" || "$bandwidth_gb" == "0" ]] && continue
-
+        # 4. Count Bandwidth for ALL active users (Unlimited & Limited alike)
         usagefile="$BW_DIR/${user}.usage"
         accumulated=0
         if [[ -f "$usagefile" ]]; then
@@ -223,8 +237,12 @@ while true; do
                     d=$cur
                 fi
                 delta_total=$((delta_total + d))
+            else
+                # When pid is first seen, cur is the initial bytes consumed so far
+                delta_total=$((delta_total + cur))
             fi
-            printf "%s\n" "$cur" > "$pidfile"
+            printf "%s
+" "$cur" > "$pidfile"
         done
 
         for f in "$PID_DIR/${user}__"*.last; do
@@ -235,14 +253,18 @@ while true; do
         done
 
         new_total=$((accumulated + delta_total))
-        printf "%s\n" "$new_total" > "$usagefile"
+        printf "%s
+" "$new_total" > "$usagefile"
 
-        quota_bytes=$(( ${bandwidth_gb%%.*} * 1073741824 ))
-        if [[ "$quota_bytes" =~ ^[0-9]+$ ]] && (( new_total >= quota_bytes )); then
-            if ! $user_locked; then
-                usermod -L "$user" &>/dev/null
-                killall -u "$user" -9 &>/dev/null
-                locked_users["$user"]=1
+        # 5. Lock Account if Bandwidth Quota is exceeded (only if bandwidth_gb > 0)
+        if [[ -n "$bandwidth_gb" && "$bandwidth_gb" =~ ^[0-9]+$ && "$bandwidth_gb" -gt 0 ]]; then
+            quota_bytes=$(( bandwidth_gb * 1073741824 ))
+            if (( new_total >= quota_bytes )); then
+                if ! $user_locked; then
+                    usermod -L "$user" &>/dev/null
+                    killall -u "$user" -9 &>/dev/null
+                    locked_users["$user"]=1
+                fi
             fi
         fi
     done < "$DB_FILE"
