@@ -109,6 +109,8 @@ else
     curl -sSL "${REPO_RAW_BASE}/panelx.py" -o "$INSTALL_DIR/panelx.py"
     curl -sSL "${REPO_RAW_BASE}/ws-proxy.py" -o "$INSTALL_DIR/ws-proxy.py"
     curl -sSL "${REPO_RAW_BASE}/web/index.html" -o "$INSTALL_DIR/web/index.html"
+    curl -sSL "${REPO_RAW_BASE}/web/favicon.svg" -o "$INSTALL_DIR/web/favicon.svg" 2>/dev/null || true
+    curl -sSL "${REPO_RAW_BASE}/web/favicon.ico" -o "$INSTALL_DIR/web/favicon.ico" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/assets/logo.svg" -o "$INSTALL_DIR/web/assets/logo.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/panelx-cli" -o "/usr/local/bin/panelx"
 fi
