@@ -98,10 +98,9 @@ mkdir -p "$INSTALL_DIR/web"
 REPO_RAW_BASE="https://raw.githubusercontent.com/WerangaNimsara/PanelX/main"
 
 # Check if installing from local directory
-if [ -f "panelx.py" ] && [ -f "ws-proxy.py" ]; then
+if [ -f "panelx.py" ] || [ -f "bin/panelx-core" ]; then
     echo -e "${CYAN}→ Installing from local directory files...${NC}"
     cp panelx.py "$INSTALL_DIR/" 2>/dev/null || true
-    cp ws-proxy.py "$INSTALL_DIR/"
     cp -r web/* "$INSTALL_DIR/web/" 2>/dev/null || true
     cp panelx-cli /usr/local/bin/panelx 2>/dev/null || true
     if [ -f "bin/panelx-core" ]; then
@@ -112,7 +111,6 @@ if [ -f "panelx.py" ] && [ -f "ws-proxy.py" ]; then
 else
     mkdir -p "$INSTALL_DIR/web/assets"
     curl -sSL "${REPO_RAW_BASE}/panelx.py" -o "$INSTALL_DIR/panelx.py" 2>/dev/null || true
-    curl -sSL "${REPO_RAW_BASE}/ws-proxy.py" -o "$INSTALL_DIR/ws-proxy.py"
     curl -sSL "${REPO_RAW_BASE}/web/index.html" -o "$INSTALL_DIR/web/index.html"
     curl -sSL "${REPO_RAW_BASE}/web/favicon.svg" -o "$INSTALL_DIR/web/favicon.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/favicon.ico" -o "$INSTALL_DIR/web/favicon.ico" 2>/dev/null || true
@@ -125,7 +123,6 @@ else
 fi
 
 chmod +x "$INSTALL_DIR/panelx.py" 2>/dev/null || true
-chmod +x "$INSTALL_DIR/ws-proxy.py"
 chmod +x "/usr/local/bin/panelx"
 ln -sf /usr/local/bin/panelx /usr/bin/panelx 2>/dev/null || true
 
