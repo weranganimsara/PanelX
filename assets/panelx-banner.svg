@@ -37,7 +37,7 @@
 
     <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="40%" stop-color="#00f2fe" />
+      <stop offset="30%" stop-color="#00f2fe" />
       <stop offset="100%" stop-color="#9d4edd" />
     </linearGradient>
 
@@ -64,7 +64,7 @@
   <circle cx="850" cy="240" r="150" fill="rgba(0, 242, 254, 0.1)" filter="url(#glowCyan)" />
 
   <!-- LOGO EMBLEM (Shield + Lightning Bolt) -->
-  <g transform="translate(105, 75)">
+  <g transform="translate(100, 75)">
     <!-- Outer Hex Glow Shield -->
     <path d="M 55 5 L 105 25 L 105 85 C 105 130 55 160 55 160 C 55 160 5 130 5 85 L 5 25 Z" 
           fill="none" stroke="url(#cyanGrad)" stroke-width="3" filter="url(#glowCyan)" />
@@ -79,67 +79,78 @@
   </g>
 
   <!-- BRAND HEADLINE & TYPOGRAPHY -->
-  <g transform="translate(260, 115)">
-    <!-- Main Title -->
-    <text x="0" y="30" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-weight="900" font-size="64" letter-spacing="3" fill="url(#brandGrad)">
+  <g transform="translate(255, 110)">
+    <!-- Main Title: SGPX -->
+    <text x="0" y="32" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-weight="900" font-size="64" letter-spacing="4" fill="url(#brandGrad)">
+      SGPX
+    </text>
+
+    <!-- Sub Title Badge: PANELX -->
+    <rect x="215" y="2" width="125" height="28" rx="14" fill="rgba(0, 242, 254, 0.12)" stroke="#00f2fe" stroke-width="1" />
+    <text x="277" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="13" letter-spacing="1.5" fill="#00f2fe" text-anchor="middle">
       PANELX
     </text>
 
-    <!-- Version Badge -->
-    <rect x="305" y="-12" width="70" height="26" rx="13" fill="rgba(0, 242, 254, 0.15)" stroke="#00f2fe" stroke-width="1" />
-    <text x="340" y="6" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12" fill="#00f2fe" text-anchor="middle">
-      v2.0
+    <!-- Version & Authenticity Badges -->
+    <rect x="350" y="2" width="115" height="28" rx="14" fill="rgba(157, 78, 221, 0.18)" stroke="#a855f7" stroke-width="1" />
+    <text x="407" y="21" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="12" fill="#c084fc" text-anchor="middle">
+      v2.4 OFFICIAL
     </text>
 
     <!-- Subtitle -->
-    <text x="0" y="65" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-weight="600" font-size="16" letter-spacing="1.5" fill="#94a3b8">
-      ENTERPRISE LINUX SERVER &amp; VPN CONTROL PANEL
+    <text x="0" y="68" font-family="'Plus Jakarta Sans', 'Segoe UI', sans-serif" font-weight="600" font-size="15" letter-spacing="1.5" fill="#94a3b8">
+      ENTERPRISE LINUX SERVER &amp; HIGH-SPEED VPN CONTROL SYSTEM
     </text>
 
-    <!-- Tagline: Powered by SG Home -->
-    <g transform="translate(0, 85)">
-      <rect x="0" y="0" width="220" height="28" rx="8" fill="rgba(157, 78, 221, 0.18)" stroke="rgba(157, 78, 221, 0.5)" stroke-width="1" />
-      <text x="110" y="19" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12" letter-spacing="1" fill="#c084fc" text-anchor="middle">
+    <!-- Tagline: Powered by SG Home + Anti-Tamper Shield -->
+    <g transform="translate(0, 88)">
+      <rect x="0" y="0" width="205" height="28" rx="8" fill="rgba(157, 78, 221, 0.18)" stroke="rgba(157, 78, 221, 0.5)" stroke-width="1" />
+      <text x="102" y="19" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12" letter-spacing="1" fill="#c084fc" text-anchor="middle">
         ⚡ POWERED BY SG HOME
+      </text>
+
+      <rect x="215" y="0" width="205" height="28" rx="8" fill="rgba(16, 185, 129, 0.15)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="1" />
+      <text x="317" y="19" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="12" letter-spacing="1" fill="#10b981" text-anchor="middle">
+        🛡️ ANTI-TAMPER SECURED
       </text>
     </g>
   </g>
 
   <!-- FEATURE PILLS / TAGS (Bottom Bar) -->
-  <g transform="translate(105, 270)">
+  <g transform="translate(70, 270)">
     <!-- Pill 1: Firewall Center -->
     <g transform="translate(0, 0)">
-      <rect width="145" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(0, 242, 254, 0.3)" stroke-width="1" />
+      <rect width="155" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(0, 242, 254, 0.3)" stroke-width="1" />
       <circle cx="16" cy="16" r="4" fill="#00f2fe" />
       <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">Firewall Center</text>
     </g>
 
     <!-- Pill 2: 30s Safety Rollback -->
-    <g transform="translate(155, 0)">
+    <g transform="translate(165, 0)">
       <rect width="165" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(255, 183, 3, 0.3)" stroke-width="1" />
       <circle cx="16" cy="16" r="4" fill="#ffb703" />
       <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">30s Safety Rollback</text>
     </g>
 
     <!-- Pill 3: NetMod & HTTP Payloads -->
-    <g transform="translate(330, 0)">
-      <rect width="170" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(0, 245, 155, 0.3)" stroke-width="1" />
+    <g transform="translate(340, 0)">
+      <rect width="175" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(0, 245, 155, 0.3)" stroke-width="1" />
       <circle cx="16" cy="16" r="4" fill="#00f59b" />
       <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">NetMod Payloads</text>
     </g>
 
     <!-- Pill 4: Rust High-Speed Proxy -->
-    <g transform="translate(510, 0)">
-      <rect width="145" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(157, 78, 221, 0.3)" stroke-width="1" />
+    <g transform="translate(525, 0)">
+      <rect width="155" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(157, 78, 221, 0.3)" stroke-width="1" />
       <circle cx="16" cy="16" r="4" fill="#c084fc" />
       <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">Rust TCP Proxy</text>
     </g>
 
-    <!-- Pill 5: SG Home REST API -->
-    <g transform="translate(665, 0)">
-      <rect width="135" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(79, 172, 254, 0.3)" stroke-width="1" />
+    <!-- Pill 5: SGPX REST API -->
+    <g transform="translate(690, 0)">
+      <rect width="165" height="32" rx="16" fill="rgba(14, 23, 42, 0.7)" stroke="rgba(79, 172, 254, 0.3)" stroke-width="1" />
       <circle cx="16" cy="16" r="4" fill="#4facfe" />
-      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">REST API Ready</text>
+      <text x="28" y="21" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="600" fill="#f1f5f9">SGPX REST API</text>
     </g>
   </g>
 </svg>

@@ -1,10 +1,11 @@
 <p align="center">
-  <img src="assets/panelx-banner.svg" alt="PanelX - Powered by SG Home" width="100%" />
+  <img src="assets/panelx-banner.svg" alt="SGPX — SG Home PanelX Banner" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/weranganimsara/PanelX/stargazers"><img src="https://img.shields.io/github/stars/weranganimsara/PanelX?style=for-the-badge&color=00f2fe&logo=github" alt="Stars"/></a>
   <a href="https://github.com/weranganimsara/PanelX/network/members"><img src="https://img.shields.io/github/forks/weranganimsara/PanelX?style=for-the-badge&color=9d4edd&logo=github" alt="Forks"/></a>
+  <img src="https://img.shields.io/badge/Brand-SGPX%20Official-00f59b?style=for-the-badge&logo=shield" alt="SGPX Official"/>
   <img src="https://img.shields.io/badge/Platform-Ubuntu%20%7C%20Debian-blue?style=for-the-badge&logo=linux" alt="OS"/>
   <img src="https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python" alt="Python"/>
   <img src="https://img.shields.io/badge/Rust-High--Speed%20Proxy-orange?style=for-the-badge&logo=rust" alt="Rust"/>
@@ -12,14 +13,14 @@
 </p>
 
 <p align="center">
-  <b>PanelX</b> is a modern, ultra-responsive Linux VPS, Firewall, and SSH/WebSocket VPN Management Control Panel.<br>
-  Engineered with standard Python 3, high-speed compiled Rust networking, SQLite, and a dark Cyber NOC interface.<br>
-  <b>Proudly Powered by SG Home.</b>
+  <b>SGPX (SG Home PanelX)</b> is an enterprise-grade, ultra-responsive Linux VPS, Firewall, and SSH/WebSocket VPN Management Control Panel.<br>
+  Engineered with standard Python 3, high-speed compiled Rust networking, SQLite, and a dark Cyber NOC interface with hardware-level responsiveness.<br>
+  <b>Proudly Owned &amp; Powered by SG Home.</b>
 </p>
 
 ---
 
-## ⚡ Quick 1-Command Installation
+## ⚡ Quick 1-Command Automated Installation
 
 Log in as `root` to any fresh Linux VPS (Ubuntu 20/22/24 or Debian 10/11/12/13) and run:
 
@@ -27,7 +28,7 @@ Log in as `root` to any fresh Linux VPS (Ubuntu 20/22/24 or Debian 10/11/12/13) 
 bash <(curl -Ls https://raw.githubusercontent.com/weranganimsara/PanelX/main/install.sh)
 ```
 
-The installer will automatically detect your OS, install dependencies, configure OpenSSH, launch the compiled Rust proxy, initialize BadVPN, and start the PanelX web console on port `7788`.
+The installer will automatically detect your OS, install dependencies, configure OpenSSH, launch the compiled Rust proxy, initialize BadVPN, and start the SGPX web console on port `7788`.
 
 ### 🔑 Default Credentials:
 * **Web UI Dashboard:** `http://YOUR_VPS_IP:7788`
@@ -36,10 +37,22 @@ The installer will automatically detect your OS, install dependencies, configure
 
 ---
 
+## 🛡️ SGPX™ Brand Identity & Anti-Tamper System
+
+SGPX includes an authentic, military-grade digital brand protection system to assert official **SG Home** ownership and protect against unauthorized modification:
+
+* 🛡️ **Floating Glassmorphism Authenticity Seal**: Screen bottom-right status seal badge highlighting `SGPX CORE • SG HOME OFFICIAL` with animated live pulses.
+* ⚡ **DOM MutationObserver Guardian (`initSGPXGuardian`)**: If anyone attempts to remove, hide, or manipulate the SGPX brand watermark via browser DevTools (Inspect Element), the watchdog immediately detects the mutation and instantly restores visibility.
+* 🔒 **CSS Pseudo-Element Watermark**: Background layer stamped with `SGPX • SG HOME OFFICIAL` using CSS `::after`, making it completely immune to DOM node deletion.
+* 🖥️ **Backend HTTP Response Headers**: Every API response directly transmits `X-Powered-By: SGPX / SG Home` and `X-Brand: SGPX Official`.
+* 💻 **F12 DevTools Console Banner**: Cyberpunk ASCII seal printed in browser developer tools verifying genuine system ownership.
+
+---
+
 ## 💎 World-Class Feature Highlights
 
 ### 1. 🛡️ Firewall Center with 30-Second Lockout Safety
-* **Real Linux Packet Filtering**: Seamlessly integrates with `iptables` and `ufw`.
+* **Real Linux Packet Filtering**: Seamlessly integrates with native `iptables` and `ufw`.
 * **Automated 30s Rollback Queue**: Applying risky rules triggers an automatic 30-second safety rollback timer. If not confirmed with **"Confirm & Keep"**, rules are reverted automatically to prevent remote admin lockout!
 * **Quick Actions**: One-click Allow for SSH (22), HTTP (80), HTTPS (443), BadVPN UDP (7300), and immediate Malicious IP/CIDR blocking.
 
@@ -49,12 +62,13 @@ The installer will automatically detect your OS, install dependencies, configure
   * 🔹 **Hutch Direct CDN (Proxy None)**
   * 🔹 **Mobitel All IP (Zoom Bug)**
   * 🔹 **Dialog Fastly 5G (Port 80 Bypass)**
+  * 🔹 **Airtel Unlimited Free Gateway**
 * Add, edit, or remove custom carrier profiles anytime with zero service downtime.
 
 ### 3. 👥 SSH Client Accounts & Universal Exporter
 * Single & Bulk account creation with customizable device limits (`maxlogins`) enforced via Linux `/etc/security/limits.conf`.
-* **Client Configuration Modal**:
-  * 📲 **SSH for NetMod URI:** Generates exact `ssh://user:pass@host:port/?payload#SG` URIs for 1-click import into NetMod Syna.
+* **Client Configuration Exporter Modal**:
+  * 📱 **SSH for NetMod URI:** Generates exact `ssh://user:pass@host:port/?payload#SG` URIs for 1-click import into NetMod Syna (smart URL encoding & `#SG` remark).
   * 📦 **HTTP Custom (`.hc`)**: `proxy:port@user:pass#payload` format.
   * 💬 **WhatsApp / Telegram**: Rich formatted messages with emojis.
   * 🌐 **Direct SSH URL & Live In-Browser QR Code!**
@@ -82,7 +96,7 @@ The installer will automatically detect your OS, install dependencies, configure
 
 ## 🖥️ Terminal Management (`panelx` CLI)
 
-PanelX includes a dedicated interactive terminal utility:
+SGPX includes a dedicated interactive terminal utility:
 ```bash
 panelx
 ```
@@ -100,14 +114,15 @@ panelx
 
 ---
 
-## 🔌 PanelX REST API & Automation
+## 🔌 SGPX REST API & Automation
 
-PanelX provides a complete, authenticated REST API for integration with external platforms, websites, and bots:
+SGPX provides a complete, authenticated REST API for integration with external platforms, websites, and bots:
 
 ```env
-PANELX_API_URL=http://YOUR_VPS_IP:7788
-PANELX_API_KEY=SGX_YOUR_SECRET_KEY
+SGPX_API_URL=http://YOUR_VPS_IP:7788
+SGPX_API_KEY=SGX_YOUR_SECRET_KEY
 ```
+
 ### Endpoints:
 
 | Method | Endpoint | Description | Auth |
@@ -132,7 +147,7 @@ PANELX_API_KEY=SGX_YOUR_SECRET_KEY
 ```text
 PanelX/
 ├── assets/
-│   ├── panelx-banner.svg       # Official vector banner for GitHub
+│   ├── panelx-banner.svg       # Official SGPX vector banner
 │   └── logo.svg                # High-res vector square logo
 ├── bin/
 │   └── panelx-proxy            # Compiled high-speed async Rust proxy binary
@@ -140,11 +155,11 @@ PanelX/
 │   └── panelx-limiter.sh       # Multi-device session & bandwidth limiter
 ├── web/
 │   ├── assets/
-│   │   └── logo.svg            # App icon asset
-│   └── index.html              # Cyber NOC Dark UI single-page application
+│   │   └── logo.svg            # Web app icon asset
+│   └── index.html              # SGPX Cyber NOC Dark UI single-page application
 ├── install.sh                  # 1-click universal automated Linux installer
-├── panelx.py                   # Pure Python 3 daemon & REST API engine
-├── panelx-cli                  # Interactive terminal management CLI
+├── panelx.py                   # Pure Python 3 daemon & SGPX REST API engine
+├── panelx-cli                  # SGPX interactive terminal management CLI
 └── README.md                   # Project documentation
 ```
 
@@ -154,13 +169,13 @@ PanelX/
 
 Distributed under the **MIT License**.
 
-* **Author:** Weranga Nimsara
-* **Organization:** [SG Home](https://sghome.space)
+* **Lead Architect:** Weranga Nimsara
+* **Brand & Ownership:** [SG Home](https://sghome.space)
 * **GitHub:** [weranganimsara/PanelX](https://github.com/weranganimsara/PanelX)
 
 ---
 
 <p align="center">
-  <b>⚡ PanelX — Complete Linux Server &amp; VPN Control</b><br>
-  <i>Crafted with passion by Weranga Nimsara | Powered by SG Home</i>
+  <b>⚡ SGPX — Official SG Home PanelX Control System</b><br>
+  <i>Crafted with passion by Weranga Nimsara | Exclusively Powered by SG Home</i>
 </p>
