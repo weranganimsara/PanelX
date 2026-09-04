@@ -1365,7 +1365,7 @@ PANELX_API_KEY=SGX_...</div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">SSH Host</label>
-            <input type="text" id="inb-host" class="form-input" placeholder="hutch.sghome.space" required>
+            <input type="text" id="inb-host" class="form-input" placeholder="vps.yourdomain.com or IP" required>
           </div>
           <div class="form-group">
             <label class="form-label">SSH Port</label>
@@ -1391,7 +1391,7 @@ PANELX_API_KEY=SGX_...</div>
         <div class="form-row" id="inb-proxy-row">
           <div class="form-group">
             <label class="form-label">Proxy Host</label>
-            <input type="text" id="inb-proxy-host" class="form-input" placeholder="dpkids.lk">
+            <input type="text" id="inb-proxy-host" class="form-input" placeholder="proxy.example.com">
           </div>
           <div class="form-group">
             <label class="form-label">Proxy Port</label>
@@ -1584,9 +1584,9 @@ PANELX_API_KEY=SGX_...</div>
     let allProcesses = [];
     let currentUser = null;
     let activeConfigTab = 'netmod';
-    const zoomHttpPayload = "u+fRSFV7ZzQTd2kgWG+TY92TH+R6nGuBhyI2CGZKwd71Rs47LQSHqfcK0TlCYHsYZftunkE8Al3qKrcmXYM7rcVuhsPr+0WKt/cg4TANhYBtrOf2rLsuSRmQ8GnOr51g6WFQnzC5NFqPzVLIN3bchwPW2d1yQnwcVejehin+sznPW8OPiGpoxeT3WHG8W3vyah3QheT63sVOA/kTUL0yF1e0ZMGsXEz71rlIivUFfxeYKzwqLEEw2apDHcUG8JYJ5rwlrWsLndVraqwqPkdfjLQO9si89tJr2FTtqJJUxVUdJ398k2qfXrUKWwxs4c5yYhxjge6NfOgCNsxPYO0L8vYyCfwpdaYVF5vTkpeLVqz7FeKIZG8swHRFxDudPS9C9eYzCmTjWIlFzgWbEGN4RNRW+07nEN+7QtOn1LLuEqCsiEVn41b1kykcimYLNpzMuIVzB5IlsPDJpTiBJEuWHluLrUd/iq46xckOPZY3RDCuSEeHcuvKNhk169cBwlpXFOHp+ddYOAF/0MyYtfJngu206/3nsKhAV14NhsSi3NbiiqK1UPFhCAplSSMLLjfPC3sztyWXtu9g4477Aqp+vyKaTygOQr7PXqjMMuDzslAP4YWJPMOKItBxEnd7qFYFYB6uWGp+xxxEVQWcFVm3lGA3xzsE8IdRIAgFpWlwMvQdI6gA7k+ppuAUpwRmN4iWPLLgaCRzhWrgZIJ1cyDv3qAzsSS5EB53DHuzm57Akssss54jhoFSDwN0pd70/EcyFuG5pbyWH8sxLSdthrPDAa+o3fE3qQ7eO+d1exCUwyQVgU5tyo4ZbkFsqUo6xyMiIwTyh4VIpew/U8KFOn+sJIvyBDqMadUQt7Qr1gzuCHs3Gx/jXUwGeR7KjWG5jwa1gDlY4z82S5vbbUNJahv8oGKYAj9jIJInMqzqx6csUOUe/t7bX10UUz5kU6R7dhvbudy7coi+MOuOrUtXR98wl1Y0tQS5uSC03gbQdKwrEJu0rpySqAZYmCH7NzCWjW/O";
-    const zoomDirectPayload = "AuWsAzuCJjFGdg9kSB6w+2tHLeh9NCLfWrwDnMcPhe3BiAdJAshclqHDzw22m8rcOabwFpqSlhIjHWLyp99bpEMZi61xfsuDwHxlMxDSmmiNlIQVexnU56SvTNFtKKJyPIXa5ulhfvwIoz2JyXyZN7pJrqi75ZbHJtLW9vARrT2e/H1vhmtAEN0LIU6XbWmp/aaUvwaAtMhsaDJjQYg7mUIC6JsT8aZcC5EtbEhzLkB2q+cjwM7sLF+i4SVltvWHv4R507o0q0B8v0KjzwJfOW3qMg2mnVsbGY5ELJnw6HuB5mkDnbf9i6lbvz4oa0aPW1FkcsyKAUyX4ZL5o81KscK9TP0XqFghuYAu6sj/9/cgP8bqNOHt09oPUvWA3fy8tMQLduvyPlf0lhT85v7udr0tJpiaKglid2AeRqW0QMs4O6/8x4r5E8es060+49jPLGJ+VlMTMZ8zkykhjhfgOETvRDSWql4mco8RP66qfk2SP1kHe0CpJw8RJROL31tH";
-    let defaultPayload = zoomHttpPayload;
+    const genericHttpPayload = "GET / HTTP/1.1[crlf]Host: [host][crlf]X-Online-Host: [host][crlf]Connection: Keep-Alive[crlf]User-Agent: [ua][crlf][crlf]";
+    const genericDirectPayload = "GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]";
+    let defaultPayload = genericDirectPayload;
     let rollbackInterval = null;
 
     // Toast Notification
@@ -1620,14 +1620,14 @@ PANELX_API_KEY=SGX_...</div>
       const payloadInput = document.getElementById('inb-payload');
       if (payloadInput) {
         if (type === 'none') {
-          if (!payloadInput.value || payloadInput.value === zoomHttpPayload) {
-            payloadInput.value = zoomDirectPayload;
+          if (!payloadInput.value || payloadInput.value === genericHttpPayload) {
+            payloadInput.value = genericDirectPayload;
           }
         } else if (type === 'http') {
-          if (!payloadInput.value || payloadInput.value === zoomDirectPayload) {
-            payloadInput.value = zoomHttpPayload;
-            if (!document.getElementById('inb-proxy-host').value) document.getElementById('inb-proxy-host').value = 'partner.zoom.us';
-            if (!document.getElementById('inb-proxy-port').value) document.getElementById('inb-proxy-port').value = '80';
+          if (!payloadInput.value || payloadInput.value === genericDirectPayload) {
+            payloadInput.value = genericHttpPayload;
+            if (!document.getElementById('inb-proxy-host').value) document.getElementById('inb-proxy-host').value = '127.0.0.1';
+            if (!document.getElementById('inb-proxy-port').value) document.getElementById('inb-proxy-port').value = '8080';
           }
         }
       }
@@ -2029,15 +2029,16 @@ PANELX_API_KEY=SGX_...</div>
     }
 
     function openInboundModal() {
+      const pubIp = (document.getElementById('stat-public-ip') && document.getElementById('stat-public-ip').innerText) || 'YOUR_SERVER_IP';
       document.getElementById('inb-id').value = '';
-      document.getElementById('inb-remark').value = 'M ZOOM ALL';
-      document.getElementById('inb-host').value = 'zoom.sghome.space';
+      document.getElementById('inb-remark').value = 'Direct CDN Gateway';
+      document.getElementById('inb-host').value = pubIp;
       document.getElementById('inb-port').value = '80';
-      document.getElementById('inb-proxy-type').value = 'http';
-      document.getElementById('inb-proxy-host').value = 'partner.zoom.us';
+      document.getElementById('inb-proxy-type').value = 'none';
+      document.getElementById('inb-proxy-host').value = '';
       document.getElementById('inb-proxy-port').value = '80';
       document.getElementById('inb-bandwidth-limit').value = '0';
-      document.getElementById('inb-payload').value = zoomHttpPayload;
+      document.getElementById('inb-payload').value = genericDirectPayload;
       document.getElementById('inb-default').value = '0';
       toggleProxyRow();
       openModal('inbound-modal');
@@ -2331,18 +2332,19 @@ PANELX_API_KEY=SGX_...</div>
       if (!currentUser) return;
       const select = document.getElementById('config-inbound-select');
       const inbId = parseInt(select.value);
+      const defaultHost = (document.getElementById('stat-public-ip') && document.getElementById('stat-public-ip').innerText) || '127.0.0.1';
       const inb = allInbounds.find(i => i.id === inbId) || allInbounds[0] || {
-        host: document.getElementById('stat-public-ip').innerText || '127.0.0.1',
+        host: defaultHost,
         port: 80,
-        proxy_type: 'http',
-        proxy_host: 'dpkids.lk',
-        proxy_port: 8080,
+        proxy_type: 'none',
+        proxy_host: '',
+        proxy_port: 80,
         payload: defaultPayload,
-        remark: 'SG HOME VPN'
+        remark: 'Default Gateway'
       };
 
       const u = currentUser;
-      const host = inb.host || document.getElementById('stat-public-ip').innerText || 'zoom.sghome.space';
+      const host = inb.host || defaultHost;
       const port = inb.port || 80;
 
       // 1. SSH for NetMod URI (Exact NetMod Syna URI specification: :port/?payload#SG)

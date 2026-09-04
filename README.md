@@ -58,11 +58,10 @@ SGPX includes an authentic, military-grade digital brand protection system to as
 
 ### 2. 📡 Carrier Inbounds & Payloads Manager (3X-UI Architecture)
 * Dedicated Inbounds section for configuring carrier-specific bug hosts, SNI, and proxies:
-  * 🔹 **Hutch Zero (NetMod HTTP Proxy)** with proxy host (`dpkids.lk:8080`)
-  * 🔹 **Hutch Direct CDN (Proxy None)**
-  * 🔹 **Mobitel All IP (Zoom Bug)**
-  * 🔹 **Dialog Fastly 5G (Port 80 Bypass)**
-  * 🔹 **Airtel Unlimited Free Gateway**
+  * 🔹 **Direct CDN Gateway** (WebSocket / Port 80 auto-configured)
+  * 🔹 **HTTP Proxy Template** (Custom upstream proxy & port support)
+  * 🔹 **SSL / TLS SNI Inbound** (Cloudflare / CDN port 443 bypass)
+  * 🔹 **Custom Carrier & Bug Host Profiles** (Full freedom to add your private payloads)
 * Add, edit, or remove custom carrier profiles anytime with zero service downtime.
 
 ### 3. 👥 SSH Client Accounts & Universal Exporter

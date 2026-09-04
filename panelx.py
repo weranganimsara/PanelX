@@ -90,6 +90,15 @@ def audit_log(username: str, action: str, target: str = "", ip: str = "", detail
     except Exception:
         pass
 
+def get_server_public_ip():
+    try:
+        res = subprocess.run("curl -s -4 --max-time 2 ifconfig.me || curl -s -4 --max-time 2 icanhazip.com", shell=True, capture_output=True, text=True)
+        ip = res.stdout.strip()
+        if ip and len(ip) <= 45: return ip
+    except Exception:
+        pass
+    return "127.0.0.1"
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
@@ -183,45 +192,36 @@ def init_db():
     # Seed default inbounds if empty
     inbound_count = cursor.execute("SELECT COUNT(*) FROM inbounds").fetchone()[0]
     if inbound_count == 0:
+        server_ip = get_server_public_ip()
         default_inbounds = [
             (
-                "M ZOOM ALL",
-                "zoom.sghome.space",
+                "Direct CDN Gateway",
+                server_ip,
                 80,
-                "http",
-                "partner.zoom.us",
+                "none",
+                "",
                 80,
-                "u+fRSFV7ZzQTd2kgWG+TY92TH+R6nGuBhyI2CGZKwd71Rs47LQSHqfcK0TlCYHsYZftunkE8Al3qKrcmXYM7rcVuhsPr+0WKt/cg4TANhYBtrOf2rLsuSRmQ8GnOr51g6WFQnzC5NFqPzVLIN3bchwPW2d1yQnwcVejehin+sznPW8OPiGpoxeT3WHG8W3vyah3QheT63sVOA/kTUL0yF1e0ZMGsXEz71rlIivUFfxeYKzwqLEEw2apDHcUG8JYJ5rwlrWsLndVraqwqPkdfjLQO9si89tJr2FTtqJJUxVUdJ398k2qfXrUKWwxs4c5yYhxjge6NfOgCNsxPYO0L8vYyCfwpdaYVF5vTkpeLVqz7FeKIZG8swHRFxDudPS9C9eYzCmTjWIlFzgWbEGN4RNRW+07nEN+7QtOn1LLuEqCsiEVn41b1kykcimYLNpzMuIVzB5IlsPDJpTiBJEuWHluLrUd/iq46xckOPZY3RDCuSEeHcuvKNhk169cBwlpXFOHp+ddYOAF/0MyYtfJngu206/3nsKhAV14NhsSi3NbiiqK1UPFhCAplSSMLLjfPC3sztyWXtu9g4477Aqp+vyKaTygOQr7PXqjMMuDzslAP4YWJPMOKItBxEnd7qFYFYB6uWGp+xxxEVQWcFVm3lGA3xzsE8IdRIAgFpWlwMvQdI6gA7k+ppuAUpwRmN4iWPLLgaCRzhWrgZIJ1cyDv3qAzsSS5EB53DHuzm57Akssss54jhoFSDwN0pd70/EcyFuG5pbyWH8sxLSdthrPDAa+o3fE3qQ7eO+d1exCUwyQVgU5tyo4ZbkFsqUo6xyMiIwTyh4VIpew/U8KFOn+sJIvyBDqMadUQt7Qr1gzuCHs3Gx/jXUwGeR7KjWG5jwa1gDlY4z82S5vbbUNJahv8oGKYAj9jIJInMqzqx6csUOUe/t7bX10UUz5kU6R7dhvbudy7coi+MOuOrUtXR98wl1Y0tQS5uSC03gbQdKwrEJu0rpySqAZYmCH7NzCWjW/O",
+                "GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]",
                 1
             ),
             (
-                "M ZOOM ALL (Direct CDN)",
-                "zoom.sghome.space",
-                80,
-                "none",
-                "",
-                80,
-                "AuWsAzuCJjFGdg9kSB6w+2tHLeh9NCLfWrwDnMcPhe3BiAdJAshclqHDzw22m8rcOabwFpqSlhIjHWLyp99bpEMZi61xfsuDwHxlMxDSmmiNlIQVexnU56SvTNFtKKJyPIXa5ulhfvwIoz2JyXyZN7pJrqi75ZbHJtLW9vARrT2e/H1vhmtAEN0LIU6XbWmp/aaUvwaAtMhsaDJjQYg7mUIC6JsT8aZcC5EtbEhzLkB2q+cjwM7sLF+i4SVltvWHv4R507o0q0B8v0KjzwJfOW3qMg2mnVsbGY5ELJnw6HuB5mkDnbf9i6lbvz4oa0aPW1FkcsyKAUyX4ZL5o81KscK9TP0XqFghuYAu6sj/9/cgP8bqNOHt09oPUvWA3fy8tMQLduvyPlf0lhT85v7udr0tJpiaKglid2AeRqW0QMs4O6/8x4r5E8es060+49jPLGJ+VlMTMZ8zkykhjhfgOETvRDSWql4mco8RP66qfk2SP1kHe0CpJw8RJROL31tH",
-                0
-            ),
-            (
-                "Hutch Zero (NetMod HTTP Proxy)",
-                "hutch.sghome.space",
+                "HTTP Proxy Template",
+                server_ip,
                 80,
                 "http",
-                "dpkids.lk",
+                "127.0.0.1",
                 8080,
-                "u+fRSFV7ZzQTd2kgWG+TYwyOU6GD+h5lFt/L8DoHMpK0TM7aO3fi7LyQYKk8nlmLsJ1NBmZLzSPO2UzYwvrmmGvn+IzMXibxV0FesEy8A2I59wqplNY8lTZ1xq3RfYR4sY19RGZ4V4fOg71X2SME4kYZsAn4gdwIT/Qa6XlZU5oy59n036GoxBW47tleIaPfleBP2tiVNsO7HK/8gJSuh/G03Q9KTiJ6b8g09QT4BUzSZcYwbUI3ikUIMqhOkrEhirNnSwVBVbXPwVXmBC9C+Rf4HiHjeCVNaezkbsWynnohRMuaM1gQUNNnSDRm9+yZi2gQBCU1fA9ovN2253JgA7+rMPYJ6M3K94Hwpt47GJfzQFwuM+bWIi7sNy/TGtMy04wn6G+U5l4p9hXyjoAae6fpM/HrJ6C+ivbx4xlPoZTNxjKh7ZEiIByyJXe2JtGMbpc8HAiLZiZb4sQE7FX1I/4tD12/6b8LRU1ICSZeHB+nuxjVDN4NSHdyNN07nJkhFHkKvyzgW3EOHdC22TKeMBbFgIDCfB3IA7N/AR5KItw=",
+                "GET / HTTP/1.1[crlf]Host: [host][crlf]X-Online-Host: [host][crlf]Connection: Keep-Alive[crlf]User-Agent: [ua][crlf][crlf]",
                 0
             ),
             (
-                "Hutch Direct CDN (Proxy None)",
-                "hutch.sghome.space",
-                80,
+                "Cloudflare SNI Inbound",
+                server_ip,
+                443,
                 "none",
                 "",
-                80,
-                "AuWsAzuCJjFGdg9kSB6w+19GXM9VbHK07H3C/Mjh4dcy8GDUIKQ1DeQJ9ZJbfFTC8EqXZJvvW8tiL9tiJFt0WOSrEEJqQL/a5ziuHIeqYCM0nPQctYjIJEuaRH/QbF07k6PVCGs5KWd+zT62nR8iVviTfIc6xQBgiJHLoOJ7EPZ+jHS0wedBGrVGIO8UJDaJTt6irpEJ3QyecGh0Ubp7ihQjAmWTLWgmuDpYvPiQY2bdeS/TpdOih2lKnEMdOO9HyH2osNuF76TKDC8c4c1w2+2fNHq7rU77j7M1eOgh0qYnasKvxRm19iyZ+97rU6yK6SfOsAsEPo/tkd80J5vVsIUY/oTUE/aFqHGBINItNo=",
+                443,
+                "GET /cdn-cgi/trace HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: Upgrade[crlf][crlf]",
                 0
             )
         ]
@@ -241,7 +241,7 @@ def init_db():
         "ssh_port": "80",
         "badvpn_port": "7300",
         "api_secret": "SGX_" + secrets.token_hex(12).upper(),
-        "default_payload": "GET /cdn-cgi/trace HTTP/1.1[crlf]Host: partner.zoom.us[crlf][crlf][split]UNLOCK /? HTTP/1.1[crlf]Host: [host][crlf]Connection: upgrade[crlf]User-Agent: [ua][crlf]Upgrade: websocket[crlf][crlf]"
+        "default_payload": "GET / HTTP/1.1[crlf]Host: [host][crlf]Upgrade: websocket[crlf]Connection: upgrade[crlf]User-Agent: [ua][crlf][crlf]"
     }
     
     for k, v in defaults.items():
@@ -287,15 +287,6 @@ def set_setting(key: str, value: str):
     conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
     conn.commit()
     conn.close()
-
-def get_server_public_ip():
-    try:
-        res = subprocess.run("curl -s -4 --max-time 2 ifconfig.me || curl -s -4 --max-time 2 icanhazip.com", shell=True, capture_output=True, text=True)
-        ip = res.stdout.strip()
-        if ip and len(ip) <= 45: return ip
-    except Exception:
-        pass
-    return "127.0.0.1"
 
 # Network RX/TX tracking
 _prev_net = {"time": time.time(), "rx": 0, "tx": 0}
