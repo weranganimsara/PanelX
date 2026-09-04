@@ -100,15 +100,14 @@ panelx
 
 ---
 
-## 🔌 SG Home Paid Site REST API
+## 🔌 PanelX REST API & Automation
 
-PanelX provides a complete, authenticated REST API for integration with paid subscription websites:
+PanelX provides a complete, authenticated REST API for integration with external platforms, websites, and bots:
 
 ```env
-FALCON_API_URL=http://YOUR_VPS_IP:7788
-FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026
+PANELX_API_URL=http://YOUR_VPS_IP:7788
+PANELX_API_KEY=SGX_YOUR_SECRET_KEY
 ```
-
 ### Endpoints:
 
 | Method | Endpoint | Description | Auth |

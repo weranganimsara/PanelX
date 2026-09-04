@@ -1114,25 +1114,29 @@
             </div>
             <div class="form-group">
               <label class="form-label">SSH Domain / Custom Host</label>
-              <input type="text" id="st-domain" class="form-input" placeholder="e.g. ssh.sghome.space">
+              <input type="text" id="st-domain" class="form-input" placeholder="e.g. vps.yourdomain.com">
             </div>
             <div class="form-group">
-              <label class="form-label"><i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> API Secret Key (SG Home & External Sites)</label>
+              <label class="form-label"><i class="fa-solid fa-key" style="color: var(--accent-amber);"></i> API Secret Key</label>
               <div style="display: flex; gap: 6px;">
-                <input type="text" id="st-api-key" class="form-input" style="font-family: var(--font-mono); color: var(--accent-amber);">
-                <button type="button" class="btn btn-outline" onclick="copyApiKey()"><i class="fa-solid fa-copy"></i></button>
+                <input type="text" id="st-api-key" class="form-input" style="font-family: var(--font-mono); color: var(--accent-amber);" oninput="updateIntegrationBox(this.value)">
+                <button type="button" class="btn btn-outline" title="Generate New SGX Key" onclick="generateRandomApiKey()"><i class="fa-solid fa-arrows-rotate"></i></button>
+                <button type="button" class="btn btn-outline" title="Copy API Key" onclick="copyApiKey()"><i class="fa-solid fa-copy"></i></button>
               </div>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top: 10px;"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
           </form>
         </div>
 
-        <!-- SG Home Integration Docs -->
+        <!-- PanelX Integration Details -->
         <div class="content-card" style="max-width: 700px;">
-          <h3 style="font-size: 15px; color: #fff; margin-bottom: 8px;">SG Home Paid Site (.env Integration)</h3>
-          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Copy these exact values into your SG Home Paid Site <code>.env</code> file:</p>
-          <div class="code-box" style="color: var(--accent-green);">FALCON_API_URL=http://34.21.211.234:7788
-FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-plug" style="color: var(--accent-cyan); margin-right: 6px;"></i> PanelX URL & API Integration</h3>
+            <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="copyIntegrationDetails()"><i class="fa-solid fa-copy"></i> Copy All</button>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Use this PanelX URL and API Secret Key to connect external systems, applications, or bots:</p>
+          <div class="code-box" id="integration-code-box" style="color: var(--accent-green); white-space: pre-wrap; font-family: var(--font-mono); font-size: 12px;">PANELX_URL=http://127.0.0.1:7788
+PANELX_API_KEY=SGX_...</div>
         </div>
       </div>
 
@@ -2553,7 +2557,37 @@ FALCON_API_KEY=SG_HOME_FALCON_SECRET_2026</div>
         document.getElementById('st-domain').value = st.ssh_domain || '';
         document.getElementById('st-api-key').value = st.api_secret || '';
         defaultPayload = st.default_payload || defaultPayload;
+        updateIntegrationBox(st.api_secret || '');
       } catch (e) {}
+    }
+
+    function updateIntegrationBox(apiKey) {
+      const vpsUrl = window.location.origin;
+      const key = apiKey || (document.getElementById('st-api-key') ? document.getElementById('st-api-key').value : '');
+      const box = document.getElementById('integration-code-box');
+      if (box) {
+        box.innerText = `PANELX_URL=${vpsUrl}
+PANELX_API_KEY=${key}`;
+      }
+    }
+
+    function generateRandomApiKey() {
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let rand = '';
+      for (let i = 0; i < 24; i++) {
+        rand += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const newKey = 'SGX_' + rand;
+      document.getElementById('st-api-key').value = newKey;
+      updateIntegrationBox(newKey);
+      showToast('Generated new SGX API Key! Click Save Settings to apply.');
+    }
+
+    function copyIntegrationDetails() {
+      const box = document.getElementById('integration-code-box');
+      if (box) {
+        copyToClipboard(box.innerText, 'PanelX URL and API Key copied!');
+      }
     }
 
     function copyApiKey() {
