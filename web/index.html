@@ -279,8 +279,16 @@
       border-radius: 8px;
       background: rgba(0, 242, 254, 0.05);
       border: 1px solid rgba(0, 242, 254, 0.12);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       user-select: none;
+      text-decoration: none;
+      transition: all 0.25s ease;
+    }
+    .sgpx-brand-badge:hover {
+      background: rgba(0, 242, 254, 0.12);
+      border-color: rgba(0, 242, 254, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.15);
     }
     .sgpx-live-dot {
       width: 6px;
@@ -667,7 +675,7 @@
     <!-- Left Sidebar -->
     <aside class="sidebar">
       <div>
-        <div class="sidebar-brand">
+        <div class="sidebar-brand" onclick="window.open('https://paid.sghome.space/', '_blank')" style="cursor: pointer;" title="SG Home Official Paid Site • Click to visit">
           <div class="sidebar-brand-icon"><i class="fa-solid fa-bolt"></i></div>
           <div class="sidebar-brand-text">
             <h1 id="top-title">SGPX</h1>
@@ -740,16 +748,22 @@
       </div>
 
       <div class="sidebar-footer">
-        <div class="sgpx-brand-badge">
+        <a href="https://weraxx.sghome.space/" target="_blank" class="sgpx-brand-badge" title="WERA X Main Site • https://weraxx.sghome.space/">
           <span class="sgpx-live-dot"></span>
-          <span class="sgpx-brand-title">SGPX OFFICIAL</span>
+          <span class="sgpx-brand-title" style="letter-spacing: 0.5px;">WERA Xx‿x𝙓</span>
           <span class="sgpx-brand-tag">SG HOME</span>
-        </div>
-        <a onclick="handleLogout()" style="cursor: pointer; color: var(--accent-red);">
-          <i class="fa-solid fa-power-off"></i> Log Out
         </a>
-        <a href="https://github.com/weranganimsara/PanelX" target="_blank">
+        <a href="https://weraxx.sghome.space/" target="_blank" title="Official WERA X Main Site" style="color: var(--accent-cyan); margin-bottom: 2px;">
+          <i class="fa-solid fa-globe"></i> WERA X Main Site
+        </a>
+        <a href="https://paid.sghome.space/" target="_blank" title="SG Home Official Paid Site" style="color: var(--accent-amber); margin-bottom: 2px;">
+          <i class="fa-solid fa-crown"></i> SG Home Paid Site
+        </a>
+        <a href="https://github.com/weranganimsara/PanelX" target="_blank" style="margin-bottom: 2px;">
           <i class="fa-brands fa-github"></i> GitHub Repository
+        </a>
+        <a onclick="handleLogout()" style="cursor: pointer; color: var(--accent-red); margin-top: 4px;">
+          <i class="fa-solid fa-power-off"></i> Log Out
         </a>
       </div>
     </aside>
@@ -2973,10 +2987,13 @@ PANELX_API_KEY=${key}`;
       function verifySGPXSeal() {
         let seal = document.getElementById('sgpx-watermark');
         if (!seal) {
-          seal = document.createElement('div');
+          seal = document.createElement('a');
           seal.id = 'sgpx-watermark';
+          seal.href = 'https://paid.sghome.space/';
+          seal.target = '_blank';
           seal.className = 'sgpx-floating-seal';
-          seal.setAttribute('title', 'Authentic SGPX Core Engine • Powered by SG Home');
+          seal.setAttribute('title', 'SG Home Official Paid Site • Click to Visit (https://paid.sghome.space)');
+          seal.style.cssText = 'text-decoration: none; cursor: pointer;';
           seal.innerHTML = `
             <div class="sgpx-seal-inner">
               <div class="sgpx-seal-icon-box"><i class="fa-solid fa-shield-halved"></i></div>
@@ -2988,6 +3005,12 @@ PANELX_API_KEY=${key}`;
             </div>
           `;
           document.body.appendChild(seal);
+        } else {
+          if (!seal.getAttribute('href')) {
+            seal.setAttribute('href', 'https://paid.sghome.space/');
+            seal.setAttribute('target', '_blank');
+          }
+          seal.style.cursor = 'pointer';
         }
         seal.style.setProperty('display', 'block', 'important');
         seal.style.setProperty('opacity', '1', 'important');
@@ -3003,7 +3026,7 @@ PANELX_API_KEY=${key}`;
 </script>
 
   <!-- SGPX Floating Cybernetic Seal / Watermark -->
-  <div id="sgpx-watermark" class="sgpx-floating-seal" title="Authentic SGPX Core Engine • Powered by SG Home">
+  <a id="sgpx-watermark" href="https://paid.sghome.space/" target="_blank" class="sgpx-floating-seal" title="SG Home Official Paid Site • Click to Visit (https://paid.sghome.space)" style="text-decoration: none; cursor: pointer;">
     <div class="sgpx-seal-inner">
       <div class="sgpx-seal-icon-box">
         <i class="fa-solid fa-shield-halved"></i>
@@ -3014,7 +3037,7 @@ PANELX_API_KEY=${key}`;
       </div>
       <span class="sgpx-seal-dot"></span>
     </div>
-  </div>
+  </a>
 
 </body>
 
