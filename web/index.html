@@ -953,6 +953,7 @@
                   <th>SSH Host / Port</th>
                   <th>Proxy Type</th>
                   <th>Proxy Target</th>
+                  <th>Traffic Quota</th>
                   <th>Default</th>
                   <th>Actions</th>
                 </tr>
@@ -987,6 +988,7 @@
                   <th>Password</th>
                   <th>Expiry Date</th>
                   <th>Device Limit</th>
+                  <th>Data Quota</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -1397,6 +1399,19 @@ PANELX_API_KEY=SGX_...</div>
           </div>
         </div>
         <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between;">
+            <span><i class="fa-solid fa-gauge-high" style="color: var(--accent-cyan); margin-right: 6px;"></i> Inbound Traffic Quota (GB)</span>
+            <span style="font-size: 11px; color: var(--text-muted);">0 = Unlimited Throughput</span>
+          </label>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <input type="number" id="inb-bandwidth-limit" class="form-input" value="0" min="0" placeholder="0 = Unlimited" style="flex: 1;">
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 0)">∞ Unlimited</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 250)">250GB</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 500)">500GB</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 1000)">1000GB</button>
+          </div>
+        </div>
+        <div class="form-group">
           <label class="form-label">Payload String</label>
           <textarea id="inb-payload" class="form-input" rows="4" style="font-family: var(--font-mono); font-size: 11px;"></textarea>
         </div>
@@ -1479,6 +1494,19 @@ PANELX_API_KEY=SGX_...</div>
           <div class="form-group">
             <label class="form-label">Device Limit</label>
             <input type="number" id="cu-limit" class="form-input" value="3" min="1" max="10" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between;">
+            <span><i class="fa-solid fa-gauge-high" style="color: var(--accent-cyan); margin-right: 6px;"></i> Data Limit (GB Quota)</span>
+            <span style="font-size: 11px; color: var(--text-muted);">0 = Unlimited</span>
+          </label>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <input type="number" id="cu-bandwidth" class="form-input" value="0" min="0" placeholder="0 = Unlimited" style="flex: 1;">
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 0)">∞ Unlimited</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 25)">25GB</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 50)">50GB</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 100)">100GB</button>
           </div>
         </div>
         <div class="form-group">
@@ -1961,24 +1989,43 @@ PANELX_API_KEY=SGX_...</div>
         return;
       }
 
-      tbody.innerHTML = inbounds.map(inb => `
-        <tr>
-          <td>
-            <div style="font-weight: 700; color: #fff;">${inb.remark}</div>
-            <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${inb.payload.substring(0, 45)}...</div>
-          </td>
-          <td><code>${inb.host}:${inb.port}</code></td>
-          <td><span class="tag ${inb.proxy_type === 'http' ? 'tag-blue' : 'tag-active'}">${inb.proxy_type === 'http' ? 'HTTP Proxy' : 'Direct CDN'}</span></td>
-          <td>${inb.proxy_type === 'http' ? `<code>${inb.proxy_host}:${inb.proxy_port}</code>` : '<span style="color: var(--text-muted);">-</span>'}</td>
-          <td>${inb.is_default ? '<span class="tag tag-active">Default</span>' : '<span style="color: var(--text-muted); font-size: 11px;">Secondary</span>'}</td>
-          <td>
-            <div class="action-btn-group">
-              <button class="icon-btn" title="Edit Profile" onclick="openEditInboundModal(${inb.id})"><i class="fa-solid fa-pen"></i></button>
-              <button class="icon-btn delete" title="Delete Profile" onclick="deleteInbound(${inb.id})"><i class="fa-solid fa-trash"></i></button>
+      tbody.innerHTML = inbounds.map(inb => {
+        let qLimit = inb.bandwidth_limit_gb || 0;
+        let qHtml = '<span class="tag tag-blue"><i class="fa-solid fa-infinity"></i> Unlimited</span>';
+        if (qLimit > 0) {
+          let uGb = inb.bandwidth_used_gb || 0;
+          let uPct = inb.usage_percent || 0;
+          let bColor = uPct >= 95 ? 'var(--accent-red, #ef4444)' : (uPct >= 75 ? 'var(--accent-yellow, #f59e0b)' : 'var(--accent-green, #10b981)');
+          qHtml = `
+            <div>
+              <div style="font-size: 11px; font-weight: 600; color: #fff; margin-bottom: 3px;">${uGb} / ${qLimit} GB</div>
+              <div style="width: 80px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                <div style="width: ${uPct}%; height: 100%; background: ${bColor};"></div>
+              </div>
             </div>
-          </td>
-        </tr>
-      `).join('');
+          `;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: #fff;">${inb.remark}</div>
+              <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${inb.payload.substring(0, 45)}...</div>
+            </td>
+            <td><code>${inb.host}:${inb.port}</code></td>
+            <td><span class="tag ${inb.proxy_type === 'http' ? 'tag-blue' : 'tag-active'}">${inb.proxy_type === 'http' ? 'HTTP Proxy' : 'Direct CDN'}</span></td>
+            <td>${inb.proxy_type === 'http' ? `<code>${inb.proxy_host}:${inb.proxy_port}</code>` : '<span style="color: var(--text-muted);">-</span>'}</td>
+            <td>${qHtml}</td>
+            <td>${inb.is_default ? '<span class="tag tag-active">Default</span>' : '<span style="color: var(--text-muted); font-size: 11px;">Secondary</span>'}</td>
+            <td>
+              <div class="action-btn-group">
+                <button class="icon-btn" title="Edit Profile" onclick="openEditInboundModal(${inb.id})"><i class="fa-solid fa-pen"></i></button>
+                <button class="icon-btn delete" title="Delete Profile" onclick="deleteInbound(${inb.id})"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function openInboundModal() {
@@ -1989,6 +2036,7 @@ PANELX_API_KEY=SGX_...</div>
       document.getElementById('inb-proxy-type').value = 'http';
       document.getElementById('inb-proxy-host').value = 'partner.zoom.us';
       document.getElementById('inb-proxy-port').value = '80';
+      document.getElementById('inb-bandwidth-limit').value = '0';
       document.getElementById('inb-payload').value = zoomHttpPayload;
       document.getElementById('inb-default').value = '0';
       toggleProxyRow();
@@ -2005,6 +2053,7 @@ PANELX_API_KEY=SGX_...</div>
       document.getElementById('inb-proxy-type').value = inb.proxy_type;
       document.getElementById('inb-proxy-host').value = inb.proxy_host || '';
       document.getElementById('inb-proxy-port').value = inb.proxy_port || 8080;
+      document.getElementById('inb-bandwidth-limit').value = inb.bandwidth_limit_gb || '0';
       document.getElementById('inb-payload').value = inb.payload;
       document.getElementById('inb-default').value = inb.is_default ? '1' : '0';
       toggleProxyRow();
@@ -2022,6 +2071,7 @@ PANELX_API_KEY=SGX_...</div>
         proxy_type: document.getElementById('inb-proxy-type').value,
         proxy_host: document.getElementById('inb-proxy-host').value,
         proxy_port: parseInt(document.getElementById('inb-proxy-port').value) || 8080,
+        bandwidth_limit_gb: parseInt(document.getElementById('inb-bandwidth-limit').value) || 0,
         payload: document.getElementById('inb-payload').value,
         is_default: parseInt(document.getElementById('inb-default').value)
       };
@@ -2083,6 +2133,34 @@ PANELX_API_KEY=SGX_...</div>
         if (u.is_expired) { tagClass = 'tag-danger'; tagText = 'Expired'; }
         else if (u.days_left <= 3) { tagClass = 'tag-warning'; }
 
+        let bwHtml = '';
+        let bwLimit = u.bandwidth_gb || 0;
+        if (bwLimit === 0) {
+          bwHtml = '<span class="tag tag-blue"><i class="fa-solid fa-infinity"></i> Unlimited</span>';
+        } else {
+          let usedGB = u.used_gb || 0;
+          let pct = u.usage_percent || 0;
+          let barColor = pct >= 95 ? 'var(--accent-red, #ef4444)' : (pct >= 75 ? 'var(--accent-yellow, #f59e0b)' : 'var(--accent-green, #10b981)');
+          bwHtml = `
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px;">
+                <span style="font-weight: 600; color: #fff;">${usedGB} / ${bwLimit} GB</span>
+                <span style="color: ${barColor}; font-weight: 700;">${pct}%</span>
+              </div>
+              <div style="width: 100px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                <div style="width: ${pct}%; height: 100%; background: ${barColor};"></div>
+              </div>
+            </div>
+          `;
+        }
+
+        let statusBadge = '<span class="tag tag-active">Active</span>';
+        if (u.is_data_exhausted) {
+          statusBadge = '<span class="tag tag-danger"><i class="fa-solid fa-triangle-exclamation"></i> Quota Full</span>';
+        } else if (u.is_expired) {
+          statusBadge = '<span class="tag tag-danger">Expired</span>';
+        }
+
         return `
           <tr>
             <td>
@@ -2095,11 +2173,13 @@ PANELX_API_KEY=SGX_...</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${u.expiry_date}</div>
             </td>
             <td><i class="fa-solid fa-mobile-screen"></i> Max ${u.simultaneous_limit} Devices</td>
-            <td><span class="tag tag-active">Active</span></td>
+            <td>${bwHtml}</td>
+            <td>${statusBadge}</td>
             <td>
               <div class="action-btn-group">
                 <button class="icon-btn" title="View Config / QR Code" onclick="openConfigModal('${u.username}')"><i class="fa-solid fa-qrcode"></i></button>
                 <button class="icon-btn" title="Renew Client (+30 Days)" onclick="renewClient('${u.username}')"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                ${bwLimit > 0 ? `<button class="icon-btn" title="Reset Bandwidth Quota (0 GB)" onclick="resetClientBandwidth('${u.username}')"><i class="fa-solid fa-rotate-left"></i></button>` : ''}
                 <button class="icon-btn delete" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
@@ -2114,6 +2194,31 @@ PANELX_API_KEY=SGX_...</div>
       renderUsers(filtered);
     }
 
+    function setBwPreset(inputId, val) {
+      const el = document.getElementById(inputId);
+      if (el) el.value = val;
+    }
+
+    async function resetClientBandwidth(username) {
+      if (!confirm(`Are you sure you want to reset bandwidth usage to 0 GB for ${username}?`)) return;
+      try {
+        const res = await fetch('/api/user/reset-bandwidth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Bandwidth reset for ${username}`);
+          loadUsers();
+        } else {
+          showToast(data.error || 'Failed to reset bandwidth', true);
+        }
+      } catch (e) {
+        showToast('Error resetting bandwidth', true);
+      }
+    }
+
     async function handleCreateUser(e) {
       e.preventDefault();
       const body = {
@@ -2121,6 +2226,7 @@ PANELX_API_KEY=SGX_...</div>
         password: document.getElementById('cu-password').value,
         days: document.getElementById('cu-days').value,
         simultaneous_limit: document.getElementById('cu-limit').value,
+        bandwidthGB: parseInt(document.getElementById('cu-bandwidth').value) || 0,
         notes: document.getElementById('cu-notes').value
       };
 

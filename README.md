@@ -135,6 +135,7 @@ SGPX_API_KEY=SGX_YOUR_SECRET_KEY
 | `GET` | `/api/users/list` | List all SSH client accounts | Session / API Key |
 | `POST` | `/api/user/create` | Provision new SSH account | `x-api-key` / Session |
 | `POST` | `/api/user/renew` | Extend account validity | `x-api-key` / Session |
+| `POST` | `/api/user/reset-bandwidth` | Reset client bandwidth quota to 0 GB | `x-api-key` / Session |
 | `POST` | `/api/user/delete` | Delete account & revoke access | `x-api-key` / Session |
 | `GET` | `/api/inbounds/list` | Retrieve carrier payload profiles | Session / API Key |
 | `GET` | `/api/processes/list` | Top Linux processes (PID, CPU, Mem) | Session / API Key |

@@ -138,9 +138,19 @@ def init_db():
             proxy_port INTEGER DEFAULT 8080,
             payload TEXT NOT NULL,
             is_default INTEGER DEFAULT 0,
+            bandwidth_limit_gb INTEGER DEFAULT 0,
+            bandwidth_used_bytes INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE inbounds ADD COLUMN bandwidth_limit_gb INTEGER DEFAULT 0")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE inbounds ADD COLUMN bandwidth_used_bytes INTEGER DEFAULT 0")
+    except Exception:
+        pass
 
     # 5. Audit Logs table
     cursor.execute("""
@@ -245,6 +255,27 @@ init_db()
 # ---------------------------------------------------------------------------
 # Core System Helpers
 # ---------------------------------------------------------------------------
+def get_user_bandwidth_usage(username: str) -> int:
+    for base_dir in ["/etc/panelx/bandwidth", "/var/log/panelx/bw"]:
+        fpath = os.path.join(base_dir, f"{username}.usage")
+        if os.path.exists(fpath):
+            try:
+                with open(fpath, "r") as bf:
+                    return int(bf.read().strip() or "0")
+            except Exception:
+                pass
+    return 0
+
+def reset_user_bandwidth_usage(username: str):
+    for base_dir in ["/etc/panelx/bandwidth", "/var/log/panelx/bw"]:
+        os.makedirs(base_dir, exist_ok=True)
+        fpath = os.path.join(base_dir, f"{username}.usage")
+        try:
+            with open(fpath, "w") as bf:
+                bf.write("0")
+        except Exception:
+            pass
+
 def get_setting(key: str, default="") -> str:
     conn = get_db()
     row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
@@ -1027,6 +1058,7 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
             ssh_port = get_setting("ssh_port", "80")
 
+            bw_dir = "/var/log/panelx/bw"
             for u in users:
                 u["ssh_url"] = f"ssh://{u['username']}:{u['password']}@{ssh_domain}:{ssh_port}"
                 try:
@@ -1037,6 +1069,22 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 except Exception:
                     u["days_left"] = 0
                     u["is_expired"] = False
+
+                # Real-time Linux bandwidth usage reading
+                used_bytes = get_user_bandwidth_usage(u['username'])
+                u["used_bytes"] = used_bytes
+                u["used_gb"] = round(used_bytes / (1024 * 1024 * 1024), 2)
+                bw_limit = int(u.get("bandwidth_gb", 0) or 0)
+                u["bandwidth_gb"] = bw_limit
+                if bw_limit > 0:
+                    quota_bytes = bw_limit * 1024 * 1024 * 1024
+                    u["usage_percent"] = min(100, round((used_bytes / quota_bytes) * 100, 1))
+                    u["is_data_exhausted"] = used_bytes >= quota_bytes
+                    if u["is_data_exhausted"]:
+                        u["status"] = "Quota Exceeded"
+                else:
+                    u["usage_percent"] = 0
+                    u["is_data_exhausted"] = False
 
             self.send_json(200, {"users": users, "total": len(users)})
             return
@@ -1049,7 +1097,23 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             conn = get_db()
             rows = conn.execute("SELECT * FROM inbounds ORDER BY is_default DESC, id ASC").fetchall()
             conn.close()
-            self.send_json(200, {"inbounds": [dict(r) for r in rows]})
+            inbounds_list = []
+            for r in rows:
+                item = dict(r)
+                limit_gb = int(item.get("bandwidth_limit_gb", 0) or 0)
+                used_bytes = int(item.get("bandwidth_used_bytes", 0) or 0)
+                item["bandwidth_limit_gb"] = limit_gb
+                item["bandwidth_used_bytes"] = used_bytes
+                item["bandwidth_used_gb"] = round(used_bytes / (1024 * 1024 * 1024), 2)
+                if limit_gb > 0:
+                    q_bytes = limit_gb * 1024 * 1024 * 1024
+                    item["usage_percent"] = min(100, round((used_bytes / q_bytes) * 100, 1))
+                    item["is_exhausted"] = used_bytes >= q_bytes
+                else:
+                    item["usage_percent"] = 0
+                    item["is_exhausted"] = False
+                inbounds_list.append(item)
+            self.send_json(200, {"inbounds": inbounds_list})
             return
 
         # 13. API: Settings
@@ -1367,12 +1431,22 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
                 base_date = datetime.now()
 
             new_exp = (base_date + timedelta(days=days)).strftime("%Y-%m-%d")
+            # If renewing, auto-reset data usage and unlock user
+            bw_file = f"/var/log/panelx/bw/{username}.usage"
+            if os.path.exists(bw_file):
+                try:
+                    with open(bw_file, "w") as bf:
+                        bf.write("0")
+                except Exception:
+                    pass
+            subprocess.run(f"usermod -U {username}", shell=True, capture_output=True)
+
             conn.execute("UPDATE users SET expiry_date = ?, status = 'Active' WHERE username = ?", (new_exp, username))
             conn.commit()
             conn.close()
 
             os_renew_user(username, new_exp)
-            audit_log("admin", "user_renew", username, client_ip, f"Extended to {new_exp}")
+            audit_log("admin", "user_renew", username, client_ip, f"Extended to {new_exp} (Bandwidth reset)")
 
             ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
             ssh_port = get_setting("ssh_port", "80")
@@ -1387,6 +1461,24 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             return
 
         # 18. Delete User
+        elif path in ["/api/users/reset-bandwidth", "/api/user/reset-bandwidth"]:
+            username = body.get("username", "").strip().lower()
+            if not username:
+                self.send_json(400, {"error": "Username required"})
+                return
+
+            reset_user_bandwidth_usage(username)
+
+            subprocess.run(f"usermod -U {username}", shell=True, capture_output=True)
+            conn = get_db()
+            conn.execute("UPDATE users SET status = 'Active' WHERE username = ?", (username,))
+            conn.commit()
+            conn.close()
+
+            audit_log("admin", "user_reset_bandwidth", username, client_ip, "Reset data to 0 GB")
+            self.send_json(200, {"success": True, "message": f"Bandwidth reset to 0 GB for {username}"})
+            return
+
         elif path in ["/api/users/delete", "/api/user/delete"]:
             username = body.get("username", "").strip().lower()
             conn = get_db()
@@ -1409,17 +1501,18 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             proxy_port = int(body.get("proxy_port", 8080))
             payload = body.get("payload", "").strip()
             is_default = int(body.get("is_default", 0))
+            bandwidth_limit_gb = int(body.get("bandwidth_limit_gb", body.get("bandwidthLimitGB", 0)))
 
             conn = get_db()
             if is_default:
                 conn.execute("UPDATE inbounds SET is_default = 0")
             conn.execute("""
-                INSERT INTO inbounds (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default))
+                INSERT INTO inbounds (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default, bandwidth_limit_gb, bandwidth_used_bytes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default, bandwidth_limit_gb))
             conn.commit()
             conn.close()
-            audit_log("admin", "inbound_create", remark, client_ip)
+            audit_log("admin", "inbound_create", f"{remark} ({bandwidth_limit_gb} GB Quota)", client_ip)
             self.send_json(200, {"success": True, "message": "Inbound profile created"})
             return
 
@@ -1433,17 +1526,18 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             proxy_port = int(body.get("proxy_port", 8080))
             payload = body.get("payload", "").strip()
             is_default = int(body.get("is_default", 0))
+            bandwidth_limit_gb = int(body.get("bandwidth_limit_gb", body.get("bandwidthLimitGB", 0)))
 
             conn = get_db()
             if is_default:
                 conn.execute("UPDATE inbounds SET is_default = 0")
             conn.execute("""
-                UPDATE inbounds SET remark = ?, host = ?, port = ?, proxy_type = ?, proxy_host = ?, proxy_port = ?, payload = ?, is_default = ?
+                UPDATE inbounds SET remark = ?, host = ?, port = ?, proxy_type = ?, proxy_host = ?, proxy_port = ?, payload = ?, is_default = ?, bandwidth_limit_gb = ?
                 WHERE id = ?
-            """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default, inbound_id))
+            """, (remark, host, port, proxy_type, proxy_host, proxy_port, payload, is_default, bandwidth_limit_gb, inbound_id))
             conn.commit()
             conn.close()
-            audit_log("admin", "inbound_update", remark, client_ip)
+            audit_log("admin", "inbound_update", f"{remark} ({bandwidth_limit_gb} GB Quota)", client_ip)
             self.send_json(200, {"success": True, "message": "Inbound profile updated"})
             return
 
