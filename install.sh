@@ -26,14 +26,14 @@ fi
 
 clear
 echo -e "${CYAN}"
-echo "  ██████╗  █████╗ ███╗   ██╗███████╗██╗     ██╗  ██╗"
-echo "  ██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ╚██╗██╔╝"
-echo "  ██████╔╝███████║██╔██╗ ██║█████╗  ██║      ╚███╔╝ "
-echo "  ██╔═══╝ ██╔══██║██║╚██╗██║██╔══╝  ██║      ██╔██╗ "
-echo "  ██║     ██║  ██║██║ ╚████║███████╗███████╗██╔╝ ██╗"
-echo "  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝"
-echo -e "          ${PURPLE}PanelX — Enterprise Linux Server & VPN Control${NC}"
-echo -e "                   ${YELLOW}Powered by SG Home${NC}"
+echo "  ███████╗ ██████╗ ██████╗ ██╗  ██╗"
+echo "  ██╔════╝██╔════╝ ██╔══██╗╚██╗██╔╝"
+echo "  ███████╗██║  ███╗██████╔╝ ╚███╔╝ "
+echo "  ╚════██║██║   ██║██╔═══╝  ██╔██╗ "
+echo "  ███████║╚██████╔╝██║     ██╔╝ ██╗"
+echo "  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝"
+echo -e "         ${PURPLE}SGPX — SG Home PanelX Control System v2.4${NC}"
+echo -e "                 ${YELLOW}Official SG Home Product${NC}"
 echo -e "${CYAN}======================================================${NC}"
 
 echo -e "\n${BLUE}[1/6] Detecting operating system & architecture...${NC}"

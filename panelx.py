@@ -811,6 +811,8 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
         body = json.dumps(data).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
+        self.send_header("X-Powered-By", "SGPX / SG Home")
+        self.send_header("X-Brand", "SGPX Official")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")

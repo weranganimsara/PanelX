@@ -32,14 +32,14 @@ get_db_setting() {
 show_banner() {
     clear
     echo -e "${CYAN}"
-    echo "  ██████╗  █████╗ ███╗   ██╗███████╗██╗     ██╗  ██╗"
-    echo "  ██╔══██╗██╔══██╗████╗  ██║██╔════╝██║     ╚██╗██╔╝"
-    echo "  ██████╔╝███████║██╔██╗ ██║█████╗  ██║      ╚███╔╝ "
-    echo "  ██╔═══╝ ██╔══██║██║╚██╗██║██╔══╝  ██║      ██╔██╗ "
-    echo "  ██║     ██║  ██║██║ ╚████║███████╗███████╗██╔╝ ██╗"
-    echo "  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝  ╚═╝"
-    echo -e "       ${PURPLE}SSH & WebSocket Management Panel v1.0.0${NC}"
-    echo -e "       ${YELLOW}Created by Weranga Nimsara (SG Home)${NC}"
+    echo "  ███████╗ ██████╗ ██████╗ ██╗  ██╗"
+    echo "  ██╔════╝██╔════╝ ██╔══██╗╚██╗██╔╝"
+    echo "  ███████╗██║  ███╗██████╔╝ ╚███╔╝ "
+    echo "  ╚════██║██║   ██║██╔═══╝  ██╔██╗ "
+    echo "  ███████║╚██████╔╝██║     ██╔╝ ██╗"
+    echo "  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝"
+    echo -e "       ${PURPLE}SGPX — SG Home PanelX Control System v2.4${NC}"
+    echo -e "              ${YELLOW}Official SG Home Product${NC}"
     echo -e "${CYAN}======================================================${NC}"
 }
 
