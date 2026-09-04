@@ -37,6 +37,30 @@ The installer will automatically detect your OS, install dependencies, configure
 
 ---
 
+## 🖥️ Supported Operating Systems & Compatibility
+
+PanelX is engineered, hardened, and verified for Debian and Ubuntu Linux distributions. All core capabilities—including `install.sh`, auto-dependency setup, `iptables` firewall management, live data usage tracking, client device limits, and background system services—work **100% out-of-the-box**:
+
+| Operating System | Supported Version | Compatibility | Description |
+| :--- | :--- | :--- | :--- |
+| **Ubuntu** | `24.04 LTS (Noble)` | 🟢 **Verified & Tested** | Official live-tested OS with modern `sshd-session` telemetry |
+| **Ubuntu** | `22.04 LTS (Jammy)` | 🟢 **100% Recommended** | The global standard for VPN servers; rock-solid stability |
+| **Ubuntu** | `20.04 LTS (Focal)` | 🟢 **100% Supported** | Long-term enterprise stability |
+| **Debian** | `12 (Bookworm)` | 🟢 **Super Lightweight** | Extremely low RAM footprint (~60MB) — Best for budget 512MB / 1GB VPS |
+| **Debian** | `11 (Bullseye)` | 🟢 **100% Supported** | Minimalist, ultra-reliable foundation |
+| **Debian** | `10 (Buster)` | 🟢 **Supported** | Standard package compatibility |
+
+> 💡 **OS Recommendation:** For new deployments, we highly recommend **Ubuntu 22.04 / 24.04 LTS**, or **Debian 12** if running on low-resource VPS nodes (512MB / 1GB RAM).
+
+### ⚙️ Minimum Hardware Requirements:
+* **CPU:** 1 vCPU (1.0 GHz or higher)
+* **RAM:** 512 MB minimum (1 GB recommended for high concurrent users)
+* **Disk:** 1 GB free SSD storage
+* **Architecture:** `x86_64` (Intel/AMD) or `arm64` / `aarch64` (Oracle Cloud Free Tier, AWS Graviton)
+* **Privileges:** Root access (`sudo -i`)
+
+---
+
 ## 🛡️ SGPX™ Brand Identity & Anti-Tamper System
 
 SGPX includes an authentic, military-grade digital brand protection system to assert official **SG Home** ownership and protect against unauthorized modification:
