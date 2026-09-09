@@ -66,9 +66,10 @@ menu() {
     echo -e "  ${PURPLE}[6]${NC} Change Panel Port"
     echo -e "  ${PURPLE}[7]${NC} Restart WebSocket Proxy & BadVPN"
     echo -e "  ${PURPLE}[8]${NC} View Live Logs"
+    echo -e "  ${PURPLE}[9]${NC} Update & Refresh PanelX (Web Dashboard & Core)"
     echo -e "  ${PURPLE}[0]${NC} Exit"
     echo -e "${CYAN}======================================================${NC}"
-    read -p "Select an option [0-8]: " choice
+    read -p "Select an option [0-9]: " choice
 
     case $choice in
         1)
@@ -146,6 +147,15 @@ conn.close()
         8)
             journalctl -u panelx -f
             menu
+            ;;
+        9)
+            echo -e "${CYAN}Fetching latest updates from official repository...${NC}"
+            mkdir -p /etc/panelx/web
+            curl -sSL "https://raw.githubusercontent.com/weranganimsara/PanelX/main/web/index.html" -o /etc/panelx/web/index.html
+            curl -sSL "https://raw.githubusercontent.com/weranganimsara/PanelX/main/panelx-cli" -o /usr/local/bin/panelx && chmod +x /usr/local/bin/panelx
+            systemctl restart panelx 2>/dev/null || true
+            echo -e "${GREEN}PanelX Web UI & Services updated to latest release!${NC}"
+            sleep 2; menu
             ;;
         0)
             echo "Exiting..."
