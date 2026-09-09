@@ -1592,6 +1592,28 @@ PANELX_API_KEY=SGX_...</div>
     </div>
   </div>
 
+<!-- MODAL: DELETE CLIENT CONFIRMATION -->
+  <div id="delete-client-modal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2 style="color: var(--accent-red);"><i class="fa-solid fa-user-xmark" style="margin-right: 8px;"></i> Delete Client Account</h2>
+        <button class="modal-close" onclick="closeModal('delete-client-modal')">&times;</button>
+      </div>
+      <p style="font-size: 13.5px; color: #fff; margin-bottom: 8px;">
+        Are you sure you want to permanently delete client <strong id="delete-client-target-name" style="color: var(--accent-cyan); font-family: var(--font-mono);"></strong>?
+      </p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+        <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-amber); margin-right: 5px;"></i>
+        This will terminate all active SSH connections immediately, delete Linux system credentials, and erase bandwidth usage records.
+      </p>
+      <input type="hidden" id="delete-client-username">
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" onclick="closeModal('delete-client-modal')">Cancel</button>
+        <button id="btn-confirm-delete-client" class="btn btn-danger" onclick="confirmDeleteClient()"><i class="fa-solid fa-trash"></i> Delete Client</button>
+      </div>
+    </div>
+  </div>
+
   <!-- JAVASCRIPT APPLICATION CORE -->
   <script>
     let allUsers = [];
@@ -2111,17 +2133,21 @@ PANELX_API_KEY=SGX_...</div>
 
     async function deleteInbound(id) {
       if (!confirm('Delete this inbound profile?')) return;
-      const res = await fetch('/api/inbounds/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('Inbound deleted');
-        loadInbounds();
-      } else {
-        showToast(data.error || 'Delete failed', true);
+      try {
+        const res = await fetch('/api/inbounds/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Inbound deleted');
+          loadInbounds();
+        } else {
+          showToast(data.error || 'Delete failed', true);
+        }
+      } catch (err) {
+        showToast('Delete failed: ' + err.message, true);
       }
     }
 
@@ -2305,19 +2331,42 @@ PANELX_API_KEY=SGX_...</div>
       }
     }
 
-    async function deleteClient(username) {
-      if (!confirm(`Delete client "${username}" permanently?`)) return;
-      const res = await fetch('/api/users/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(`Client "${username}" deleted`);
-        loadUsers();
-      } else {
-        showToast(data.error || 'Delete failed', true);
+    function deleteClient(username) {
+      if (!username) return;
+      const userObj = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+      const displayUser = userObj ? userObj.username : username;
+      document.getElementById('delete-client-username').value = displayUser;
+      document.getElementById('delete-client-target-name').innerText = displayUser;
+      openModal('delete-client-modal');
+    }
+
+    async function confirmDeleteClient() {
+      const username = document.getElementById('delete-client-username').value;
+      if (!username) return;
+      const btn = document.getElementById('btn-confirm-delete-client');
+      const origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+
+      try {
+        const res = await fetch('/api/users/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Client "${username}" deleted permanently!`);
+          closeModal('delete-client-modal');
+          loadUsers();
+        } else {
+          showToast(data.error || 'Delete failed', true);
+        }
+      } catch (err) {
+        showToast('Delete request failed: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
       }
     }
 
