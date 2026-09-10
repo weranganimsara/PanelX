@@ -1188,7 +1188,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Web Secret Base Path (e.g. /sgpx_9a2b8c/ or /)</label>
-              <input type="text" id="st-base-path" class="form-input" placeholder="/sgpx_a8f9b2/">
+              <input type="text" id="st-base-path" class="form-input" placeholder="/sgpx_a8f9b2/" oninput="updateIntegrationBox()">
               <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">Custom URL path prefix for maximum security against bot port scanners. (Access via http://IP:PORT/path/)</span>
             </div>
             <div class="form-group">
@@ -2792,12 +2792,14 @@ PANELX_API_KEY=SGX_...</div>
         document.getElementById('st-api-key').value = st.api_secret || '';
         if (document.getElementById('st-base-path')) document.getElementById('st-base-path').value = st.web_base_path || '/';
         defaultPayload = st.default_payload || defaultPayload;
-        updateIntegrationBox(st.api_secret || '');
+        updateIntegrationBox(st.api_secret || '', st.web_base_path || '/');
       } catch (e) {}
     }
 
-    function updateIntegrationBox(apiKey) {
-      const vpsUrl = window.location.origin;
+    function updateIntegrationBox(apiKey, basePath) {
+      const bp = basePath !== undefined ? basePath : (document.getElementById('st-base-path') ? document.getElementById('st-base-path').value : '');
+      const cleanBp = (bp && bp !== '/') ? (bp.startsWith('/') ? bp : '/' + bp) : '';
+      const vpsUrl = window.location.origin + cleanBp;
       const key = apiKey || (document.getElementById('st-api-key') ? document.getElementById('st-api-key').value : '');
       const box = document.getElementById('integration-code-box');
       if (box) {
