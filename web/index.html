@@ -183,95 +183,6 @@
     }
     .sidebar-footer a:hover { color: var(--accent-cyan); }
 
-    /* SGPX Floating Authenticity Seal */
-    .sgpx-floating-seal {
-      position: fixed;
-      bottom: 18px;
-      right: 22px;
-      z-index: 9999;
-      pointer-events: auto;
-      user-select: none;
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
-    }
-    .sgpx-floating-seal:hover {
-      transform: translateY(-2px);
-    }
-    .sgpx-seal-inner {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 6px 14px 6px 10px;
-      background: rgba(8, 12, 22, 0.88);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 242, 254, 0.25);
-      border-radius: 30px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 242, 254, 0.12);
-    }
-    .sgpx-floating-seal:hover .sgpx-seal-inner {
-      border-color: rgba(0, 242, 254, 0.5);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.25);
-    }
-    .sgpx-seal-icon-box {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #7928ca, #00f2fe);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: #fff;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
-    }
-    .sgpx-seal-text {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.15;
-    }
-    .sgpx-seal-brand {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: 1.2px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .sgpx-sub-label {
-      font-size: 8.5px;
-      padding: 1px 4px;
-      border-radius: 4px;
-      background: rgba(0, 242, 254, 0.15);
-      color: var(--accent-cyan);
-      font-weight: 700;
-    }
-    .sgpx-seal-owner {
-      font-size: 8px;
-      font-weight: 800;
-      color: #8b9bb4;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, #9d4edd, #00f2fe);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .sgpx-seal-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
-      animation: sgpxPulse 2s infinite ease-in-out;
-      margin-left: 2px;
-    }
-    @keyframes sgpxPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
-
     /* Sidebar SGPX Verified Badge */
     .sgpx-brand-badge {
       display: flex;
@@ -1274,6 +1185,11 @@
                 <label class="form-label">Change Password (Optional)</label>
                 <input type="password" id="st-admin-pass" class="form-input" placeholder="Leave blank to keep current">
               </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Web Secret Base Path (e.g. /sgpx_9a2b8c/ or /)</label>
+              <input type="text" id="st-base-path" class="form-input" placeholder="/sgpx_a8f9b2/">
+              <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">Custom URL path prefix for maximum security against bot port scanners. (Access via http://IP:PORT/path/)</span>
             </div>
             <div class="form-group">
               <label class="form-label">SSH Domain / Custom Host</label>
@@ -2874,6 +2790,7 @@ PANELX_API_KEY=SGX_...</div>
         document.getElementById('st-admin-pass').value = '';
         document.getElementById('st-domain').value = st.ssh_domain || '';
         document.getElementById('st-api-key').value = st.api_secret || '';
+        if (document.getElementById('st-base-path')) document.getElementById('st-base-path').value = st.web_base_path || '/';
         defaultPayload = st.default_payload || defaultPayload;
         updateIntegrationBox(st.api_secret || '');
       } catch (e) {}
@@ -2921,6 +2838,7 @@ PANELX_API_KEY=${key}`;
         admin_user: document.getElementById('st-admin-user').value,
         admin_pass: document.getElementById('st-admin-pass').value,
         ssh_domain: document.getElementById('st-domain').value,
+        web_base_path: document.getElementById('st-base-path') ? document.getElementById('st-base-path').value : '/',
         api_secret: document.getElementById('st-api-key').value
       };
 
@@ -3009,86 +2927,11 @@ PANELX_API_KEY=${key}`;
     // Start
     checkAuth();
   
-    // =========================================================================
-    // SGPX OFFICIAL BRAND & DIGITAL INTEGRITY PROTECTION
-    // Intellectual Property of SG Home - Anti-Tamper Watermark Guardian
-    // =========================================================================
-    (function initSGPXGuardian() {
-      // 1. Console Cyber Signature
-      console.log(
-        '%c ███████╗ ██████╗ ██████╗ ██╗  ██╗\n' +
-        '%c ██╔════╝██╔════╝ ██╔══██╗╚██╗██╔╝\n' +
-        '%c ███████╗██║  ███╗██████╔╝ ╚███╔╝ \n' +
-        '%c ╚════██║██║   ██║██╔═══╝  ██╔██╗ \n' +
-        '%c ███████║╚██████╔╝██║     ██╔╝ ██╗\n' +
-        '%c ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝\n' +
-        '%c SGPX Core Engine v2.4 • Official Property of SG Home\n' +
-        '%c Cryptographic Integrity & Ownership Verified\n',
-        'color: #00f2fe; font-weight: bold;',
-        'color: #00f2fe; font-weight: bold;',
-        'color: #4facfe; font-weight: bold;',
-        'color: #9d4edd; font-weight: bold;',
-        'color: #9d4edd; font-weight: bold;',
-        'color: #7928ca; font-weight: bold;',
-        'color: #00f59b; font-family: monospace; font-size: 11px; font-weight: bold;',
-        'color: #8b9bb4; font-family: monospace; font-size: 9px;'
-      );
-
-      // 2. Anti-Tamper DOM Self-Healing Watchdog
-      function verifySGPXSeal() {
-        let seal = document.getElementById('sgpx-watermark');
-        if (!seal) {
-          seal = document.createElement('a');
-          seal.id = 'sgpx-watermark';
-          seal.href = 'https://paid.sghome.space/';
-          seal.target = '_blank';
-          seal.className = 'sgpx-floating-seal';
-          seal.setAttribute('title', 'SG Home Official Paid Site • Click to Visit (https://paid.sghome.space)');
-          seal.style.cssText = 'text-decoration: none; cursor: pointer;';
-          seal.innerHTML = `
-            <div class="sgpx-seal-inner">
-              <div class="sgpx-seal-icon-box"><i class="fa-solid fa-shield-halved"></i></div>
-              <div class="sgpx-seal-text">
-                <span class="sgpx-seal-brand">SGPX <span class="sgpx-sub-label">CORE</span></span>
-                <span class="sgpx-seal-owner">SG HOME OFFICIAL</span>
-              </div>
-              <span class="sgpx-seal-dot"></span>
-            </div>
-          `;
-          document.body.appendChild(seal);
-        } else {
-          if (!seal.getAttribute('href')) {
-            seal.setAttribute('href', 'https://paid.sghome.space/');
-            seal.setAttribute('target', '_blank');
-          }
-          seal.style.cursor = 'pointer';
-        }
-        seal.style.setProperty('display', 'block', 'important');
-        seal.style.setProperty('opacity', '1', 'important');
-        seal.style.setProperty('visibility', 'visible', 'important');
-        seal.style.setProperty('pointer-events', 'auto', 'important');
-      }
-
-      verifySGPXSeal();
-      const observer = new MutationObserver(() => verifySGPXSeal());
-      observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-    })();
+    
 
 </script>
 
-  <!-- SGPX Floating Cybernetic Seal / Watermark -->
-  <a id="sgpx-watermark" href="https://paid.sghome.space/" target="_blank" class="sgpx-floating-seal" title="SG Home Official Paid Site • Click to Visit (https://paid.sghome.space)" style="text-decoration: none; cursor: pointer;">
-    <div class="sgpx-seal-inner">
-      <div class="sgpx-seal-icon-box">
-        <i class="fa-solid fa-shield-halved"></i>
-      </div>
-      <div class="sgpx-seal-text">
-        <span class="sgpx-seal-brand">SGPX <span class="sgpx-sub-label">CORE</span></span>
-        <span class="sgpx-seal-owner">SG HOME OFFICIAL</span>
-      </div>
-      <span class="sgpx-seal-dot"></span>
-    </div>
-  </a>
+  
 
 </body>
 

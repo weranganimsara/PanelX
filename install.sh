@@ -219,13 +219,27 @@ command -v iptables >/dev/null 2>&1 && {
     iptables -I INPUT -p udp --dport 7300 -j ACCEPT 2>/dev/null || true
 }
 
+# Generate Random Stealth Base Path starting with sgpx_
+RAND_HEX=$(head -c 16 /dev/urandom | md5sum | head -c 6 2>/dev/null || echo "sec$((RANDOM%9000+1000))")
+SGPX_WEB_PATH="/sgpx_${RAND_HEX}/"
+
+# Save initial web_base_path in SQLite
+python3 -c "
+import sqlite3
+conn = sqlite3.connect('/etc/panelx/panelx.db')
+conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'web_base_path\', \'$SGPX_WEB_PATH\')')
+conn.commit()
+conn.close()
+" 2>/dev/null || true
+
 PUB_IP=$(curl -s -4 ifconfig.me || curl -s -4 icanhazip.com || echo "YOUR_VPS_IP")
 
 echo -e "\n${CYAN}======================================================${NC}"
 echo -e "${GREEN}🎉 PANELX INSTALLATION COMPLETED SUCCESSFULLY! 🎉${NC}"
 echo -e "              ${YELLOW}Powered by SG Home${NC}"
 echo -e "${CYAN}======================================================${NC}"
-echo -e "  ${GREEN}● Web UI URL    :${NC} ${YELLOW}http://${PUB_IP}:7788${NC}"
+echo -e "  ${GREEN}● Web UI URL    :${NC} ${YELLOW}http://${PUB_IP}:7788${SGPX_WEB_PATH}${NC}"
+echo -e "  ${GREEN}● Web Base Path :${NC} ${PURPLE}${SGPX_WEB_PATH}${NC}"
 echo -e "  ${GREEN}● Default User  :${NC} ${CYAN}admin${NC}"
 echo -e "  ${GREEN}● Default Pass  :${NC} ${CYAN}admin${NC}"
 echo -e "  ${GREEN}● WS Ports      :${NC} ${PURPLE}80, 8080, 443, 8880${NC}"

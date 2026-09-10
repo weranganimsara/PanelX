@@ -47,9 +47,12 @@ show_info() {
     local ip=$(get_public_ip)
     local port=$(get_db_setting "panel_port" "7788")
     local user=$(get_db_setting "admin_user" "admin")
+    local path=$(get_db_setting "web_base_path" "/")
+    [ -z "$path" ] && path="/"
 
     echo ""
-    echo -e "  ${GREEN}● Web Access URL :${NC} ${CYAN}http://${ip}:${port}${NC}"
+    echo -e "  ${GREEN}● Web Access URL :${NC} ${CYAN}http://${ip}:${port}${path}${NC}"
+    echo -e "  ${GREEN}● Secret URL Path:${NC} ${PURPLE}${path}${NC}"
     echo -e "  ${GREEN}● Admin Username :${NC} ${YELLOW}${user}${NC}"
     echo -e "  ${GREEN}● Status         :${NC} $(systemctl is-active panelx)"
     echo -e "${CYAN}======================================================${NC}"
@@ -64,12 +67,13 @@ menu() {
     echo -e "  ${PURPLE}[4]${NC} Check Full Service Status"
     echo -e "  ${PURPLE}[5]${NC} Reset Admin Username & Password"
     echo -e "  ${PURPLE}[6]${NC} Change Panel Port"
-    echo -e "  ${PURPLE}[7]${NC} Restart WebSocket Proxy & BadVPN"
-    echo -e "  ${PURPLE}[8]${NC} View Live Logs"
-    echo -e "  ${PURPLE}[9]${NC} Update & Refresh PanelX (Web Dashboard & Core)"
+    echo -e "  ${PURPLE}[7]${NC} Change Web Secret Base Path (e.g. /sgpx_xxxx/)"
+    echo -e "  ${PURPLE}[8]${NC} Restart WebSocket Proxy & BadVPN"
+    echo -e "  ${PURPLE}[9]${NC} View Live Logs"
+    echo -e "  ${PURPLE}[10]${NC} Update & Refresh PanelX (Web Dashboard & Core)"
     echo -e "  ${PURPLE}[0]${NC} Exit"
     echo -e "${CYAN}======================================================${NC}"
-    read -p "Select an option [0-9]: " choice
+    read -p "Select an option [0-10]: " choice
 
     case $choice in
         1)
@@ -139,16 +143,41 @@ conn.close()
             sleep 2; menu
             ;;
         7)
+            echo -e "${CYAN}Current Web Base Path:${NC} $(get_db_setting 'web_base_path' '/')"
+            read -p "Enter new Secret Path (e.g. /sgpx_mycode/ or press Enter for random sgpx_ path, or / for root): " new_path
+            if [ -z "$new_path" ]; then
+                RAND_HEX=$(head -c 16 /dev/urandom | md5sum | head -c 6 2>/dev/null || echo "sec$((RANDOM%9000+1000))")
+                new_path="/sgpx_${RAND_HEX}/"
+            fi
+            if [ "$new_path" != "/" ]; then
+                new_path="/$(echo "$new_path" | sed -e 's|^/*||' -e 's|/*$||')/"
+            fi
+            python3 -c "
+import sqlite3
+conn = sqlite3.connect('$DB_FILE')
+conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'web_base_path\', \'$new_path\')')
+conn.commit()
+conn.close()
+"
+            systemctl restart panelx
+            local cur_ip=$(get_public_ip)
+            local cur_port=$(get_db_setting "panel_port" "7788")
+            echo -e "${GREEN}Web Secret Base Path updated to: ${YELLOW}$new_path${NC}"
+            echo -e "${GREEN}New Web Access URL: ${CYAN}http://${cur_ip}:${cur_port}${new_path}${NC}"
+            read -p "Press Enter to return to menu..."
+            menu
+            ;;
+        8)
             systemctl restart ws-proxy
             systemctl restart badvpn 2>/dev/null
             echo -e "${GREEN}WS-Proxy and BadVPN restarted.${NC}"
             sleep 2; menu
             ;;
-        8)
+        9)
             journalctl -u panelx -f
             menu
             ;;
-        9)
+        10)
             echo -e "${CYAN}Fetching latest updates from official repository...${NC}"
             mkdir -p /etc/panelx/web
             curl -sSL "https://raw.githubusercontent.com/weranganimsara/PanelX/main/web/index.html" -o /etc/panelx/web/index.html
