@@ -597,6 +597,64 @@
   })();
   </script>
 
+
+  <!-- Premium Glassmorphic Cyber Filter Pills CSS -->
+  <style>
+    .filter-pills-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(13, 20, 36, 0.85);
+      padding: 5px 6px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+    .filter-pill {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 6px 14px !important;
+      border-radius: 8px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      color: #8b9bb4 !important;
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      cursor: pointer !important;
+      transition: all 0.25s ease !important;
+      outline: none !important;
+      text-decoration: none !important;
+    }
+    .filter-pill:hover {
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+    }
+    .filter-pill.active {
+      color: #ffffff !important;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(79, 172, 254, 0.12)) !important;
+      border: 1px solid rgba(0, 242, 254, 0.55) !important;
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.25) !important;
+    }
+    .filter-pill .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.08);
+      color: inherit;
+      font-family: monospace;
+      margin-left: 4px;
+    }
+    .filter-pill.active .pill-badge {
+      background: rgba(0, 242, 254, 0.25);
+      color: #00f2fe;
+    }
+  </style>
+
 </head>
 
 <body>
@@ -985,12 +1043,28 @@
       <!-- VIEW 4: SSH CLIENTS (3x-ui style) -->
       <div id="view-clients" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
-          <!-- Filter Pills -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="filter-pill active" onclick="filterClients('all')" id="filter-all"><i class="fa-solid fa-users" style="margin-right: 4px;"></i> All (<span id="cnt-all">0</span>)</button>
-            <button class="filter-pill" onclick="filterClients('active')" id="filter-active"><i class="fa-solid fa-circle-check" style="color: #00f59b; margin-right: 4px;"></i> Active (<span id="cnt-active">0</span>)</button>
-            <button class="filter-pill" onclick="filterClients('online')" id="filter-online"><i class="fa-solid fa-bolt" style="color: #00f2fe; margin-right: 4px;"></i> Online (<span id="cnt-online">0</span>)</button>
-            <button class="filter-pill" onclick="filterClients('expired')" id="filter-expired"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right: 4px;"></i> Expired (<span id="cnt-expired">0</span>)</button>
+          <!-- Premium Filter Pills Container -->
+          <div class="filter-pills-container">
+            <button class="filter-pill active" onclick="filterClients('all')" id="filter-all">
+              <i class="fa-solid fa-users" style="color: #8b9bb4;"></i>
+              <span>All</span>
+              <span class="pill-badge" id="cnt-all">0</span>
+            </button>
+            <button class="filter-pill" onclick="filterClients('active')" id="filter-active">
+              <i class="fa-solid fa-circle-check" style="color: #00f59b;"></i>
+              <span>Active</span>
+              <span class="pill-badge" id="cnt-active">0</span>
+            </button>
+            <button class="filter-pill" onclick="filterClients('online')" id="filter-online">
+              <i class="fa-solid fa-bolt" style="color: #00f2fe;"></i>
+              <span>Online</span>
+              <span class="pill-badge" id="cnt-online">0</span>
+            </button>
+            <button class="filter-pill" onclick="filterClients('expired')" id="filter-expired">
+              <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>
+              <span>Expired</span>
+              <span class="pill-badge" id="cnt-expired">0</span>
+            </button>
           </div>
           <!-- Search & Actions -->
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
