@@ -1858,6 +1858,10 @@ PANELX_API_KEY=SGX_...</div>
         <form id="form-edit-client" onsubmit="handleSaveEditClient(event)">
           <input type="hidden" id="edit-client-username">
           <div class="form-group">
+            <label class="form-label">Attached Inbound Profile</label>
+            <select id="edit-client-inbound" class="form-input"></select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Password</label>
             <input type="text" id="edit-client-pass" class="form-input" required>
           </div>
@@ -2651,7 +2655,7 @@ PANELX_API_KEY=SGX_...</div>
               <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${u.password || '••••••••'}</div>
             </td>
             <td>
-              <span class="inbound-badge">SG Home</span>
+              <span class="inbound-badge">${u.inbound_remark || (allInbounds.length > 0 ? allInbounds[0].remark : 'Carrier Inbound')}</span>
             </td>
             <td>
               ${trafficHtml}
@@ -2715,6 +2719,10 @@ PANELX_API_KEY=SGX_...</div>
     function openEditClientModal(username) {
       const u = allUsers.find(x => x.username.toLowerCase() === username.toLowerCase());
       if (!u) return;
+      const inbSelect = document.getElementById('edit-client-inbound');
+      if (inbSelect && allInbounds) {
+        inbSelect.innerHTML = allInbounds.map(i => `<option value="${i.id}" ${i.id === (u.inbound_id || 0) || (i.remark === u.inbound_remark) ? 'selected' : ''}>${i.remark} (${i.port})</option>`).join('');
+      }
       document.getElementById('edit-client-username').value = u.username;
       document.getElementById('edit-client-display-name').innerText = u.username;
       document.getElementById('edit-client-pass').value = u.password || '';
@@ -2731,7 +2739,8 @@ PANELX_API_KEY=SGX_...</div>
         password: document.getElementById('edit-client-pass').value,
         expiry_date: document.getElementById('edit-client-expiry').value,
         max_devices: parseInt(document.getElementById('edit-client-devices').value),
-        traffic_limit: parseInt(document.getElementById('edit-client-quota').value)
+        traffic_limit: parseInt(document.getElementById('edit-client-quota').value),
+        inbound_id: parseInt(document.getElementById('edit-client-inbound').value || 0)
       };
 
       showToast(`Saving changes for "${body.username}"...`);
