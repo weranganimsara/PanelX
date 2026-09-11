@@ -601,57 +601,71 @@
   <!-- Premium Glassmorphic Cyber Filter Pills CSS -->
   <style>
     .filter-pills-container {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(13, 20, 36, 0.85);
-      padding: 5px 6px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    }
-    .filter-pill {
       display: inline-flex !important;
       align-items: center !important;
       gap: 6px !important;
+      background: rgba(13, 20, 36, 0.95) !important;
+      padding: 5px 6px !important;
+      border-radius: 12px !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    }
+    button.filter-pill,
+    .filter-pills-container button,
+    .filter-pill {
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
       padding: 6px 14px !important;
       border-radius: 8px !important;
       font-size: 12px !important;
       font-weight: 600 !important;
+      font-family: inherit !important;
       color: #8b9bb4 !important;
-      background: transparent !important;
-      border: 1px solid transparent !important;
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
       cursor: pointer !important;
-      transition: all 0.25s ease !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
       outline: none !important;
+      box-shadow: none !important;
       text-decoration: none !important;
     }
+    button.filter-pill:hover,
+    .filter-pills-container button:hover,
     .filter-pill:hover {
       color: #ffffff !important;
-      background: rgba(255, 255, 255, 0.06) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(0, 242, 254, 0.4) !important;
+      transform: translateY(-1px);
     }
+    button.filter-pill.active,
+    .filter-pills-container button.active,
     .filter-pill.active {
       color: #ffffff !important;
-      background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(79, 172, 254, 0.12)) !important;
-      border: 1px solid rgba(0, 242, 254, 0.55) !important;
-      box-shadow: 0 0 16px rgba(0, 242, 254, 0.25) !important;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(79, 172, 254, 0.15)) !important;
+      border: 1px solid #00f2fe !important;
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.35) !important;
+      transform: translateY(-1px);
     }
-    .filter-pill .pill-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.08);
-      color: inherit;
-      font-family: monospace;
+    .pill-badge {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 2px 7px !important;
+      border-radius: 10px !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #cbd5e1 !important;
+      font-family: monospace !important;
       margin-left: 4px;
     }
+    button.filter-pill.active .pill-badge,
     .filter-pill.active .pill-badge {
-      background: rgba(0, 242, 254, 0.25);
-      color: #00f2fe;
+      background: rgba(0, 242, 254, 0.3) !important;
+      color: #00f2fe !important;
     }
   </style>
 
@@ -1044,23 +1058,23 @@
       <div id="view-clients" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
           <!-- Premium Filter Pills Container -->
-          <div class="filter-pills-container">
-            <button class="filter-pill active" onclick="filterClients('all')" id="filter-all">
+          <div class="filter-pills-container" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(13, 20, 36, 0.95); padding: 5px 6px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);">
+            <button type="button" class="filter-pill active" onclick="filterClients('all')" id="filter-all">
               <i class="fa-solid fa-users" style="color: #8b9bb4;"></i>
               <span>All</span>
               <span class="pill-badge" id="cnt-all">0</span>
             </button>
-            <button class="filter-pill" onclick="filterClients('active')" id="filter-active">
+            <button type="button" class="filter-pill" onclick="filterClients('active')" id="filter-active">
               <i class="fa-solid fa-circle-check" style="color: #00f59b;"></i>
               <span>Active</span>
               <span class="pill-badge" id="cnt-active">0</span>
             </button>
-            <button class="filter-pill" onclick="filterClients('online')" id="filter-online">
+            <button type="button" class="filter-pill" onclick="filterClients('online')" id="filter-online">
               <i class="fa-solid fa-bolt" style="color: #00f2fe;"></i>
               <span>Online</span>
               <span class="pill-badge" id="cnt-online">0</span>
             </button>
-            <button class="filter-pill" onclick="filterClients('expired')" id="filter-expired">
+            <button type="button" class="filter-pill" onclick="filterClients('expired')" id="filter-expired">
               <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>
               <span>Expired</span>
               <span class="pill-badge" id="cnt-expired">0</span>
