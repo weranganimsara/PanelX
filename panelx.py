@@ -34,6 +34,9 @@ import socket
 import signal
 import threading
 import urllib.parse
+import random
+import base64
+import gzip
 from datetime import datetime, timedelta
 
 # Reconfigure stdout for UTF-8 compatibility
@@ -49,6 +52,7 @@ if sys.stdout.encoding != 'utf-8':
 PANEL_PORT = 7788
 DATA_DIR = "/etc/panelx"
 DB_PATH = os.path.join(DATA_DIR, "panelx.db")
+DB_FILE = DB_PATH
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
 # Ensure directories exist
@@ -1081,7 +1085,7 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             if not self.is_authenticated():
                 self.send_json(401, {"error": "Unauthorized"})
                 return
-            db_path = DB_FILE
+            db_path = DB_PATH
             if os.path.exists(db_path):
                 with open(db_path, "rb") as f:
                     db_bytes = f.read()
@@ -1691,7 +1695,7 @@ class FalconFirewallHandler(http.server.BaseHTTPRequestHandler):
             if db_b64:
                 import base64
                 db_data = base64.b64decode(db_b64)
-                with open(DB_FILE, "wb") as f:
+                with open(DB_PATH, "wb") as f:
                     f.write(db_data)
                 sync_users_db()
                 audit_log("admin", "backup_restore", "Database restored successfully", client_ip)
