@@ -669,6 +669,162 @@
     }
   </style>
 
+
+  <!-- 3x-ui Pure Client Table Styling -->
+  <style>
+    /* Toggle Switch */
+    .switch-toggle {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+    .switch-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 20px;
+    }
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    .switch-toggle input:checked + .switch-slider {
+      background-color: #0084ff;
+      box-shadow: 0 0 10px rgba(0, 132, 255, 0.4);
+    }
+    .switch-toggle input:checked + .switch-slider:before {
+      transform: translateX(16px);
+    }
+
+    /* Badges */
+    .badge-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #00f59b;
+      background: rgba(0, 245, 155, 0.1);
+      border: 1px solid rgba(0, 245, 155, 0.25);
+    }
+    .badge-offline {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #8b9bb4;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #00f59b;
+      box-shadow: 0 0 8px #00f59b;
+      animation: pulse 2s infinite;
+    }
+    .inbound-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #00f2fe;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.2);
+    }
+    .badge-purple {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #b57edc;
+      background: rgba(181, 126, 220, 0.12);
+    }
+    .badge-green {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #00f59b;
+      background: rgba(0, 245, 155, 0.1);
+    }
+    .badge-blue {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .badge-red {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    /* Traffic Progress Bar */
+    .traffic-bar-bg {
+      flex: 1;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      min-width: 80px;
+    }
+    .traffic-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #9d4edd, #00f2fe);
+    }
+
+    /* Actions 3xui clean icons */
+    .action-btn-clean {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .action-btn-clean:hover {
+      color: #00f2fe;
+      transform: translateY(-1px);
+    }
+    .action-btn-clean.delete-action:hover {
+      color: #ef4444;
+    }
+  </style>
+
 </head>
 
 <body>
@@ -1100,13 +1256,14 @@
             <table>
               <thead>
                 <tr>
-                  <th>Client Username</th>
-                  <th>Password</th>
-                  <th>Expiry Date</th>
-                  <th>Device Limit</th>
-                  <th>Data Quota</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th style="width: 65px;">Enabled</th>
+                  <th style="width: 85px;">Online</th>
+                  <th>Client</th>
+                  <th>Attached inbounds</th>
+                  <th style="min-width: 170px;">Traffic</th>
+                  <th style="width: 95px;">Remaining</th>
+                  <th style="width: 95px;">Duration</th>
+                  <th style="width: 160px; text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="user-table-body">
@@ -1685,6 +1842,85 @@ PANELX_API_KEY=SGX_...</div>
           </div>
           <textarea id="bulk-export-text" readonly style="width: 100%; height: 140px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--accent-cyan); font-family: monospace; font-size: 11px; padding: 10px; resize: none; box-sizing: border-box;"></textarea>
         </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- MODAL: EDIT CLIENT (3x-ui Pro Feature) -->
+  <div id="modal-edit-client" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-size: 16px; color: #fff; font-weight: 700;"><i class="fa-solid fa-pen" style="color: var(--accent-cyan); margin-right: 8px;"></i> Edit Client: <span id="edit-client-display-name" style="color: var(--accent-cyan);"></span></h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-edit-client')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-edit-client" onsubmit="handleSaveEditClient(event)">
+          <input type="hidden" id="edit-client-username">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="text" id="edit-client-pass" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Expiry Date</label>
+              <input type="date" id="edit-client-expiry" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Device Limit</label>
+              <input type="number" id="edit-client-devices" class="form-input" min="1" max="10" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Traffic Quota (GB, 0 = Unlimited)</label>
+            <input type="number" id="edit-client-quota" class="form-input" min="0" required>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-client')">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CLIENT INFO (3x-ui Pro Feature) -->
+  <div id="modal-client-info" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 style="font-size: 16px; color: #fff; font-weight: 700;"><i class="fa-solid fa-circle-info" style="color: var(--accent-cyan); margin-right: 8px;"></i> Client Details</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-client-info')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <span style="color: var(--text-muted);">Username:</span>
+            <span style="font-weight: 700; color: #fff;" id="info-client-name"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <span style="color: var(--text-muted);">Password:</span>
+            <span style="font-family: monospace; color: var(--accent-cyan);" id="info-client-pass"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <span style="color: var(--text-muted);">Status:</span>
+            <span style="font-weight: 600; color: #00f59b;" id="info-client-status"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <span style="color: var(--text-muted);">Expiry Date:</span>
+            <span style="color: #cbd5e1;" id="info-client-expiry"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <span style="color: var(--text-muted);">Active Devices:</span>
+            <span style="color: #cbd5e1;" id="info-client-devices"></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <span style="color: var(--text-muted);">Traffic Used:</span>
+            <span style="color: #b57edc; font-weight: 600;" id="info-client-quota"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeModal('modal-client-info')">Close</button>
       </div>
     </div>
   </div>
@@ -2374,64 +2610,65 @@ PANELX_API_KEY=SGX_...</div>
     function renderUsers(users) {
       const tbody = document.getElementById('user-table-body');
       if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No client accounts configured. Click "Add Client" to create one!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">No client accounts configured. Click "Add Client" to create one!</td></tr>';
         return;
       }
 
       tbody.innerHTML = users.map(u => {
-        let tagClass = 'tag-active';
-        let tagText = `${u.days_left} Days Left`;
-        if (u.is_expired) { tagClass = 'tag-danger'; tagText = 'Expired'; }
-        else if (u.days_left <= 3) { tagClass = 'tag-warning'; }
-
-        let bwHtml = '';
-        let bwLimit = u.bandwidth_gb || 0;
-        if (bwLimit === 0) {
-          bwHtml = '<span class="tag tag-blue"><i class="fa-solid fa-infinity"></i> Unlimited</span>';
-        } else {
-          let usedGB = u.used_gb || 0;
-          let pct = u.usage_percent || 0;
-          let barColor = pct >= 95 ? 'var(--accent-red, #ef4444)' : (pct >= 75 ? 'var(--accent-yellow, #f59e0b)' : 'var(--accent-green, #10b981)');
-          bwHtml = `
-            <div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px;">
-                <span style="font-weight: 600; color: #fff;">${usedGB} / ${bwLimit} GB</span>
-                <span style="color: ${barColor}; font-weight: 700;">${pct}%</span>
-              </div>
-              <div style="width: 100px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                <div style="width: ${pct}%; height: 100%; background: ${barColor};"></div>
-              </div>
-            </div>
-          `;
+        let isOnline = (u.active_connections || 0) > 0;
+        let isEnabled = !u.is_locked;
+        let bwLimit = u.bandwidth_gb || u.traffic_limit_gb || 0;
+        let usedGB = typeof u.used_gb !== 'undefined' ? u.used_gb : (u.traffic_used_gb || 0);
+        let pct = bwLimit > 0 ? Math.min(100, Math.round((usedGB / bwLimit) * 100)) : 100;
+        
+        let remainingHtml = bwLimit === 0 ? '<span class="badge-purple">∞</span>' : `<span class="badge-green">${Math.max(0, bwLimit - usedGB).toFixed(1)} GB</span>`;
+        let durationHtml = '<span class="badge-purple">∞</span>';
+        if (u.expiry_date) {
+          if (u.is_expired) durationHtml = '<span class="badge-red">Expired</span>';
+          else durationHtml = `<span class="badge-blue">${u.days_left || 0}d Left</span>`;
         }
 
-        let statusBadge = '<span class="tag tag-active">Active</span>';
-        if (u.is_data_exhausted) {
-          statusBadge = '<span class="tag tag-danger"><i class="fa-solid fa-triangle-exclamation"></i> Quota Full</span>';
-        } else if (u.is_expired) {
-          statusBadge = '<span class="tag tag-danger">Expired</span>';
-        }
+        let trafficHtml = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11.5px; font-weight: 600; color: #cbd5e1; min-width: 55px;">${usedGB} GB</span>
+            <div class="traffic-bar-bg"><div class="traffic-bar-fill" style="width: ${pct}%;"></div></div>
+            <span style="font-size: 11.5px; color: ${bwLimit === 0 ? '#b57edc' : '#8b9bb4'}; font-weight: 700;">${bwLimit === 0 ? '∞' : bwLimit + ' GB'}</span>
+          </div>`;
 
         return `
           <tr>
             <td>
-              <div style="font-weight: 700; color: #fff;"><i class="fa-solid fa-user" style="color: var(--accent-cyan); margin-right: 6px;"></i> ${u.username}</div>
-              ${u.notes ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${u.notes}</div>` : ''}
+              <label class="switch-toggle">
+                <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleClientLock('${u.username}')">
+                <span class="switch-slider"></span>
+              </label>
             </td>
-            <td><code style="color: var(--accent-cyan);">${u.password}</code></td>
             <td>
-              <span class="tag ${tagClass}">${tagText}</span>
-              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${u.expiry_date}</div>
+              ${isOnline ? '<span class="badge-online"><span class="badge-dot"></span> Online</span>' : '<span class="badge-offline">Offline</span>'}
             </td>
-            <td><i class="fa-solid fa-mobile-screen"></i> Max ${u.simultaneous_limit} Devices</td>
-            <td>${bwHtml}</td>
-            <td>${statusBadge}</td>
             <td>
-              <div class="action-btn-group">
-                <button class="icon-btn" title="View Config / QR Code" onclick="openConfigModal('${u.username}')"><i class="fa-solid fa-qrcode"></i></button>
-                <button class="icon-btn" title="Renew Client (+30 Days)" onclick="renewClient('${u.username}')"><i class="fa-solid fa-clock-rotate-left"></i></button>
-                ${bwLimit > 0 ? `<button class="icon-btn" title="Reset Bandwidth Quota (0 GB)" onclick="resetClientBandwidth('${u.username}')"><i class="fa-solid fa-rotate-left"></i></button>` : ''}
-                <button class="icon-btn delete" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
+              <div style="font-weight: 700; color: #fff; font-size: 13px;">${u.username}</div>
+              <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${u.password || '••••••••'}</div>
+            </td>
+            <td>
+              <span class="inbound-badge">SG Home</span>
+            </td>
+            <td>
+              ${trafficHtml}
+            </td>
+            <td>
+              ${remainingHtml}
+            </td>
+            <td>
+              ${durationHtml}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;">
+                <button class="action-btn-clean" title="View Config / QR Code" onclick="openConfigModal('${u.username}')"><i class="fa-solid fa-qrcode"></i></button>
+                <button class="action-btn-clean" title="Client Details" onclick="openClientInfoModal('${u.username}')"><i class="fa-solid fa-circle-info"></i></button>
+                <button class="action-btn-clean" title="Renew (+30 Days)" onclick="renewClient('${u.username}')"><i class="fa-solid fa-arrows-rotate"></i></button>
+                <button class="action-btn-clean" title="Edit Client" onclick="openEditClientModal('${u.username}')"><i class="fa-solid fa-pen"></i></button>
+                <button class="action-btn-clean delete-action" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -2439,87 +2676,80 @@ PANELX_API_KEY=SGX_...</div>
       }).join('');
     }
 
-    function filterUsers() {
-      const q = document.getElementById('search-input').value.toLowerCase();
-      const filtered = allUsers.filter(u => u.username.toLowerCase().includes(q) || (u.notes && u.notes.toLowerCase().includes(q)));
-      renderUsers(filtered);
-    }
-
-    function setBwPreset(inputId, val) {
-      const el = document.getElementById(inputId);
-      if (el) el.value = val;
-    }
-
-    async function resetClientBandwidth(username) {
-      if (!confirm(`Are you sure you want to reset bandwidth usage to 0 GB for ${username}?`)) return;
+    // Toggle User Lock / Enable
+    async function toggleClientLock(username) {
       try {
-        const res = await fetch('/api/user/reset-bandwidth', {
+        const res = await fetch('/api/users/toggle-lock', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username })
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`Bandwidth reset for ${username}`);
+          showToast(`Client "${username}" is now ${data.is_locked ? 'Locked (Disabled)' : 'Enabled'}`);
           loadUsers();
         } else {
-          showToast(data.error || 'Failed to reset bandwidth', true);
+          showToast(data.error || 'Failed to toggle client state', true);
+          loadUsers();
         }
       } catch (e) {
-        showToast('Error resetting bandwidth', true);
+        showToast('Error: ' + e.message, true);
+        loadUsers();
       }
     }
 
-    async function handleCreateUser(e) {
+    // Client Info Details Modal
+    function openClientInfoModal(username) {
+      const u = allUsers.find(x => x.username.toLowerCase() === username.toLowerCase());
+      if (!u) return;
+      document.getElementById('info-client-name').innerText = u.username;
+      document.getElementById('info-client-pass').innerText = u.password || '••••••••';
+      document.getElementById('info-client-expiry').innerText = u.expiry_date || 'Lifetime (No Expiry)';
+      document.getElementById('info-client-devices').innerText = `${u.active_connections || 0} / ${u.max_devices || 2} Online`;
+      document.getElementById('info-client-quota').innerText = `${u.used_gb || 0} GB used of ${u.bandwidth_gb === 0 ? 'Unlimited' : u.bandwidth_gb + ' GB'}`;
+      document.getElementById('info-client-status').innerText = u.is_locked ? 'Locked (Disabled)' : (u.is_expired ? 'Expired' : 'Active');
+      openModal('modal-client-info');
+    }
+
+    // Edit Client Modal
+    function openEditClientModal(username) {
+      const u = allUsers.find(x => x.username.toLowerCase() === username.toLowerCase());
+      if (!u) return;
+      document.getElementById('edit-client-username').value = u.username;
+      document.getElementById('edit-client-display-name').innerText = u.username;
+      document.getElementById('edit-client-pass').value = u.password || '';
+      document.getElementById('edit-client-expiry').value = u.expiry_date || '';
+      document.getElementById('edit-client-devices').value = u.max_devices || 2;
+      document.getElementById('edit-client-quota').value = u.bandwidth_gb || u.traffic_limit_gb || 0;
+      openModal('modal-edit-client');
+    }
+
+    async function handleSaveEditClient(e) {
       e.preventDefault();
       const body = {
-        username: document.getElementById('cu-username').value,
-        password: document.getElementById('cu-password').value,
-        days: document.getElementById('cu-days').value,
-        simultaneous_limit: document.getElementById('cu-limit').value,
-        bandwidthGB: parseInt(document.getElementById('cu-bandwidth').value) || 0,
-        notes: document.getElementById('cu-notes').value
+        username: document.getElementById('edit-client-username').value,
+        password: document.getElementById('edit-client-pass').value,
+        expiry_date: document.getElementById('edit-client-expiry').value,
+        max_devices: parseInt(document.getElementById('edit-client-devices').value),
+        traffic_limit: parseInt(document.getElementById('edit-client-quota').value)
       };
 
-      const res = await fetch('/api/users/create', {
+      showToast(`Saving changes for "${body.username}"...`);
+      const res = await fetch('/api/users/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
       const data = await res.json();
       if (data.success) {
-        showToast(`Client "${body.username}" created!`);
-        closeModal('create-modal');
+        showToast(`Client "${body.username}" updated successfully!`);
+        closeModal('modal-edit-client');
         loadUsers();
-        openConfigModal(body.username);
       } else {
-        showToast(data.error || 'Create failed', true);
+        showToast(data.error || 'Failed to update client', true);
       }
     }
 
-    async function handleBulkCreate(e) {
-      e.preventDefault();
-      const body = {
-        count: document.getElementById('bu-count').value,
-        prefix: document.getElementById('bu-prefix').value,
-        days: document.getElementById('bu-days').value,
-        simultaneous_limit: document.getElementById('bu-limit').value
-      };
-
-      const res = await fetch('/api/users/bulk-create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(`Generated ${data.created_count} accounts!`);
-        closeModal('bulk-modal');
-        loadUsers();
-      } else {
-        showToast(data.error || 'Bulk create failed', true);
-      }
-    }
 
     async function renewClient(username) {
       const days = prompt(`Extend "${username}" by how many days?`, "30");
