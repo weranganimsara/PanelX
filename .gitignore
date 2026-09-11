@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 
 3x-ui-main/
+
+panelx_source.py
+*.source.py
