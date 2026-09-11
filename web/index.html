@@ -982,16 +982,28 @@
         </div>
       </div>
 
-      <!-- VIEW 4: SSH CLIENTS -->
+      <!-- VIEW 4: SSH CLIENTS (3x-ui style) -->
       <div id="view-clients" style="display: none;">
-        <div class="toolbar">
-          <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="search-input" placeholder="Search clients..." oninput="filterUsers()">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <!-- Filter Pills -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="filter-pill active" onclick="filterClients('all')" id="filter-all"><i class="fa-solid fa-users" style="margin-right: 4px;"></i> All (<span id="cnt-all">0</span>)</button>
+            <button class="filter-pill" onclick="filterClients('active')" id="filter-active"><i class="fa-solid fa-circle-check" style="color: #00f59b; margin-right: 4px;"></i> Active (<span id="cnt-active">0</span>)</button>
+            <button class="filter-pill" onclick="filterClients('online')" id="filter-online"><i class="fa-solid fa-bolt" style="color: #00f2fe; margin-right: 4px;"></i> Online (<span id="cnt-online">0</span>)</button>
+            <button class="filter-pill" onclick="filterClients('expired')" id="filter-expired"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right: 4px;"></i> Expired (<span id="cnt-expired">0</span>)</button>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-outline" onclick="openBulkModal()"><i class="fa-solid fa-users"></i> Bulk Generate</button>
-            <button class="btn btn-primary" onclick="openCreateModal()"><i class="fa-solid fa-user-plus"></i> Add Client</button>
+          <!-- Search & Actions -->
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <div class="search-box" style="margin: 0; min-width: 200px;">
+              <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+              <input type="text" id="search-input" placeholder="Search clients..." oninput="filterUsers()">
+            </div>
+            <button class="btn btn-outline" onclick="openBulkCreateModal()" style="border: 1px solid rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.08); color: var(--accent-cyan);">
+              <i class="fa-solid fa-users-line"></i> Bulk Generate
+            </button>
+            <button class="btn btn-primary" onclick="openCreateUserModal()">
+              <i class="fa-solid fa-user-plus"></i> Add Client
+            </button>
           </div>
         </div>
 
@@ -1305,6 +1317,23 @@
           <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Use this PanelX URL and API Secret Key to connect external systems, applications, or bots:</p>
           <div class="code-box" id="integration-code-box" style="color: var(--accent-green); white-space: pre-wrap; font-family: var(--font-mono); font-size: 12px;">PANELX_URL=http://127.0.0.1:7788
 PANELX_API_KEY=SGX_...</div>
+        </div>
+
+        <!-- Backup & Database Restore (3x-ui style) -->
+        <div id="backup-restore-card" class="content-card" style="max-width: 700px; margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="font-size: 15px; color: #fff;"><i class="fa-solid fa-database" style="color: var(--accent-cyan); margin-right: 6px;"></i> Database Backup & Restore</h3>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Download a complete snapshot of all clients, settings, and firewall rules or restore from a previous backup.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="downloadDatabaseBackup()" style="border: 1px solid rgba(0, 242, 254, 0.4); color: var(--accent-cyan); background: rgba(0, 242, 254, 0.06);">
+              <i class="fa-solid fa-download"></i> Download Full Backup (.db)
+            </button>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('backup-file-input').click()">
+              <i class="fa-solid fa-upload"></i> Restore Backup File
+            </button>
+            <input type="file" id="backup-file-input" style="display: none;" onchange="handleRestoreBackup(event)" accept=".db,.sqlite,.sqlite3">
+          </div>
         </div>
       </div>
 
