@@ -1089,7 +1089,7 @@
             <button class="btn btn-outline" onclick="openBulkCreateModal()" style="border: 1px solid rgba(0, 242, 254, 0.4); background: rgba(0, 242, 254, 0.08); color: var(--accent-cyan);">
               <i class="fa-solid fa-users-line"></i> Bulk Generate
             </button>
-            <button class="btn btn-primary" onclick="openCreateUserModal()">
+            <button class="btn btn-primary" onclick="openCreateModal()">
               <i class="fa-solid fa-user-plus"></i> Add Client
             </button>
           </div>
@@ -2431,8 +2431,7 @@ PANELX_API_KEY=SGX_...</div>
                 <button class="icon-btn" title="View Config / QR Code" onclick="openConfigModal('${u.username}')"><i class="fa-solid fa-qrcode"></i></button>
                 <button class="icon-btn" title="Renew Client (+30 Days)" onclick="renewClient('${u.username}')"><i class="fa-solid fa-clock-rotate-left"></i></button>
                 ${bwLimit > 0 ? `<button class="icon-btn" title="Reset Bandwidth Quota (0 GB)" onclick="resetClientBandwidth('${u.username}')"><i class="fa-solid fa-rotate-left"></i></button>` : ''}
-                <button class="icon-btn" style="color: var(--accent-cyan);" title="QR & App Configs" onclick="openQrModal('${u.username}', '${u.password || ''}')"><i class="fa-solid fa-qrcode"></i></button>
-              <button class="icon-btn delete" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
+                <button class="icon-btn delete" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -2581,7 +2580,8 @@ PANELX_API_KEY=SGX_...</div>
 
     // Config Modal & NetMod Exporter
     async function openConfigModal(username) {
-      currentUser = allUsers.find(u => u.username === username);
+      const userList = (allUsers && allUsers.length) ? allUsers : allLoadedClients;
+      currentUser = userList.find(u => u.username.toLowerCase() === (username || '').toLowerCase());
       if (!currentUser) return;
 
       if (allInbounds.length === 0) {
@@ -3317,6 +3317,7 @@ PANELX_API_KEY=${key}`;
       try {
         const res = await fetch('/api/users/list');
         const data = await res.json();
+        allUsers = data.users || [];
         allLoadedClients = data.users || [];
         
         // Update counts
