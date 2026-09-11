@@ -2615,7 +2615,7 @@ PANELX_API_KEY=SGX_...</div>
       }
 
       tbody.innerHTML = users.map(u => {
-        let isOnline = (u.active_connections || 0) > 0;
+        let isOnline = (u.active_connections || 0) > 0 || u.is_online === true;
         let isEnabled = !u.is_locked;
         let bwLimit = u.bandwidth_gb || u.traffic_limit_gb || 0;
         let usedGB = typeof u.used_gb !== 'undefined' ? u.used_gb : (u.traffic_used_gb || 0);
@@ -3534,7 +3534,7 @@ PANELX_API_KEY=${key}`;
       if (type === 'active') {
         filtered = allLoadedClients.filter(u => !u.is_locked && (!u.expiry_date || u.expiry_date >= nowStr));
       } else if (type === 'online') {
-        filtered = allLoadedClients.filter(u => (u.active_connections || 0) > 0);
+        filtered = allLoadedClients.filter(u => (u.active_connections || 0) > 0 || u.is_online === true);
       } else if (type === 'expired') {
         filtered = allLoadedClients.filter(u => u.expiry_date && u.expiry_date < nowStr);
       }
@@ -3553,7 +3553,7 @@ PANELX_API_KEY=${key}`;
         // Update counts
         const nowStr = new Date().toISOString().split('T')[0];
         const activeCount = allLoadedClients.filter(u => !u.is_locked && (!u.expiry_date || u.expiry_date >= nowStr)).length;
-        const onlineCount = allLoadedClients.filter(u => (u.active_connections || 0) > 0).length;
+        const onlineCount = allLoadedClients.filter(u => (u.active_connections || 0) > 0 || u.is_online === true).length;
         const expiredCount = allLoadedClients.filter(u => u.expiry_date && u.expiry_date < nowStr).length;
 
         if (document.getElementById('cnt-all')) document.getElementById('cnt-all').innerText = allLoadedClients.length;
