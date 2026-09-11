@@ -203,6 +203,31 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
+# Apply Linux BBR and TCP Speed Optimizations
+echo -e "\n${BLUE}[*] Applying Linux BBR & TCP Kernel Speed Optimizations...${NC}"
+cat <<'EOF' > /etc/sysctl.d/99-panelx-bbr.conf
+# PanelX Ultra-Speed Kernel & TCP BBR Optimization
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_slow_start_after_idle = 0
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 15
+net.ipv4.tcp_keepalive_time = 300
+net.ipv4.tcp_keepalive_probes = 5
+net.ipv4.tcp_keepalive_intvl = 15
+net.ipv4.tcp_max_syn_backlog = 16384
+net.core.somaxconn = 16384
+net.core.netdev_max_backlog = 16384
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 65536 16777216
+net.ipv4.tcp_mtu_probing = 1
+fs.file-max = 1048576
+EOF
+sysctl -p /etc/sysctl.d/99-panelx-bbr.conf >/dev/null 2>&1 || true
+
 echo -e "\n${BLUE}[6/6] Enabling services & configuring firewall...${NC}"
 systemctl daemon-reload
 systemctl enable --now panelx >/dev/null 2>&1
