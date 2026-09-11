@@ -3330,9 +3330,20 @@ PANELX_API_KEY=${key}`;
     }
 
     // 5. Database Backup & Restore
-    function downloadDatabaseBackup() {
-      window.location.href = '/api/backup/export';
-      showToast('Downloading database backup...');
+    async function downloadDatabaseBackup() {
+      try {
+        showToast('Preparing database backup...');
+        const res = await fetch('/api/backup/export');
+        if (!res.ok) throw new Error('Backup failed');
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `panelx-backup-${new Date().toISOString().split('T')[0]}.db`;
+        a.click();
+        showToast('Database backup downloaded!');
+      } catch (e) {
+        showToast('Download failed: ' + e.message, true);
+      }
     }
 
     function handleRestoreBackup(e) {
