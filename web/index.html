@@ -1700,7 +1700,7 @@ PANELX_API_KEY=SGX_...</div>
           </label>
           <div style="display: flex; gap: 6px; align-items: center;">
             <input type="number" id="inb-bandwidth-limit" class="form-input" value="0" min="0" placeholder="0 = Unlimited" style="flex: 1;">
-            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 0)">∞ Unlimited</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 0)"><i class="fa-solid fa-infinity"></i> Unlimited</button>
             <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 250)">250GB</button>
             <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 500)">500GB</button>
             <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('inb-bandwidth-limit', 1000)">1000GB</button>
@@ -1967,7 +1967,7 @@ PANELX_API_KEY=SGX_...</div>
           </label>
           <div style="display: flex; gap: 6px; align-items: center;">
             <input type="number" id="cu-bandwidth" class="form-input" value="0" min="0" placeholder="0 = Unlimited" style="flex: 1;">
-            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 0)">∞ Unlimited</button>
+            <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 0)"><i class="fa-solid fa-infinity"></i> Unlimited</button>
             <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 25)">25GB</button>
             <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 50)">50GB</button>
             <button type="button" class="btn btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="setBwPreset('cu-bandwidth', 100)">100GB</button>
@@ -2087,9 +2087,116 @@ PANELX_API_KEY=SGX_...</div>
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function openCreateModal() { generateRandomPass('cu-password'); openModal('create-modal'); }
+    function openCreateModal() { 
+      const uEl = document.getElementById('cu-username');
+      if (uEl) uEl.value = '';
+      const bEl = document.getElementById('cu-bandwidth');
+      if (bEl) bEl.value = '0';
+      const nEl = document.getElementById('cu-notes');
+      if (nEl) nEl.value = '';
+      generateRandomPass('cu-password'); 
+      openModal('create-modal'); 
+    }
     function openBulkModal() { openModal('bulk-modal'); }
     function openAddRuleModal() { openModal('firewall-modal'); }
+
+    function setBwPreset(inputId, val) {
+      const el = document.getElementById(inputId);
+      if (el) {
+        el.value = val;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    async function handleCreateUser(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const uEl = document.getElementById('cu-username');
+      const pEl = document.getElementById('cu-password');
+      const dEl = document.getElementById('cu-days');
+      const lEl = document.getElementById('cu-limit');
+      const bEl = document.getElementById('cu-bandwidth');
+      const nEl = document.getElementById('cu-notes');
+
+      const username = uEl ? uEl.value.trim() : '';
+      const password = pEl ? pEl.value.trim() : '';
+      const days = dEl ? parseInt(dEl.value) || 30 : 30;
+      const simultaneous_limit = lEl ? parseInt(lEl.value) || 3 : 3;
+      const bandwidth_gb = bEl ? parseInt(bEl.value) || 0 : 0;
+      const notes = nEl ? nEl.value.trim() : '';
+
+      if (!username || !password) {
+        showToast('Username and password are required!', true);
+        return;
+      }
+
+      showToast(`Creating client "${username}"...`);
+      try {
+        const res = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            password,
+            days,
+            simultaneous_limit,
+            bandwidth_gb,
+            notes
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Client "${username}" created successfully!`);
+          closeModal('create-modal');
+          if (uEl) uEl.value = '';
+          if (pEl) pEl.value = '';
+          if (bEl) bEl.value = '0';
+          if (nEl) nEl.value = '';
+          loadUsers();
+        } else {
+          showToast(data.error || 'Failed to create client', true);
+        }
+      } catch (err) {
+        showToast('Network error while creating client', true);
+      }
+    }
+
+    async function handleBulkCreate(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const countEl = document.getElementById('bu-count');
+      const prefixEl = document.getElementById('bu-prefix');
+      const daysEl = document.getElementById('bu-days');
+      const limitEl = document.getElementById('bu-limit');
+
+      const count = countEl ? parseInt(countEl.value) || 5 : 5;
+      const prefix = prefixEl ? prefixEl.value.trim() || 'user' : 'user';
+      const days = daysEl ? parseInt(daysEl.value) || 30 : 30;
+      const simultaneous_limit = limitEl ? parseInt(limitEl.value) || 3 : 3;
+
+      showToast(`Generating ${count} client accounts...`);
+      try {
+        const res = await fetch('/api/users/bulk-create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            count,
+            prefix,
+            days,
+            simultaneous_limit
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Successfully created ${count} accounts!`);
+          closeModal('bulk-modal');
+          loadUsers();
+        } else {
+          showToast(data.error || 'Bulk generation failed', true);
+        }
+      } catch (err) {
+        showToast('Network error during bulk generation', true);
+      }
+    }
 
     function generateRandomPass(id) {
       const chars = "abcdefghjkmnpqrstuvwxyz23456789";
