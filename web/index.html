@@ -2980,7 +2980,7 @@ PANELX_API_KEY=SGX_...</div>
               </label>
             </td>
             <td>
-              ${isOnline ? '<span class="badge-online"><span class="badge-dot"></span> Online</span>' : '<span class="badge-offline">Offline</span>'}
+              ${isOnline ? `<span class="badge-online"><span class="badge-dot"></span> Online${(u.active_connections && u.active_connections > 1) ? ` (${u.active_connections})` : ''}</span>` : '<span class="badge-offline">Offline</span>'}
             </td>
             <td>
               <div style="font-weight: 700; color: #fff; font-size: 13px;">${u.username}</div>

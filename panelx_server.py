@@ -16,6 +16,7 @@ Key Architecture Upgrades:
 """
 
 import os
+import re
 import sys
 import time
 import json
@@ -408,15 +409,44 @@ def get_network_speed():
     return max(rx_speed_kb, 0.0), max(tx_speed_kb, 0.0), rx_bytes, tx_bytes
 
 def get_active_users_telemetry() -> Dict[str, Any]:
-    """Reads live active connection and device info from system_guardian cache."""
+    """Reads live active connection and device info from system_guardian cache with real-time process fallback."""
+    telemetry: Dict[str, Any] = {}
     if os.path.exists(ACTIVE_USERS_FILE):
         try:
             with open(ACTIVE_USERS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return data if isinstance(data, dict) else {}
+                if isinstance(data, dict):
+                    telemetry = data
         except Exception:
             pass
-    return {}
+
+    # If telemetry cache is empty or missing, run ultra-fast direct live scan
+    if not telemetry:
+        try:
+            res = subprocess.run("ps -eo pid,user,args 2>/dev/null", shell=True, capture_output=True, text=True, timeout=1.5)
+            if res.stdout:
+                counts: Dict[str, int] = {}
+                for line in res.stdout.splitlines():
+                    if "sshd:" in line:
+                        m = re.search(r"sshd:\s+([a-zA-Z0-9_\-\.]+)", line)
+                        if m:
+                            u = m.group(1).split("@")[0].strip().lower()
+                            if u not in ["root", "sshd", "nobody", "privsep", "listener", "accepted"]:
+                                if "[priv]" not in line:
+                                    counts[u] = counts.get(u, 0) + 1
+                                elif u not in counts:
+                                    counts[u] = 1
+                for u, cnt in counts.items():
+                    telemetry[u] = {
+                        "active_connections": cnt,
+                        "total_sockets": cnt,
+                        "ips": ["127.0.0.1"],
+                        "last_seen": int(time.time())
+                    }
+        except Exception:
+            pass
+
+    return telemetry
 
 def calculate_health_score(cpu_pct, mem_pct, disk_pct, services):
     score = 100

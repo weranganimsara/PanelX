@@ -21,6 +21,7 @@ import re
 import sys
 import time
 import glob
+import json
 import signal
 import shutil
 import sqlite3
@@ -253,7 +254,7 @@ def get_process_io_bytes(pid: int) -> int:
 
 def scan_active_ssh_sessions(uid_map: Dict[int, str]) -> Dict[str, List[Dict[str, Any]]]:
     """
-    Scans active SSH/VPN sessions using 'ss -tnp' in one single quick command.
+    Scans active SSH/VPN sessions using 'ss -tnp' with supplementary process validation.
     Accurately maps:
     username -> [
         {"pid": int, "remote_ip": str, "remote_port": str, "start_time": int},
@@ -261,98 +262,131 @@ def scan_active_ssh_sessions(uid_map: Dict[int, str]) -> Dict[str, List[Dict[str
     ]
     """
     user_sessions: Dict[str, List[Dict[str, Any]]] = {}
+    seen_pids: Set[int] = set()
 
     # Query TCP established sockets on ports 22, 80, 8080, 443, 8880
     cmd = "ss -tnp '( sport = :22 or sport = :80 or sport = :8080 or sport = :443 or sport = :8880 )'"
     try:
         res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     except Exception:
-        return {}
+        res = None
 
-    lines = res.stdout.splitlines()
-    for line in lines:
-        if not ("ESTAB" in line and "sshd" in line):
-            continue
+    if res and res.stdout:
+        lines = res.stdout.splitlines()
+        for line in lines:
+            if not ("ESTAB" in line and "sshd" in line):
+                continue
 
-        parts = line.split()
-        if len(parts) < 5:
-            continue
+            parts = line.split()
+            if len(parts) < 5:
+                continue
 
-        peer_addr = parts[4]
-        # Parse remote IP & port
-        if ":" in peer_addr:
-            remote_ip = peer_addr.rsplit(":", 1)[0].strip("[]")
-            remote_port = peer_addr.rsplit(":", 1)[1]
-        else:
-            remote_ip = peer_addr
-            remote_port = ""
+            peer_addr = parts[4]
+            # Parse remote IP & port
+            if ":" in peer_addr:
+                remote_ip = peer_addr.rsplit(":", 1)[0].strip("[]")
+                remote_port = peer_addr.rsplit(":", 1)[1]
+            else:
+                remote_ip = peer_addr
+                remote_port = ""
 
-        # Extract PID from users:(("sshd",pid=1234,fd=4))
-        m = re.search(r"pid=(\d+)", line)
-        if not m:
-            continue
-        pid = int(m.group(1))
+            # Extract PID from users:(("sshd",pid=1234,fd=4))
+            m = re.search(r"pid=(\d+)", line)
+            if not m:
+                continue
+            pid = int(m.group(1))
+            if pid in seen_pids:
+                continue
 
-        # Determine user associated with this SSH session PID
-        username = None
+            # Determine user associated with this SSH session PID
+            username = None
 
-        # Method A: Process UID from /proc/<pid>/status
-        status_file = f"/proc/{pid}/status"
-        if os.path.exists(status_file):
-            try:
-                with open(status_file, "r") as sf:
-                    for sline in sf:
-                        if sline.startswith("Uid:"):
-                            uids = sline.split()
-                            if len(uids) >= 2 and uids[1].isdigit():
-                                r_uid = int(uids[1])
-                                if r_uid != 0 and r_uid in uid_map:
-                                    username = uid_map[r_uid]
-                            break
-            except Exception:
-                pass
-
-        # Method B: Process command line /proc/<pid>/cmdline (e.g. sshd: alice [priv] or sshd: alice@notty)
-        if not username:
-            cmdline_file = f"/proc/{pid}/cmdline"
-            if os.path.exists(cmdline_file):
+            # Method A: Process UID from /proc/<pid>/status
+            status_file = f"/proc/{pid}/status"
+            if os.path.exists(status_file):
                 try:
-                    with open(cmdline_file, "r", errors="ignore") as cf:
-                        content = cf.read().replace("\x00", " ")
-                        cm = re.search(r"sshd:\s+([a-zA-Z0-9_\-\.]+)", content)
-                        if cm:
-                            cand = cm.group(1).split("@")[0].strip().lower()
-                            if cand not in ["root", "sshd", "privsep", "nobody"]:
-                                username = cand
+                    with open(status_file, "r") as sf:
+                        for sline in sf:
+                            if sline.startswith("Uid:"):
+                                uids = sline.split()
+                                if len(uids) >= 2 and uids[1].isdigit():
+                                    r_uid = int(uids[1])
+                                    if r_uid != 0 and r_uid in uid_map:
+                                        username = uid_map[r_uid]
+                                break
                 except Exception:
                     pass
 
-        # Method C: Kernel loginuid (/proc/<pid>/loginuid)
-        if not username:
-            loginuid_file = f"/proc/{pid}/loginuid"
-            if os.path.exists(loginuid_file):
-                try:
-                    with open(loginuid_file, "r") as lf:
-                        l_uid_str = lf.read().strip()
-                        if l_uid_str.isdigit() and l_uid_str != "4294967295":
-                            l_uid = int(l_uid_str)
-                            if l_uid in uid_map:
-                                username = uid_map[l_uid]
-                except Exception:
-                    pass
+            # Method B: Process command line /proc/<pid>/cmdline (e.g. sshd: alice [priv] or sshd: alice@notty)
+            if not username:
+                cmdline_file = f"/proc/{pid}/cmdline"
+                if os.path.exists(cmdline_file):
+                    try:
+                        with open(cmdline_file, "r", errors="ignore") as cf:
+                            content = cf.read().replace("\x00", " ")
+                            cm = re.search(r"sshd:\s+([a-zA-Z0-9_\-\.]+)", content)
+                            if cm:
+                                cand = cm.group(1).split("@")[0].strip().lower()
+                                if cand not in ["root", "sshd", "privsep", "nobody", "listener", "accepted"]:
+                                    username = cand
+                    except Exception:
+                        pass
 
-        if username and username not in ["root", "sshd", "nobody"]:
-            username = username.lower()
-            start_time = get_process_start_time(pid)
-            sess_info = {
-                "pid": pid,
-                "remote_ip": remote_ip,
-                "remote_port": remote_port,
-                "start_time": start_time
-            }
-            if username not in user_sessions:
-                user_sessions[username] = []
-            user_sessions[username].append(sess_info)
+            # Method C: Kernel loginuid (/proc/<pid>/loginuid)
+            if not username:
+                loginuid_file = f"/proc/{pid}/loginuid"
+                if os.path.exists(loginuid_file):
+                    try:
+                        with open(loginuid_file, "r") as lf:
+                            l_uid_str = lf.read().strip()
+                            if l_uid_str.isdigit() and l_uid_str != "4294967295":
+                                l_uid = int(l_uid_str)
+                                if l_uid in uid_map:
+                                    username = uid_map[l_uid]
+                    except Exception:
+                        pass
+
+            if username and username not in ["root", "sshd", "nobody", "listener", "accepted"]:
+                username = username.lower()
+                seen_pids.add(pid)
+                start_time = get_process_start_time(pid)
+                sess_info = {
+                    "pid": pid,
+                    "remote_ip": remote_ip,
+                    "remote_port": remote_port,
+                    "start_time": start_time
+                }
+                if username not in user_sessions:
+                    user_sessions[username] = []
+                user_sessions[username].append(sess_info)
+
+    # Method D: Fast process scan fallback for active OpenSSH user sessions
+    try:
+        ps_res = subprocess.run("ps -eo pid,user,args 2>/dev/null", shell=True, capture_output=True, text=True)
+        if ps_res.stdout:
+            for pline in ps_res.stdout.splitlines():
+                if "sshd:" in pline:
+                    pm = re.search(r"sshd:\s+([a-zA-Z0-9_\-\.]+)", pline)
+                    if pm:
+                        cand = pm.group(1).split("@")[0].strip().lower()
+                        if cand not in ["root", "sshd", "privsep", "nobody", "listener", "accepted"]:
+                            parts = pline.split()
+                            if parts and parts[0].isdigit():
+                                p_pid = int(parts[0])
+                                if p_pid not in seen_pids:
+                                    seen_pids.add(p_pid)
+                                    if cand not in user_sessions:
+                                        user_sessions[cand] = []
+                                    # Add session if not priv process duplicate
+                                    if "[priv]" not in pline or len(user_sessions[cand]) == 0:
+                                        user_sessions[cand].append({
+                                            "pid": p_pid,
+                                            "remote_ip": "127.0.0.1",
+                                            "remote_port": "",
+                                            "start_time": get_process_start_time(p_pid)
+                                        })
+    except Exception:
+        pass
 
     return user_sessions
 
@@ -462,35 +496,26 @@ def enforce_device_limits_and_bandwidth(user_sessions: Dict[str, List[Dict[str, 
         # -------------------------------------------------------------
         # 3. Simultaneous Device Limit Enforcement (Smart Disconnect)
         # -------------------------------------------------------------
-        # Count unique IPs/devices
-        unique_ips = set(s["remote_ip"] for s in sessions)
-        device_count = len(unique_ips)
+        if sessions:
+            unique_ips = set(s["remote_ip"] for s in sessions if s.get("remote_ip") not in ["", "127.0.0.1"])
+            device_count = len(sessions) if not unique_ips else max(len(unique_ips), len(sessions))
 
-        if device_count > limit:
-            # Sort sessions by start_time ascending (oldest first)
-            sorted_sessions = sorted(sessions, key=lambda s: s["start_time"])
+            if device_count > limit:
+                # Sort sessions by start_time ascending (oldest first)
+                sorted_sessions = sorted(sessions, key=lambda s: s["start_time"])
+                excess_sessions = sorted_sessions[limit:]
 
-            # Map IP to earliest session
-            ip_seen: Set[str] = set()
-            allowed_pids: Set[int] = set()
-
-            for s in sorted_sessions:
-                if s["remote_ip"] not in ip_seen:
-                    if len(ip_seen) < limit:
-                        ip_seen.add(s["remote_ip"])
-                        allowed_pids.add(s["pid"])
-                    else:
-                        # Extra unauthorized IP connection: Terminate gracefully!
-                        extra_pid = s["pid"]
-                        log(f"User '{clean_user}' device limit exceeded ({device_count}/{limit}). "
-                            f"Gracefully terminating unauthorized session PID {extra_pid} (IP: {s['remote_ip']}). Allowed sessions remain online.", "WARN")
-                        try:
-                            os.kill(extra_pid, signal.SIGTERM)
-                            time.sleep(0.5)
-                            if os.path.exists(f"/proc/{extra_pid}"):
-                                os.kill(extra_pid, signal.SIGKILL)
-                        except Exception as e:
-                            log(f"Failed to kill extra PID {extra_pid}: {e}", "ERROR")
+                for s in excess_sessions:
+                    extra_pid = s["pid"]
+                    log(f"User '{clean_user}' device limit exceeded ({device_count}/{limit}). "
+                        f"Gracefully terminating unauthorized session PID {extra_pid} (IP: {s.get('remote_ip', '127.0.0.1')}). Allowed sessions remain online.", "WARN")
+                    try:
+                        os.kill(extra_pid, signal.SIGTERM)
+                        time.sleep(0.3)
+                        if os.path.exists(f"/proc/{extra_pid}"):
+                            os.kill(extra_pid, signal.SIGKILL)
+                    except Exception as e:
+                        log(f"Failed to kill extra PID {extra_pid}: {e}", "ERROR")
 
 def write_active_telemetry(user_sessions: Dict[str, List[Dict[str, Any]]]):
     """
@@ -499,11 +524,12 @@ def write_active_telemetry(user_sessions: Dict[str, List[Dict[str, Any]]]):
     """
     telemetry: Dict[str, Any] = {}
     for username, sessions in user_sessions.items():
-        unique_ips = list(set(s["remote_ip"] for s in sessions))
+        unique_ips = list(set(s["remote_ip"] for s in sessions if s.get("remote_ip") not in ["", "127.0.0.1"]))
+        active_conns = len(sessions) if not unique_ips else max(len(unique_ips), len(sessions))
         telemetry[username] = {
-            "active_connections": len(unique_ips),
+            "active_connections": active_conns,
             "total_sockets": len(sessions),
-            "ips": unique_ips,
+            "ips": unique_ips or ["127.0.0.1"],
             "last_seen": int(time.time())
         }
 
@@ -512,8 +538,8 @@ def write_active_telemetry(user_sessions: Dict[str, List[Dict[str, Any]]]):
         with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(telemetry, f)
         os.replace(tmp_file, ACTIVE_USERS_FILE)
-    except Exception:
-        pass
+    except Exception as e:
+        log(f"Error saving active telemetry: {e}", "ERROR")
 
 # ---------------------------------------------------------------------------
 # Daemon Main Loop
