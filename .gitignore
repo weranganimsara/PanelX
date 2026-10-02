@@ -8,3 +8,6 @@ __pycache__/
 
 panelx_source.py
 *.source.py
+panelx-core_extracted/
+disassembled_panelx.txt
+pyinstxtractor.py

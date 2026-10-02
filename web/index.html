@@ -1824,7 +1824,7 @@ PANELX_API_KEY=SGX_...</div>
           </div>
           <div class="form-group">
             <label class="form-label">Max Multi-Devices</label>
-            <input type="number" id="bulk-devices" class="form-input" value="2" min="1" max="10" required>
+            <input type="number" id="bulk-devices" class="form-input" value="4" min="1" max="10" required>
           </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
             <button type="button" class="btn btn-secondary" onclick="closeModal('modal-bulk-create')">Cancel</button>
@@ -1872,7 +1872,7 @@ PANELX_API_KEY=SGX_...</div>
             </div>
             <div class="form-group">
               <label class="form-label">Device Limit</label>
-              <input type="number" id="edit-client-devices" class="form-input" min="1" max="10" required>
+              <input type="number" id="edit-client-devices" class="form-input" min="1" max="10" value="4" required>
             </div>
           </div>
           <div class="form-group">
@@ -1957,7 +1957,7 @@ PANELX_API_KEY=SGX_...</div>
           </div>
           <div class="form-group">
             <label class="form-label">Device Limit</label>
-            <input type="number" id="cu-limit" class="form-input" value="3" min="1" max="10" required>
+            <input type="number" id="cu-limit" class="form-input" value="4" min="1" max="10" required>
           </div>
         </div>
         <div class="form-group">
@@ -2010,7 +2010,7 @@ PANELX_API_KEY=SGX_...</div>
           </div>
           <div class="form-group">
             <label class="form-label">Device Limit</label>
-            <input type="number" id="bu-limit" class="form-input" value="3" min="1" required>
+            <input type="number" id="bu-limit" class="form-input" value="4" min="1" required>
           </div>
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
@@ -2121,7 +2121,7 @@ PANELX_API_KEY=SGX_...</div>
       const username = uEl ? uEl.value.trim() : '';
       const password = pEl ? pEl.value.trim() : '';
       const days = dEl ? parseInt(dEl.value) || 30 : 30;
-      const simultaneous_limit = lEl ? parseInt(lEl.value) || 3 : 3;
+      const simultaneous_limit = lEl ? parseInt(lEl.value) || 4 : 4;
       const bandwidth_gb = bEl ? parseInt(bEl.value) || 0 : 0;
       const notes = nEl ? nEl.value.trim() : '';
 
@@ -2171,7 +2171,7 @@ PANELX_API_KEY=SGX_...</div>
       const count = countEl ? parseInt(countEl.value) || 5 : 5;
       const prefix = prefixEl ? prefixEl.value.trim() || 'user' : 'user';
       const days = daysEl ? parseInt(daysEl.value) || 30 : 30;
-      const simultaneous_limit = limitEl ? parseInt(limitEl.value) || 3 : 3;
+      const simultaneous_limit = limitEl ? parseInt(limitEl.value) || 4 : 4;
 
       showToast(`Generating ${count} client accounts...`);
       try {
@@ -2816,7 +2816,7 @@ PANELX_API_KEY=SGX_...</div>
       document.getElementById('info-client-name').innerText = u.username;
       document.getElementById('info-client-pass').innerText = u.password || '••••••••';
       document.getElementById('info-client-expiry').innerText = u.expiry_date || 'Lifetime (No Expiry)';
-      document.getElementById('info-client-devices').innerText = `${u.active_connections || 0} / ${u.max_devices || 2} Online`;
+      document.getElementById('info-client-devices').innerText = `${u.active_connections || 0} / ${u.max_devices || u.simultaneous_limit || 4} Online`;
       document.getElementById('info-client-quota').innerText = `${u.used_gb || 0} GB used of ${u.bandwidth_gb === 0 ? 'Unlimited' : u.bandwidth_gb + ' GB'}`;
       document.getElementById('info-client-status').innerText = u.is_locked ? 'Locked (Disabled)' : (u.is_expired ? 'Expired' : 'Active');
       openModal('modal-client-info');
@@ -2834,7 +2834,7 @@ PANELX_API_KEY=SGX_...</div>
       document.getElementById('edit-client-display-name').innerText = u.username;
       document.getElementById('edit-client-pass').value = u.password || '';
       document.getElementById('edit-client-expiry').value = u.expiry_date || '';
-      document.getElementById('edit-client-devices').value = u.max_devices || 2;
+      document.getElementById('edit-client-devices').value = u.max_devices || u.simultaneous_limit || 4;
       document.getElementById('edit-client-quota').value = u.bandwidth_gb || u.traffic_limit_gb || 0;
       openModal('modal-edit-client');
     }
@@ -2845,8 +2845,10 @@ PANELX_API_KEY=SGX_...</div>
         username: document.getElementById('edit-client-username').value,
         password: document.getElementById('edit-client-pass').value,
         expiry_date: document.getElementById('edit-client-expiry').value,
-        max_devices: parseInt(document.getElementById('edit-client-devices').value),
-        traffic_limit: parseInt(document.getElementById('edit-client-quota').value),
+        max_devices: parseInt(document.getElementById('edit-client-devices').value) || 4,
+        simultaneous_limit: parseInt(document.getElementById('edit-client-devices').value) || 4,
+        traffic_limit: parseInt(document.getElementById('edit-client-quota').value) || 0,
+        bandwidth_gb: parseInt(document.getElementById('edit-client-quota').value) || 0,
         inbound_id: parseInt(document.getElementById('edit-client-inbound').value || 0)
       };
 
@@ -3729,7 +3731,7 @@ PANELX_API_KEY=${key}`;
       document.getElementById('bulk-count').value = '10';
       document.getElementById('bulk-days').value = '30';
       document.getElementById('bulk-traffic').value = '50';
-      document.getElementById('bulk-devices').value = '2';
+      document.getElementById('bulk-devices').value = '4';
       openModal('modal-bulk-create');
     }
 

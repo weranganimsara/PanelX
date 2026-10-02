@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# PanelX - Automated 1-Click Installer
+# PanelX - Automated 1-Click Installer (v2.0 Production Engine)
 # Open-Source SSH & WebSocket VPN Management Panel
 # Author: Weranga Nimsara (SG Home) & Open-Source Community
 # GitHub: https://github.com/WerangaNimsara/PanelX
@@ -32,7 +32,7 @@ echo "  ███████╗██║  ███╗██████╔╝ 
 echo "  ╚════██║██║   ██║██╔═══╝  ██╔██╗ "
 echo "  ███████║╚██████╔╝██║     ██╔╝ ██╗"
 echo "  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝"
-echo -e "         ${PURPLE}SGPX — SG Home PanelX Control System v2.4${NC}"
+echo -e "         ${PURPLE}SGPX — SG Home PanelX Control System v2.0${NC}"
 echo -e "                 ${YELLOW}Official SG Home Product${NC}"
 echo -e "${CYAN}======================================================${NC}"
 
@@ -46,12 +46,19 @@ fi
 echo -e "${GREEN}✓ Detected ${OS_ID} (${ARCH})${NC}"
 
 echo -e "\n${BLUE}[2/6] Updating system repositories & installing dependencies...${NC}"
-apt-get update -y >/dev/null 2>&1
+apt-get update -y >/dev/null 2>&1 || true
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    python3 python3-pip curl wget unzip git openssh-server iptables net-tools lsof >/dev/null 2>&1
-echo -e "${GREEN}✓ Dependencies installed successfully.${NC}"
+    python3 python3-pip curl wget unzip git openssh-server iptables net-tools lsof fail2ban logrotate rsyslog >/dev/null 2>&1
 
-echo -e "\n${BLUE}[3/6] Configuring OpenSSH & Security limits...${NC}"
+# Install FastAPI and Uvicorn
+DEBIAN_FRONTEND=noninteractive apt-get install -y python3-fastapi uvicorn >/dev/null 2>&1 || true
+python3 -c "import fastapi, uvicorn" >/dev/null 2>&1 || {
+    pip3 install fastapi uvicorn --break-system-packages >/dev/null 2>&1 || \
+    pip3 install fastapi uvicorn >/dev/null 2>&1 || true
+}
+echo -e "${GREEN}✓ Dependencies and async runtime installed successfully.${NC}"
+
+echo -e "\n${BLUE}[3/6] Configuring OpenSSH, Security limits & 50MB Log Guards...${NC}"
 # Ensure OpenSSH allows password authentication
 sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config 2>/dev/null || true
 sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config 2>/dev/null || true
@@ -59,6 +66,53 @@ sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd
 
 systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 echo -e "${GREEN}✓ OpenSSH configured on port 22.${NC}"
+
+# Configure systemd-journald max 50MB
+mkdir -p /etc/systemd/journald.conf.d
+cat <<'EOF' > /etc/systemd/journald.conf.d/panelx-limits.conf
+[Journal]
+SystemMaxUse=50M
+SystemKeepFree=500M
+RuntimeMaxUse=30M
+MaxRetentionSec=3day
+EOF
+systemctl restart systemd-journald 2>/dev/null || true
+journalctl --vacuum-size=50M >/dev/null 2>&1 || true
+
+# Configure logrotate for syslog and auth.log to prevent 18+ GB storage exhaustion
+cat <<'EOF' > /etc/logrotate.d/panelx-rsyslog
+/var/log/syslog
+/var/log/auth.log
+/var/log/messages
+{
+    rotate 2
+    daily
+    maxsize 50M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    postrotate
+        /usr/lib/rsyslog/rsyslog-rotate 2>/dev/null || systemctl restart rsyslog 2>/dev/null || true
+    endscript
+}
+EOF
+
+# Fail2ban configuration for SSH bot protection
+mkdir -p /etc/fail2ban/jail.d
+cat <<'EOF' > /etc/fail2ban/jail.d/panelx-ssh.conf
+[sshd]
+enabled = true
+port = 22,80,8080,443,8880
+filter = sshd
+maxretry = 4
+findtime = 10m
+bantime = 24h
+banaction = iptables-multiport
+EOF
+systemctl enable --now fail2ban >/dev/null 2>&1 || true
+echo -e "${GREEN}✓ Automated storage protection & Fail2ban configured.${NC}"
 
 echo -e "\n${BLUE}[4/6] Installing BadVPN-udpgw (UDP Port 7300 for Gaming & WhatsApp Calls)...${NC}"
 BADVPN_BIN="/usr/local/bin/badvpn-udpgw"
@@ -94,75 +148,80 @@ fi
 echo -e "\n${BLUE}[5/6] Setting up PanelX core & Web UI...${NC}"
 INSTALL_DIR="/etc/panelx"
 mkdir -p "$INSTALL_DIR/web"
+mkdir -p "$INSTALL_DIR/bandwidth"
 
 REPO_RAW_BASE="https://raw.githubusercontent.com/WerangaNimsara/PanelX/main"
 
 # Check if installing from local directory
-if [ -f "panelx.py" ] || [ -f "bin/panelx-core" ]; then
+if [ -f "panelx.py" ] || [ -f "panelx_server.py" ]; then
     echo -e "${CYAN}→ Installing from local directory files...${NC}"
     cp panelx.py "$INSTALL_DIR/" 2>/dev/null || true
+    cp panelx_server.py "$INSTALL_DIR/" 2>/dev/null || true
+    cp system_guardian.py "$INSTALL_DIR/" 2>/dev/null || true
     cp -r web/* "$INSTALL_DIR/web/" 2>/dev/null || true
     cp panelx-cli /usr/local/bin/panelx 2>/dev/null || true
-    if [ -f "bin/panelx-core" ]; then
-        echo -e "${GREEN}✓ Installing compiled panelx-core binary...${NC}"
-        cp bin/panelx-core /usr/local/bin/panelx-core
-        chmod +x /usr/local/bin/panelx-core
-    fi
 else
     mkdir -p "$INSTALL_DIR/web/assets"
     curl -sSL "${REPO_RAW_BASE}/panelx.py" -o "$INSTALL_DIR/panelx.py" 2>/dev/null || true
+    curl -sSL "${REPO_RAW_BASE}/panelx_server.py" -o "$INSTALL_DIR/panelx_server.py" 2>/dev/null || true
+    curl -sSL "${REPO_RAW_BASE}/system_guardian.py" -o "$INSTALL_DIR/system_guardian.py" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/index.html" -o "$INSTALL_DIR/web/index.html"
     curl -sSL "${REPO_RAW_BASE}/web/favicon.svg" -o "$INSTALL_DIR/web/favicon.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/favicon.ico" -o "$INSTALL_DIR/web/favicon.ico" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/assets/logo.svg" -o "$INSTALL_DIR/web/assets/logo.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/panelx-cli" -o "/usr/local/bin/panelx"
-    # Download compiled binary if available
-    echo -e "${CYAN}→ Downloading compiled panelx-core binary...${NC}"
-    curl -sSL "${REPO_RAW_BASE}/bin/panelx-core" -o "/usr/local/bin/panelx-core" 2>/dev/null || true
-    chmod +x "/usr/local/bin/panelx-core" 2>/dev/null || true
 fi
 
 chmod +x "$INSTALL_DIR/panelx.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/panelx_server.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/system_guardian.py" 2>/dev/null || true
 chmod +x "/usr/local/bin/panelx"
 ln -sf /usr/local/bin/panelx /usr/bin/panelx 2>/dev/null || true
-
-# Determine ExecStart target (Binary preferred, Python fallback)
-EXEC_TARGET="/usr/bin/python3 ${INSTALL_DIR}/panelx.py"
-if [ -f "/usr/local/bin/panelx-core" ] && [ -x "/usr/local/bin/panelx-core" ]; then
-    EXEC_TARGET="/usr/local/bin/panelx-core"
-    echo -e "${GREEN}✓ Engine Execution Mode: Standalone Compiled Binary${NC}"
-else
-    echo -e "${YELLOW}! Engine Execution Mode: Python Runtime Fallback${NC}"
-fi
 
 # Setup Systemd Service for PanelX
 cat <<EOF > /etc/systemd/system/panelx.service
 [Unit]
-Description=PanelX Modern SSH & WebSocket Management Panel
+Description=PanelX v2.0 Enterprise Control Panel (Powered by SG Home)
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=${EXEC_TARGET}
+ExecStart=/usr/bin/python3 ${INSTALL_DIR}/panelx_server.py
 Restart=always
 RestartSec=3
+LimitNOFILE=65535
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Setup panelx-proxy high-speed Rust binary
+# Setup System Guardian Daemon
+cat <<EOF > /etc/systemd/system/system-guardian.service
+[Unit]
+Description=PanelX System Guardian (Storage Protection & Smart Device Limiter)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=/usr/bin/python3 ${INSTALL_DIR}/system_guardian.py
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Setup panelx-proxy high-speed Rust binary if available
 if [ -f "bin/panelx-proxy" ]; then
     cp bin/panelx-proxy "/usr/local/bin/panelx-proxy" 2>/dev/null || true
-else
-    curl -sSL "${REPO_RAW_BASE}/bin/panelx-proxy" -o "/usr/local/bin/panelx-proxy" 2>/dev/null || true
-fi
-chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+    chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
 
-# Setup Systemd Service for WS-Proxy (Using compiled Rust proxy binary)
-cat <<EOF > /etc/systemd/system/ws-proxy.service
+    cat <<EOF > /etc/systemd/system/ws-proxy.service
 [Unit]
 Description=PanelX High-Speed Rust Proxy (Ports 80, 8080, 443)
 After=network.target
@@ -177,34 +236,9 @@ RestartSec=2s
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# Setup panelx-limiter daemon
-if [ -f "core/panelx-limiter.sh" ]; then
-    cp core/panelx-limiter.sh "$INSTALL_DIR/"
-else
-    curl -sSL "${REPO_RAW_BASE}/core/panelx-limiter.sh" -o "$INSTALL_DIR/panelx-limiter.sh" 2>/dev/null || true
 fi
-chmod +x "$INSTALL_DIR/panelx-limiter.sh" 2>/dev/null || true
-
-# Setup Systemd Service for Limiter
-cat <<EOF > /etc/systemd/system/panelx-limiter.service
-[Unit]
-Description=PanelX Session & Bandwidth Limiter Daemon
-After=network.target
-
-[Service]
-Type=simple
-User=root
-ExecStart=/bin/bash ${INSTALL_DIR}/panelx-limiter.sh
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
 
 # Apply Linux BBR and TCP Speed Optimizations
-echo -e "\n${BLUE}[*] Applying Linux BBR & TCP Kernel Speed Optimizations...${NC}"
 cat <<'EOF' > /etc/sysctl.d/99-panelx-bbr.conf
 # PanelX Ultra-Speed Kernel & TCP BBR Optimization
 net.core.default_qdisc = fq
@@ -230,9 +264,9 @@ sysctl -p /etc/sysctl.d/99-panelx-bbr.conf >/dev/null 2>&1 || true
 
 echo -e "\n${BLUE}[6/6] Enabling services & configuring firewall...${NC}"
 systemctl daemon-reload
+systemctl enable --now system-guardian >/dev/null 2>&1
 systemctl enable --now panelx >/dev/null 2>&1
-systemctl enable --now ws-proxy >/dev/null 2>&1
-systemctl enable --now panelx-limiter >/dev/null 2>&1 || true
+systemctl enable --now ws-proxy >/dev/null 2>&1 || true
 
 # Open Ports in UFW & iptables
 command -v ufw >/dev/null 2>&1 && ufw allow 22/tcp 80/tcp 8080/tcp 443/tcp 8880/tcp 7300/udp 7788/tcp >/dev/null 2>&1 || true
@@ -244,15 +278,17 @@ command -v iptables >/dev/null 2>&1 && {
     iptables -I INPUT -p udp --dport 7300 -j ACCEPT 2>/dev/null || true
 }
 
-# Generate Random Stealth Base Path starting with sgpx_
-RAND_HEX=$(head -c 16 /dev/urandom | md5sum | head -c 6 2>/dev/null || echo "sec$((RANDOM%9000+1000))")
-SGPX_WEB_PATH="/sgpx_${RAND_HEX}/"
+# Standard Web Base Path & API Key
+SGPX_WEB_PATH="/sgpx_4f5124/"
 
-# Save initial web_base_path in SQLite
+# Save initial settings in SQLite with WAL mode
 python3 -c "
 import sqlite3
 conn = sqlite3.connect('/etc/panelx/panelx.db')
+conn.execute('PRAGMA journal_mode=WAL;')
+conn.execute('PRAGMA busy_timeout=5000;')
 conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'web_base_path\', \'$SGPX_WEB_PATH\')')
+conn.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (\'api_secret\', \'SGX_EE7A2843737920768EEB6FDB\')')
 conn.commit()
 conn.close()
 " 2>/dev/null || true
@@ -267,6 +303,8 @@ echo -e "  ${GREEN}● Web UI URL    :${NC} ${YELLOW}http://${PUB_IP}:7788${SGPX
 echo -e "  ${GREEN}● Web Base Path :${NC} ${PURPLE}${SGPX_WEB_PATH}${NC}"
 echo -e "  ${GREEN}● Default User  :${NC} ${CYAN}admin${NC}"
 echo -e "  ${GREEN}● Default Pass  :${NC} ${CYAN}admin${NC}"
+echo -e "  ${GREEN}● API Key       :${NC} ${CYAN}SGX_EE7A2843737920768EEB6FDB${NC}"
+echo -e "  ${GREEN}● Device Limit  :${NC} ${PURPLE}4 Devices Default${NC}"
 echo -e "  ${GREEN}● WS Ports      :${NC} ${PURPLE}80, 8080, 443, 8880${NC}"
 echo -e "  ${GREEN}● BadVPN UDP    :${NC} ${PURPLE}7300${NC}"
 echo -e "  ${GREEN}● CLI Tool      :${NC} Type ${YELLOW}panelx${NC} in your terminal anytime"

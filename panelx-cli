@@ -88,13 +88,16 @@ menu() {
             ;;
         3)
             systemctl restart panelx
+            systemctl restart system-guardian 2>/dev/null || true
             systemctl restart ws-proxy
             echo -e "${GREEN}Services restarted successfully.${NC}"
             sleep 2; menu
             ;;
         4)
-            echo -e "${CYAN}--- PanelX Service Status ---${NC}"
+            echo -e "${CYAN}--- PanelX Core Service Status ---${NC}"
             systemctl status panelx --no-pager
+            echo -e "${CYAN}--- System Guardian Status (Storage & Device Limiter) ---${NC}"
+            systemctl status system-guardian --no-pager 2>/dev/null || true
             echo -e "${CYAN}--- WS-Proxy Status ---${NC}"
             systemctl status ws-proxy --no-pager
             read -p "Press Enter to return to menu..."
