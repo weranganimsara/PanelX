@@ -306,17 +306,29 @@ def os_create_user(username: str, password: str, expiry_date: str, max_logins: i
 def os_update_user(username: str, password: Optional[str] = None, expiry_date: Optional[str] = None, max_logins: Optional[int] = None):
     clean_user = username.strip().lower()
     if password:
-        p = subprocess.Popen(["chpasswd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        p.communicate(f"{clean_user}:{password}\n")
+        try:
+            p = subprocess.Popen(["chpasswd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            p.communicate(f"{clean_user}:{password}\n")
+        except Exception:
+            try:
+                subprocess.run(f"echo '{clean_user}:{password}' | chpasswd 2>/dev/null", shell=True)
+            except Exception:
+                pass
     if expiry_date:
-        subprocess.run(f"chage -E {expiry_date} {clean_user} 2>/dev/null", shell=True)
+        try:
+            subprocess.run(f"chage -E {expiry_date} {clean_user} 2>/dev/null", shell=True)
+        except Exception:
+            pass
     if max_logins is not None:
         try:
             subprocess.run(f"sed -i '/^{clean_user} /d' /etc/security/limits.conf 2>/dev/null", shell=True)
             subprocess.run(f"echo '{clean_user} hard maxlogins {max_logins}' >> /etc/security/limits.conf", shell=True)
         except Exception:
             pass
-    sync_users_db()
+    try:
+        sync_users_db()
+    except Exception:
+        pass
 
 def os_delete_user(username: str):
     clean_user = username.strip().lower()
@@ -710,7 +722,15 @@ async def api_users_list(request: Request):
 
     def fetch_users():
         with get_db() as conn:
-            rows = conn.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
+            try:
+                rows = conn.execute("""
+                    SELECT u.*, i.remark as inbound_remark
+                    FROM users u
+                    LEFT JOIN inbounds i ON u.inbound_id = i.id
+                    ORDER BY u.id DESC
+                """).fetchall()
+            except Exception:
+                rows = conn.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
             users = [dict(r) for r in rows]
 
         ssh_domain = get_setting("ssh_domain") or get_server_public_ip()
@@ -838,7 +858,7 @@ async def api_user_update(request: Request):
     body = await parse_request_body(request)
     client_ip = request.client.host if request.client else "127.0.0.1"
 
-    username = str(body.get("username", "")).strip().lower()
+    username = str(body.get("username", "")).strip()
     if not username:
         raise HTTPException(status_code=400, detail="Username is required")
 
@@ -851,16 +871,33 @@ async def api_user_update(request: Request):
 
     def update_tx():
         with get_db() as conn:
-            row = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+            # Ensure missing columns exist in users table
+            try:
+                cols = [c[1] for c in conn.execute("PRAGMA table_info(users)").fetchall()]
+                if "inbound_id" not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN inbound_id INTEGER DEFAULT 0")
+                if "notes" not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN notes TEXT DEFAULT ''")
+                if "status" not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'Active'")
+                if "simultaneous_limit" not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN simultaneous_limit INTEGER DEFAULT 4")
+                if "bandwidth_gb" not in cols:
+                    conn.execute("ALTER TABLE users ADD COLUMN bandwidth_gb INTEGER DEFAULT 0")
+            except Exception:
+                pass
+
+            row = conn.execute("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", (username,)).fetchone()
             if not row:
                 return False, f"User '{username}' not found"
 
+            actual_username = row["username"]
             updates = []
             params = []
             if password:
                 updates.append("password = ?")
                 params.append(str(password).strip())
-            if expiry_date:
+            if expiry_date is not None and str(expiry_date).strip():
                 updates.append("expiry_date = ?")
                 params.append(str(expiry_date).strip())
             if max_devices is not None:
@@ -877,16 +914,20 @@ async def api_user_update(request: Request):
                 params.append(str(notes).strip())
 
             if updates:
-                params.append(username)
-                conn.execute(f"UPDATE users SET {', '.join(updates)} WHERE username = ?", params)
+                params.append(actual_username)
+                conn.execute(f"UPDATE users SET {', '.join(updates)} WHERE LOWER(username) = LOWER(?)", params)
 
-        os_update_user(
-            username=username,
-            password=str(password).strip() if password else None,
-            expiry_date=str(expiry_date).strip() if expiry_date else None,
-            max_logins=int(max_devices) if max_devices is not None else None
-        )
-        audit_log("admin", "user_update", username, client_ip, f"Updated fields: {updates}")
+        try:
+            os_update_user(
+                username=actual_username,
+                password=str(password).strip() if password else None,
+                expiry_date=str(expiry_date).strip() if (expiry_date is not None and str(expiry_date).strip()) else None,
+                max_logins=int(max_devices) if max_devices is not None else None
+            )
+        except Exception as e:
+            print(f"[WARN] os_update_user: {e}")
+
+        audit_log("admin", "user_update", actual_username, client_ip, f"Updated fields: {updates}")
         return True, ""
 
     success, err = await run_in_threadpool(update_tx)

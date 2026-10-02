@@ -426,7 +426,7 @@
     }
 
     /* Modals */
-    .modal-backdrop {
+    .modal-backdrop, .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(4, 7, 14, 0.85); backdrop-filter: blur(14px);
       display: none; align-items: center; justify-content: center;
@@ -448,9 +448,12 @@
       margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08);
       padding-bottom: 12px;
     }
-    .modal-header h2 { font-size: 17px; font-weight: 700; color: #fff; }
-    .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
-    .modal-close:hover { color: #fff; }
+    .modal-header h2, .modal-header h3 { font-size: 17px; font-weight: 700; color: #fff; margin: 0; }
+    .modal-close, .modal-close-btn {
+      background: transparent; border: none; color: var(--text-muted);
+      font-size: 22px; cursor: pointer; line-height: 1; transition: color 0.2s;
+    }
+    .modal-close:hover, .modal-close-btn:hover { color: #fff; }
 
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
@@ -1761,12 +1764,12 @@ PANELX_API_KEY=SGX_...</div>
   </div>
 
   
-  <!-- MODAL: CLIENT QR & APP CONFIG EXPORTER (3x-ui style) -->
-  <div id="modal-client-qr" class="modal-overlay" style="display: none;">
+  <!-- MODAL: CLIENT QR & APP CONFIG EXPORTER (Popup Window) -->
+  <div id="modal-client-qr" class="modal-backdrop" style="display: none;">
     <div class="modal-card" style="max-width: 520px;">
       <div class="modal-header">
         <h3 style="font-size: 16px; color: #fff; font-weight: 700;"><i class="fa-solid fa-qrcode" style="color: var(--accent-cyan); margin-right: 8px;"></i> Client QR & App Configs</h3>
-        <button class="modal-close-btn" onclick="closeModal('modal-client-qr')">&times;</button>
+        <button class="modal-close" onclick="closeModal('modal-client-qr')">&times;</button>
       </div>
       <div class="modal-body" style="text-align: center;">
         <div id="qr-svg-container" style="display: inline-block; padding: 12px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); margin-bottom: 16px;"></div>
@@ -1793,12 +1796,12 @@ PANELX_API_KEY=SGX_...</div>
     </div>
   </div>
 
-  <!-- MODAL: BULK CLIENT GENERATOR (3x-ui Pro Feature) -->
-  <div id="modal-bulk-create" class="modal-overlay" style="display: none;">
+  <!-- MODAL: BULK CLIENT GENERATOR (Popup Window) -->
+  <div id="modal-bulk-create" class="modal-backdrop" style="display: none;">
     <div class="modal-card" style="max-width: 580px;">
       <div class="modal-header">
         <h3 style="font-size: 16px; color: #fff; font-weight: 700;"><i class="fa-solid fa-users-line" style="color: var(--accent-cyan); margin-right: 8px;"></i> Bulk Generate Clients</h3>
-        <button class="modal-close-btn" onclick="closeModal('modal-bulk-create')">&times;</button>
+        <button class="modal-close" onclick="closeModal('modal-bulk-create')">&times;</button>
       </div>
       <div class="modal-body">
         <form id="form-bulk-create" onsubmit="handleBulkCreateClients(event)">
@@ -1847,53 +1850,53 @@ PANELX_API_KEY=SGX_...</div>
   </div>
 
   
-  <!-- MODAL: EDIT CLIENT (3x-ui Pro Feature) -->
-  <div id="modal-edit-client" class="modal-overlay" style="display: none;">
-    <div class="modal-card" style="max-width: 500px;">
+  <!-- MODAL: EDIT CLIENT (Popup Window) -->
+  <div id="modal-edit-client" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 520px;">
       <div class="modal-header">
         <h3 style="font-size: 16px; color: #fff; font-weight: 700;"><i class="fa-solid fa-pen" style="color: var(--accent-cyan); margin-right: 8px;"></i> Edit Client: <span id="edit-client-display-name" style="color: var(--accent-cyan);"></span></h3>
-        <button class="modal-close-btn" onclick="closeModal('modal-edit-client')">&times;</button>
+        <button class="modal-close" onclick="closeModal('modal-edit-client')">&times;</button>
       </div>
       <div class="modal-body">
         <form id="form-edit-client" onsubmit="handleSaveEditClient(event)">
           <input type="hidden" id="edit-client-username">
           <div class="form-group">
-            <label class="form-label">Attached Inbound Profile</label>
+            <label class="form-label"><i class="fa-solid fa-network-wired" style="color: var(--accent-cyan); margin-right: 5px;"></i> Attached Inbound Profile</label>
             <select id="edit-client-inbound" class="form-input"></select>
           </div>
           <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="text" id="edit-client-pass" class="form-input" required>
+            <label class="form-label"><i class="fa-solid fa-key" style="color: var(--accent-cyan); margin-right: 5px;"></i> Password</label>
+            <input type="text" id="edit-client-pass" class="form-input" required autocomplete="off">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Expiry Date</label>
+              <label class="form-label"><i class="fa-regular fa-calendar-days" style="color: var(--accent-cyan); margin-right: 5px;"></i> Expiry Date</label>
               <input type="date" id="edit-client-expiry" class="form-input">
             </div>
             <div class="form-group">
-              <label class="form-label">Device Limit</label>
+              <label class="form-label"><i class="fa-solid fa-laptop-code" style="color: var(--accent-cyan); margin-right: 5px;"></i> Device Limit</label>
               <input type="number" id="edit-client-devices" class="form-input" min="1" max="10" value="4" required>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Traffic Quota (GB, 0 = Unlimited)</label>
+            <label class="form-label"><i class="fa-solid fa-chart-pie" style="color: var(--accent-cyan); margin-right: 5px;"></i> Traffic Quota (GB, 0 = Unlimited)</label>
             <input type="number" id="edit-client-quota" class="form-input" min="0" required>
           </div>
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
             <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-client')">Cancel</button>
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+            <button type="submit" class="btn btn-primary" id="btn-save-edit-client"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: CLIENT INFO (3x-ui Pro Feature) -->
-  <div id="modal-client-info" class="modal-overlay" style="display: none;">
+  <!-- MODAL: CLIENT INFO (Popup Window) -->
+  <div id="modal-client-info" class="modal-backdrop" style="display: none;">
     <div class="modal-card" style="max-width: 480px;">
       <div class="modal-header">
         <h3 style="font-size: 16px; color: #fff; font-weight: 700;"><i class="fa-solid fa-circle-info" style="color: var(--accent-cyan); margin-right: 8px;"></i> Client Details</h3>
-        <button class="modal-close-btn" onclick="closeModal('modal-client-info')">&times;</button>
+        <button class="modal-close" onclick="closeModal('modal-client-info')">&times;</button>
       </div>
       <div class="modal-body">
         <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
@@ -1923,7 +1926,7 @@ PANELX_API_KEY=SGX_...</div>
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="justify-content: flex-end;">
+      <div class="modal-footer" style="justify-content: flex-end; margin-top: 16px;">
         <button class="btn btn-secondary" onclick="closeModal('modal-client-info')">Close</button>
       </div>
     </div>
@@ -2087,6 +2090,11 @@ PANELX_API_KEY=SGX_...</div>
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    window.addEventListener('click', (e) => {
+      if (e.target && e.target.classList && (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-overlay'))) {
+        e.target.style.display = 'none';
+      }
+    });
     function openCreateModal() { 
       const uEl = document.getElementById('cu-username');
       if (uEl) uEl.value = '';
@@ -2822,27 +2830,47 @@ PANELX_API_KEY=SGX_...</div>
       openModal('modal-client-info');
     }
 
-    // Edit Client Modal
+    // Edit Client Modal (Centered Popup Window)
     function openEditClientModal(username) {
       const u = allUsers.find(x => x.username.toLowerCase() === username.toLowerCase());
-      if (!u) return;
-      const inbSelect = document.getElementById('edit-client-inbound');
-      if (inbSelect && allInbounds) {
-        inbSelect.innerHTML = allInbounds.map(i => `<option value="${i.id}" ${i.id === (u.inbound_id || 0) || (i.remark === u.inbound_remark) ? 'selected' : ''}>${i.remark} (${i.port})</option>`).join('');
+      if (!u) {
+        showToast(`Client "${username}" not found`, true);
+        return;
       }
+
+      const inbSelect = document.getElementById('edit-client-inbound');
+      if (inbSelect) {
+        if (allInbounds && allInbounds.length > 0) {
+          inbSelect.innerHTML = allInbounds.map(i => 
+            `<option value="${i.id}" ${i.id === (u.inbound_id || 0) || (i.remark === u.inbound_remark) ? 'selected' : ''}>${i.remark} (${i.port})</option>`
+          ).join('');
+        } else {
+          inbSelect.innerHTML = '<option value="0">Default Inbound (Direct Gateway)</option>';
+        }
+      }
+
       document.getElementById('edit-client-username').value = u.username;
       document.getElementById('edit-client-display-name').innerText = u.username;
       document.getElementById('edit-client-pass').value = u.password || '';
       document.getElementById('edit-client-expiry').value = u.expiry_date || '';
       document.getElementById('edit-client-devices').value = u.max_devices || u.simultaneous_limit || 4;
-      document.getElementById('edit-client-quota').value = u.bandwidth_gb || u.traffic_limit_gb || 0;
+      document.getElementById('edit-client-quota').value = typeof u.bandwidth_gb !== 'undefined' ? u.bandwidth_gb : (u.traffic_limit_gb || 0);
+
       openModal('modal-edit-client');
     }
 
     async function handleSaveEditClient(e) {
       e.preventDefault();
+      const saveBtn = document.getElementById('btn-save-edit-client');
+      const originalBtnText = saveBtn ? saveBtn.innerHTML : '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+      }
+
+      const username = document.getElementById('edit-client-username').value;
       const body = {
-        username: document.getElementById('edit-client-username').value,
+        username: username,
         password: document.getElementById('edit-client-pass').value,
         expiry_date: document.getElementById('edit-client-expiry').value,
         max_devices: parseInt(document.getElementById('edit-client-devices').value) || 4,
@@ -2852,19 +2880,34 @@ PANELX_API_KEY=SGX_...</div>
         inbound_id: parseInt(document.getElementById('edit-client-inbound').value || 0)
       };
 
-      showToast(`Saving changes for "${body.username}"...`);
-      const res = await fetch('/api/users/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(`Client "${body.username}" updated successfully!`);
-        closeModal('modal-edit-client');
-        loadUsers();
-      } else {
-        showToast(data.error || 'Failed to update client', true);
+      try {
+        showToast(`Saving changes for "${body.username}"...`);
+        const res = await fetch('/api/users/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {}
+
+        if (res.ok && (data.success || data.message)) {
+          showToast(`Client "${body.username}" updated successfully!`);
+          closeModal('modal-edit-client');
+          await loadUsers();
+        } else {
+          const errMsg = data.detail || data.error || data.message || `Failed to update client (HTTP ${res.status})`;
+          showToast(errMsg, true);
+        }
+      } catch (err) {
+        showToast(`Network error: ${err.message}`, true);
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = originalBtnText;
+        }
       }
     }
 
