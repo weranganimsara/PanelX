@@ -195,22 +195,60 @@ mkdir -p "$INSTALL_DIR/bandwidth"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# If running via pipe (e.g. curl ... | bash) and source files aren't in SCRIPT_DIR
+if [ ! -f "$SCRIPT_DIR/panelx_server.py" ]; then
+    echo -e "${YELLOW}→ Fetching latest PanelX files from GitHub repository...${NC}"
+    TMP_SRC="/tmp/panelx_update_src"
+    rm -rf "$TMP_SRC"
+    mkdir -p "$TMP_SRC"
+    
+    # Try git clone first
+    git clone --depth 1 https://github.com/weranganimsara/PanelX.git "$TMP_SRC" >/dev/null 2>&1 || true
+    
+    # If git clone failed or files missing, download tarball
+    if [ ! -f "$TMP_SRC/panelx_server.py" ]; then
+        curl -sSL https://github.com/weranganimsara/PanelX/archive/refs/heads/main.tar.gz | tar -xz -C "$TMP_SRC" --strip-components=1 2>/dev/null || true
+    fi
+
+    # Fallback to direct raw downloads if needed
+    if [ ! -f "$TMP_SRC/panelx_server.py" ]; then
+        REPO_RAW="https://raw.githubusercontent.com/weranganimsara/PanelX/main"
+        mkdir -p "$TMP_SRC/web"
+        curl -sSL "$REPO_RAW/panelx_server.py" -o "$TMP_SRC/panelx_server.py" 2>/dev/null || true
+        curl -sSL "$REPO_RAW/panelx.py" -o "$TMP_SRC/panelx.py" 2>/dev/null || true
+        curl -sSL "$REPO_RAW/system_guardian.py" -o "$TMP_SRC/system_guardian.py" 2>/dev/null || true
+        curl -sSL "$REPO_RAW/panelx-cli" -o "$TMP_SRC/panelx-cli" 2>/dev/null || true
+        curl -sSL "$REPO_RAW/web/index.html" -o "$TMP_SRC/web/index.html" 2>/dev/null || true
+    fi
+
+    if [ -f "$TMP_SRC/panelx_server.py" ]; then
+        SCRIPT_DIR="$TMP_SRC"
+    fi
+fi
+
 # Deploy panelx_server.py
 if [ -f "$SCRIPT_DIR/panelx_server.py" ]; then
     cp "$SCRIPT_DIR/panelx_server.py" "$INSTALL_DIR/panelx_server.py"
+    cp "$SCRIPT_DIR/panelx_server.py" "$INSTALL_DIR/panelx-backend.py"
     cp "$SCRIPT_DIR/panelx.py" "$INSTALL_DIR/panelx.py"
     cp "$SCRIPT_DIR/system_guardian.py" "$INSTALL_DIR/system_guardian.py"
-    cp -r "$SCRIPT_DIR/web/"* "$INSTALL_DIR/web/"
-    cp "$SCRIPT_DIR/panelx-cli" "/usr/local/bin/panelx"
+    if [ -d "$SCRIPT_DIR/web" ]; then
+        cp -r "$SCRIPT_DIR/web/"* "$INSTALL_DIR/web/"
+    fi
+    if [ -f "$SCRIPT_DIR/panelx-cli" ]; then
+        cp "$SCRIPT_DIR/panelx-cli" "/usr/local/bin/panelx"
+    fi
+    echo -e "${GREEN}✓ Core engine v2.0, guardian daemon, and web assets deployed.${NC}"
 else
-    echo -e "${RED}[ERROR] Local source files not found in $SCRIPT_DIR!${NC}"
+    echo -e "${RED}[ERROR] Local source files not found and could not download from GitHub!${NC}"
     exit 1
 fi
 
-chmod +x "$INSTALL_DIR/panelx_server.py"
-chmod +x "$INSTALL_DIR/panelx.py"
-chmod +x "$INSTALL_DIR/system_guardian.py"
-chmod +x "/usr/local/bin/panelx"
+chmod +x "$INSTALL_DIR/panelx_server.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/panelx-backend.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/panelx.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/system_guardian.py" 2>/dev/null || true
+chmod +x "/usr/local/bin/panelx" 2>/dev/null || true
 ln -sf /usr/local/bin/panelx /usr/bin/panelx 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
