@@ -392,11 +392,34 @@ command -v iptables >/dev/null 2>&1 && {
     iptables -I INPUT -p tcp --dport 8880 -j ACCEPT 2>/dev/null || true
 }
 
-# 4. Disable old heavy bash limiter (replaces with ultra-low CPU guardian)
+# 4. Optimize BadVPN if installed
+if [ -f "/usr/local/bin/badvpn-udpgw" ]; then
+    cat <<'EOF' > /etc/systemd/system/badvpn.service
+[Unit]
+Description=BadVPN UDP Gateway for Gaming and VoIP
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --loglevel 1
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl enable --now badvpn >/dev/null 2>&1 || true
+    systemctl restart badvpn >/dev/null 2>&1 || true
+fi
+
+# 5. Disable old heavy bash limiter (replaces with ultra-low CPU guardian)
 systemctl stop panelx-limiter >/dev/null 2>&1 || true
 systemctl disable panelx-limiter >/dev/null 2>&1 || true
 
-# 5. Reload and restart without touching sshd!
+# 6. Reload and restart without touching sshd!
 systemctl daemon-reload
 systemctl enable --now system-guardian >/dev/null 2>&1
 systemctl restart system-guardian >/dev/null 2>&1

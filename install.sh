@@ -131,9 +131,11 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000
+ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --loglevel 1
 Restart=always
 RestartSec=3
+LimitNOFILE=65535
+StandardOutput=null
 
 [Install]
 WantedBy=multi-user.target
