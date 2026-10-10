@@ -158,13 +158,21 @@ if [ -f "panelx.py" ] || [ -f "panelx_server.py" ]; then
     cp panelx.py "$INSTALL_DIR/" 2>/dev/null || true
     cp panelx_server.py "$INSTALL_DIR/" 2>/dev/null || true
     cp system_guardian.py "$INSTALL_DIR/" 2>/dev/null || true
+    cp ws-proxy.py "$INSTALL_DIR/" 2>/dev/null || true
     cp -r web/* "$INSTALL_DIR/web/" 2>/dev/null || true
     cp panelx-cli /usr/local/bin/panelx 2>/dev/null || true
+    if [ -f "bin/panelx-proxy" ]; then
+        cp bin/panelx-proxy "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+        chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+    fi
 else
     mkdir -p "$INSTALL_DIR/web/assets"
     curl -sSL "${REPO_RAW_BASE}/panelx.py" -o "$INSTALL_DIR/panelx.py" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/panelx_server.py" -o "$INSTALL_DIR/panelx_server.py" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/system_guardian.py" -o "$INSTALL_DIR/system_guardian.py" 2>/dev/null || true
+    curl -sSL "${REPO_RAW_BASE}/ws-proxy.py" -o "$INSTALL_DIR/ws-proxy.py" 2>/dev/null || true
+    curl -sSL "${REPO_RAW_BASE}/bin/panelx-proxy" -o "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+    chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/index.html" -o "$INSTALL_DIR/web/index.html"
     curl -sSL "${REPO_RAW_BASE}/web/favicon.svg" -o "$INSTALL_DIR/web/favicon.svg" 2>/dev/null || true
     curl -sSL "${REPO_RAW_BASE}/web/favicon.ico" -o "$INSTALL_DIR/web/favicon.ico" 2>/dev/null || true
@@ -175,6 +183,7 @@ fi
 chmod +x "$INSTALL_DIR/panelx.py" 2>/dev/null || true
 chmod +x "$INSTALL_DIR/panelx_server.py" 2>/dev/null || true
 chmod +x "$INSTALL_DIR/system_guardian.py" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/ws-proxy.py" 2>/dev/null || true
 chmod +x "/usr/local/bin/panelx"
 ln -sf /usr/local/bin/panelx /usr/bin/panelx 2>/dev/null || true
 
@@ -216,27 +225,29 @@ LimitNOFILE=65535
 WantedBy=multi-user.target
 EOF
 
-# Setup panelx-proxy high-speed Rust binary if available
-if [ -f "bin/panelx-proxy" ]; then
-    cp bin/panelx-proxy "/usr/local/bin/panelx-proxy" 2>/dev/null || true
-    chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+# Setup WS-Proxy High-Speed Engine (Rust binary or Python fallback)
+if [ -x "/usr/local/bin/panelx-proxy" ] && /usr/local/bin/panelx-proxy -V >/dev/null 2>&1; then
+    WS_EXEC="/usr/local/bin/panelx-proxy -p 80,8080,443,8880"
+else
+    WS_EXEC="/usr/bin/python3 ${INSTALL_DIR}/ws-proxy.py"
+fi
 
-    cat <<EOF > /etc/systemd/system/ws-proxy.service
+cat <<EOF > /etc/systemd/system/ws-proxy.service
 [Unit]
-Description=PanelX High-Speed Rust Proxy (Ports 80, 8080, 443)
+Description=PanelX High-Speed WebSocket Proxy (Ports 80, 8080, 443, 8880)
 After=network.target
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/panelx-proxy -p 80,8080,443
+ExecStart=${WS_EXEC}
 Restart=always
 RestartSec=2s
+LimitNOFILE=65535
 
 [Install]
 WantedBy=multi-user.target
 EOF
-fi
 
 # Apply Linux BBR and TCP Speed Optimizations
 cat <<'EOF' > /etc/sysctl.d/99-panelx-bbr.conf

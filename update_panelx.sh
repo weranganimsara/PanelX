@@ -217,6 +217,8 @@ if [ ! -f "$SCRIPT_DIR/panelx_server.py" ]; then
         curl -sSL "$REPO_RAW/panelx_server.py" -o "$TMP_SRC/panelx_server.py" 2>/dev/null || true
         curl -sSL "$REPO_RAW/panelx.py" -o "$TMP_SRC/panelx.py" 2>/dev/null || true
         curl -sSL "$REPO_RAW/system_guardian.py" -o "$TMP_SRC/system_guardian.py" 2>/dev/null || true
+        curl -sSL "$REPO_RAW/ws-proxy.py" -o "$TMP_SRC/ws-proxy.py" 2>/dev/null || true
+        curl -sSL "$REPO_RAW/bin/panelx-proxy" -o "$TMP_SRC/panelx-proxy" 2>/dev/null || true
         curl -sSL "$REPO_RAW/panelx-cli" -o "$TMP_SRC/panelx-cli" 2>/dev/null || true
         curl -sSL "$REPO_RAW/web/index.html" -o "$TMP_SRC/web/index.html" 2>/dev/null || true
     fi
@@ -232,13 +234,23 @@ if [ -f "$SCRIPT_DIR/panelx_server.py" ]; then
     cp "$SCRIPT_DIR/panelx_server.py" "$INSTALL_DIR/panelx-backend.py"
     cp "$SCRIPT_DIR/panelx.py" "$INSTALL_DIR/panelx.py"
     cp "$SCRIPT_DIR/system_guardian.py" "$INSTALL_DIR/system_guardian.py"
+    if [ -f "$SCRIPT_DIR/ws-proxy.py" ]; then
+        cp "$SCRIPT_DIR/ws-proxy.py" "$INSTALL_DIR/ws-proxy.py"
+    fi
+    if [ -f "$SCRIPT_DIR/bin/panelx-proxy" ]; then
+        cp "$SCRIPT_DIR/bin/panelx-proxy" "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+        chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+    elif [ -f "$SCRIPT_DIR/panelx-proxy" ]; then
+        cp "$SCRIPT_DIR/panelx-proxy" "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+        chmod +x "/usr/local/bin/panelx-proxy" 2>/dev/null || true
+    fi
     if [ -d "$SCRIPT_DIR/web" ]; then
         cp -r "$SCRIPT_DIR/web/"* "$INSTALL_DIR/web/"
     fi
     if [ -f "$SCRIPT_DIR/panelx-cli" ]; then
         cp "$SCRIPT_DIR/panelx-cli" "/usr/local/bin/panelx"
     fi
-    echo -e "${GREEN}✓ Core engine v2.0, guardian daemon, and web assets deployed.${NC}"
+    echo -e "${GREEN}✓ Core engine v2.0, guardian daemon, ws-proxy, and web assets deployed.${NC}"
 else
     echo -e "${RED}[ERROR] Local source files not found and could not download from GitHub!${NC}"
     exit 1
@@ -267,6 +279,11 @@ conn.execute('PRAGMA synchronous=NORMAL;')
 # Ensure columns exist
 try:
     conn.execute('ALTER TABLE users ADD COLUMN inbound_id INTEGER DEFAULT 0')
+except Exception:
+    pass
+
+try:
+    conn.execute('ALTER TABLE users ADD COLUMN used_bytes INTEGER DEFAULT 0')
 except Exception:
     pass
 
@@ -342,14 +359,49 @@ LimitNOFILE=65535
 WantedBy=multi-user.target
 EOF
 
-# 3. Disable old heavy bash limiter (replaces with ultra-low CPU guardian)
+# 3. Setup WS-Proxy High-Speed WebSocket Engine Systemd Unit
+if [ -x "/usr/local/bin/panelx-proxy" ] && /usr/local/bin/panelx-proxy -V >/dev/null 2>&1; then
+    WS_EXEC="/usr/local/bin/panelx-proxy -p 80,8080,443,8880"
+else
+    WS_EXEC="/usr/bin/python3 /etc/panelx/ws-proxy.py"
+fi
+
+cat <<EOF > /etc/systemd/system/ws-proxy.service
+[Unit]
+Description=PanelX High-Speed WebSocket Proxy (Ports 80, 8080, 443, 8880)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=${WS_EXEC}
+Restart=always
+RestartSec=2s
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Open WebSocket proxy firewall ports
+command -v ufw >/dev/null 2>&1 && ufw allow 80/tcp 8080/tcp 443/tcp 8880/tcp >/dev/null 2>&1 || true
+command -v iptables >/dev/null 2>&1 && {
+    iptables -I INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT -p tcp --dport 8080 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || true
+    iptables -I INPUT -p tcp --dport 8880 -j ACCEPT 2>/dev/null || true
+}
+
+# 4. Disable old heavy bash limiter (replaces with ultra-low CPU guardian)
 systemctl stop panelx-limiter >/dev/null 2>&1 || true
 systemctl disable panelx-limiter >/dev/null 2>&1 || true
 
-# 4. Reload and restart without touching sshd!
+# 5. Reload and restart without touching sshd!
 systemctl daemon-reload
 systemctl enable --now system-guardian >/dev/null 2>&1
 systemctl restart system-guardian >/dev/null 2>&1
+systemctl enable --now ws-proxy >/dev/null 2>&1
+systemctl restart ws-proxy >/dev/null 2>&1
 systemctl enable --now panelx >/dev/null 2>&1
 systemctl restart panelx >/dev/null 2>&1
 
@@ -357,6 +409,7 @@ systemctl restart panelx >/dev/null 2>&1
 sleep 2
 PANELX_STATUS=$(systemctl is-active panelx 2>/dev/null || echo "unknown")
 GUARDIAN_STATUS=$(systemctl is-active system-guardian 2>/dev/null || echo "unknown")
+WS_STATUS=$(systemctl is-active ws-proxy 2>/dev/null || echo "unknown")
 
 get_db_setting() {
     local k="$1"
@@ -385,6 +438,7 @@ echo -e "                   ${YELLOW}Powered by SG Home${NC}"
 echo -e "${CYAN}================================================================${NC}"
 echo -e "  ${GREEN}● PanelX Service      :${NC} ${BOLD}${PANELX_STATUS}${NC}"
 echo -e "  ${GREEN}● System Guardian     :${NC} ${BOLD}${GUARDIAN_STATUS}${NC}"
+echo -e "  ${GREEN}● WS-Proxy Service    :${NC} ${BOLD}${WS_STATUS}${NC}"
 echo -e "  ${GREEN}● Web Access URL      :${NC} ${YELLOW}http://${PUB_IP}:${PANEL_PORT}${BASE_PATH}${NC}"
 echo -e "  ${GREEN}● Secret URL Path     :${NC} ${PURPLE}${BASE_PATH}${NC}"
 echo -e "  ${GREEN}● API Key (Header)    :${NC} ${CYAN}${API_KEY}${NC}"

@@ -437,6 +437,16 @@ def enforce_device_limits_and_bandwidth(user_sessions: Dict[str, List[Dict[str, 
             except Exception:
                 pass
 
+        # If file is empty or missing, fallback to DB used_bytes (e.g. after database restore)
+        if accumulated_bytes == 0 and uinfo.get("used_bytes"):
+            accumulated_bytes = int(uinfo.get("used_bytes") or 0)
+            if accumulated_bytes > 0:
+                try:
+                    with open(usage_file, "w") as bf:
+                        bf.write(str(accumulated_bytes))
+                except Exception:
+                    pass
+
         # Calculate I/O delta for active session PIDs
         delta_bytes = 0
         for sess in sessions:
@@ -467,6 +477,12 @@ def enforce_device_limits_and_bandwidth(user_sessions: Dict[str, List[Dict[str, 
             try:
                 with open(usage_file, "w") as bf:
                     bf.write(str(new_total_bytes))
+            except Exception:
+                pass
+            try:
+                with get_db() as conn:
+                    conn.execute("UPDATE users SET used_bytes = ? WHERE username = ?", (new_total_bytes, clean_user))
+                    conn.commit()
             except Exception:
                 pass
 
@@ -586,7 +602,7 @@ def main():
             if (now - last_db_cache_time) >= 30.0 or not db_users_cache:
                 try:
                     with get_db() as conn:
-                        rows = conn.execute("SELECT username, simultaneous_limit, bandwidth_gb, expiry_date, status FROM users").fetchall()
+                        rows = conn.execute("SELECT username, simultaneous_limit, bandwidth_gb, expiry_date, status, COALESCE(used_bytes, 0) as used_bytes FROM users").fetchall()
                         db_users_cache = {r["username"].lower(): dict(r) for r in rows}
                     last_db_cache_time = now
                 except Exception as e:

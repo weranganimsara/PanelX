@@ -190,6 +190,12 @@ def init_db():
         except Exception:
             pass
 
+        # Add used_bytes column if missing for persistent bandwidth across backups
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN used_bytes INTEGER DEFAULT 0")
+        except Exception:
+            pass
+
         # 3. Sessions table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS sessions (
@@ -352,26 +358,91 @@ def os_toggle_user_lock(username: str, lock: bool):
     else:
         subprocess.run(f"usermod -U {clean_user} 2>/dev/null", shell=True)
 
+def sync_all_system_users():
+    """
+    Synchronizes all accounts from panelx.db into Linux OS (/etc/passwd, /etc/shadow, limits.conf).
+    Automatically creates missing Linux users, restores passwords and expiry dates,
+    and applies login limits. Critical after database restore or server migration.
+    """
+    try:
+        with get_db() as conn:
+            users = conn.execute("SELECT username, password, expiry_date, simultaneous_limit FROM users").fetchall()
+        for u in users:
+            uname = u["username"].strip().lower()
+            pw = u["password"]
+            exp = u["expiry_date"]
+            limit = u["simultaneous_limit"] or 4
+
+            # Check if user exists in Linux
+            res = subprocess.run(f"id -u {uname}", shell=True, capture_output=True)
+            if res.returncode != 0:
+                if exp:
+                    subprocess.run(f"useradd -e {exp} -s /bin/false -M {uname}", shell=True)
+                else:
+                    subprocess.run(f"useradd -s /bin/false -M {uname}", shell=True)
+            else:
+                if exp:
+                    subprocess.run(f"chage -E {exp} {uname} 2>/dev/null", shell=True)
+
+            p = subprocess.Popen(["chpasswd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            p.communicate(f"{uname}:{pw}\n")
+
+            try:
+                subprocess.run(f"sed -i '/^{uname} /d' /etc/security/limits.conf 2>/dev/null", shell=True)
+                subprocess.run(f"echo '{uname} hard maxlogins {limit}' >> /etc/security/limits.conf", shell=True)
+            except Exception:
+                pass
+        sync_users_db()
+    except Exception as e:
+        print(f"[PanelX] System user sync error: {e}")
+
 def get_user_bandwidth_usage(username: str) -> int:
+    clean = username.strip().lower()
     for base_dir in ["/etc/panelx/bandwidth", "/var/log/panelx/bw"]:
-        fpath = os.path.join(base_dir, f"{username}.usage")
+        fpath = os.path.join(base_dir, f"{clean}.usage")
         if os.path.exists(fpath):
             try:
                 with open(fpath, "r", encoding="utf-8") as bf:
-                    return int(bf.read().strip() or "0")
+                    val = int(bf.read().strip() or "0")
+                    if val > 0:
+                        return val
             except Exception:
                 pass
+
+    # Fallback to database used_bytes (e.g. after restore on a new server)
+    try:
+        with get_db() as conn:
+            row = conn.execute("SELECT used_bytes FROM users WHERE username = ?", (clean,)).fetchone()
+            if row and row["used_bytes"]:
+                val = int(row["used_bytes"] or 0)
+                if val > 0:
+                    try:
+                        os.makedirs("/etc/panelx/bandwidth", exist_ok=True)
+                        with open(f"/etc/panelx/bandwidth/{clean}.usage", "w", encoding="utf-8") as bf:
+                            bf.write(str(val))
+                    except Exception:
+                        pass
+                return val
+    except Exception:
+        pass
+
     return 0
 
 def reset_user_bandwidth_usage(username: str):
+    clean = username.strip().lower()
     for base_dir in ["/etc/panelx/bandwidth", "/var/log/panelx/bw"]:
         os.makedirs(base_dir, exist_ok=True)
-        fpath = os.path.join(base_dir, f"{username}.usage")
+        fpath = os.path.join(base_dir, f"{clean}.usage")
         try:
             with open(fpath, "w", encoding="utf-8") as bf:
                 bf.write("0")
         except Exception:
             pass
+    try:
+        with get_db() as conn:
+            conn.execute("UPDATE users SET used_bytes = 0 WHERE username = ?", (clean,))
+    except Exception:
+        pass
 
 def check_service_status(service_name: str) -> bool:
     try:
@@ -1139,9 +1210,19 @@ async def api_backup_export(request: Request):
     require_auth(request)
 
     def prepare_backup_stream():
-        # Force WAL checkpoint to flush all data into main database file
-        with get_db() as conn:
-            conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
+        # Flush all user bandwidth usage from filesystem into users table
+        try:
+            with get_db() as conn:
+                rows = conn.execute("SELECT username FROM users").fetchall()
+                for row in rows:
+                    u = row["username"].strip().lower()
+                    used = get_user_bandwidth_usage(u)
+                    if used > 0:
+                        conn.execute("UPDATE users SET used_bytes = ? WHERE username = ?", (used, u))
+                conn.commit()
+                conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
+        except Exception:
+            pass
 
         if not os.path.exists(DB_PATH):
             raise HTTPException(status_code=404, detail="Database file not found")
@@ -1216,6 +1297,23 @@ async def api_backup_restore(request: Request):
         # Re-initialize schema to ensure columns
         init_db()
         sync_users_db()
+        sync_all_system_users()
+
+        # Restore bandwidth usage files from database
+        try:
+            os.makedirs("/etc/panelx/bandwidth", exist_ok=True)
+            with get_db() as conn:
+                rows = conn.execute("SELECT username, used_bytes FROM users").fetchall()
+                for row in rows:
+                    u = row["username"].strip().lower()
+                    ub = int(row["used_bytes"] or 0)
+                    if ub > 0:
+                        fpath = os.path.join("/etc/panelx/bandwidth", f"{u}.usage")
+                        with open(fpath, "w", encoding="utf-8") as bf:
+                            bf.write(str(ub))
+        except Exception:
+            pass
+
         audit_log("admin", "database_restore", "panelx.db", client_ip, "Database restored successfully")
         return True, ""
 
@@ -1224,6 +1322,34 @@ async def api_backup_restore(request: Request):
         raise HTTPException(status_code=400, detail=err)
 
     return {"success": True, "message": "Database restored successfully"}
+
+@app.post("/api/user/set-bandwidth")
+@app.post("{base_path:path}/api/user/set-bandwidth")
+async def api_user_set_bandwidth(request: Request):
+    require_auth(request)
+    body = await parse_request_body(request)
+    client_ip = request.client.host if request.client else "127.0.0.1"
+
+    username = str(body.get("username", "")).strip().lower()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username required")
+
+    used_gb = float(body.get("used_gb", 0) or 0)
+    used_bytes = int(body.get("used_bytes", 0) or 0)
+    if used_gb > 0 and used_bytes == 0:
+        used_bytes = int(used_gb * (1024**3))
+
+    def set_tx():
+        os.makedirs("/etc/panelx/bandwidth", exist_ok=True)
+        fpath = os.path.join("/etc/panelx/bandwidth", f"{username}.usage")
+        with open(fpath, "w", encoding="utf-8") as bf:
+            bf.write(str(used_bytes))
+        with get_db() as conn:
+            conn.execute("UPDATE users SET used_bytes = ? WHERE username = ?", (used_bytes, username))
+        audit_log("admin", "user_set_bandwidth", f"{username} -> {used_bytes} bytes", client_ip)
+
+    await run_in_threadpool(set_tx)
+    return {"success": True, "message": f"Bandwidth set for {username}"}
 
 # ---------------------------------------------------------------------------
 # API Endpoints: Services, Systemd, & Logs
@@ -1953,6 +2079,12 @@ def run_server():
     print(f"   Web Base Path: {base_path}")
     print(f"   API Key: {secret_key}")
     print("=" * 68)
+
+    # Automatically ensure all accounts from database exist in Linux OS
+    try:
+        threading.Thread(target=sync_all_system_users, daemon=True).start()
+    except Exception:
+        pass
 
     import uvicorn  # type: ignore
     uvicorn.run(
