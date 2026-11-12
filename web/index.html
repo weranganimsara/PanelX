@@ -1140,11 +1140,63 @@
         margin-bottom: 14px !important;
       }
     }
+
+    /* Floating PWA Install Banner */
+    .pwa-floating-banner {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(13, 20, 36, 0.95);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 242, 254, 0.25);
+      z-index: 2500;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      animation: bannerSlideUp 0.35s ease;
+      max-width: 440px;
+    }
+    @keyframes bannerSlideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @media (max-width: 520px) {
+      .pwa-floating-banner {
+        left: 12px;
+        right: 12px;
+        bottom: 14px;
+        max-width: calc(100vw - 24px);
+        padding: 10px 14px;
+      }
+    }
   </style>
 
 </head>
 
 <body>
+
+  <!-- Floating PWA Install Prompt Banner for Mobile & Desktop -->
+  <div id="pwa-floating-banner" class="pwa-floating-banner" style="display: none;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <img src="assets/icon-192.png" alt="PanelX" style="width: 40px; height: 40px; border-radius: 9px; box-shadow: 0 0 12px rgba(0,242,254,0.4); border: 1px solid rgba(0,242,254,0.3);">
+      <div>
+        <div style="font-weight: 700; color: #fff; font-size: 13.5px;">Install PanelX App</div>
+        <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 600;">Fast 1-tap launch on Android & PC</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+      <button class="btn btn-primary" onclick="triggerPWAInstall()" style="padding: 7px 14px; font-size: 12px; font-weight: 700;">
+        <i class="fa-solid fa-cloud-arrow-down"></i> Install
+      </button>
+      <button onclick="dismissPwaBanner()" style="background: transparent; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 2px 6px;" title="Dismiss">
+        &times;
+      </button>
+    </div>
+  </div>
 
   <!-- Toast Notification -->
   <div id="toast" class="toast">
@@ -1283,7 +1335,7 @@
         <a href="https://paid.sghome.space/" target="_blank" title="SG Home Official Paid Site" style="color: var(--accent-amber); margin-bottom: 2px;">
           <i class="fa-solid fa-crown"></i> SG Home Paid Site
         </a>
-        <a id="pwa-sidebar-install" onclick="triggerPWAInstall()" style="display: none; cursor: pointer; color: var(--accent-cyan); font-weight: 700; margin-bottom: 2px;">
+        <a id="pwa-sidebar-install" onclick="triggerPWAInstall()" style="cursor: pointer; color: var(--accent-cyan); font-weight: 700; margin-bottom: 2px;">
           <i class="fa-solid fa-cloud-arrow-down" style="color: var(--accent-cyan);"></i> Install PanelX App
         </a>
         <a href="https://github.com/weranganimsara/PanelX" target="_blank" style="margin-bottom: 2px;">
@@ -1311,7 +1363,7 @@
         </div>
         <div class="top-actions">
           <!-- PWA Standalone App Install Button -->
-          <button id="pwa-install-btn" class="btn btn-primary" style="display: none; font-weight: 700;" onclick="triggerPWAInstall()" title="Install PanelX as Standalone Web App (Android & PC)">
+          <button id="pwa-install-btn" class="btn btn-primary" style="font-weight: 700;" onclick="triggerPWAInstall()" title="Install PanelX as Standalone Web App (Android & PC)">
             <i class="fa-solid fa-cloud-arrow-down"></i> <span>Install App</span>
           </button>
 
@@ -1983,34 +2035,32 @@ PANELX_API_KEY=SGX_...</div>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px;">
-          <h4 style="color: var(--accent-cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-brands fa-android" style="font-size: 16px;"></i> On Android (Chrome / Brave / Edge)
+        <div style="background: rgba(0, 242, 254, 0.06); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 16px;">
+          <h4 style="color: var(--accent-cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+            <i class="fa-brands fa-android" style="font-size: 20px;"></i> Android Phone එකේ Install කරගන්නේ මෙහෙමයි:
           </h4>
-          <ol style="margin-left: 20px; color: #cbd5e1; line-height: 1.6;">
-            <li>Click the cyan <strong>"Install App"</strong> button inside PanelX.</li>
-            <li>Or tap the 3 vertical dots (<strong>⋮</strong>) in your browser top right.</li>
-            <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
-            <li>PanelX will appear as an app with the official shield icon on your phone!</li>
+          <ol style="margin-left: 20px; color: #f0f4f8; line-height: 1.75; font-size: 13px;">
+            <li>ඔයාගේ Chrome Browser එකේ උඩ දකුණු කෙළවරේ තියෙන <strong>තිත් 3 (⋮)</strong> ඔබන්න.</li>
+            <li>එන Menu එකෙන් <strong>"Install app"</strong> හෝ <strong>"Add to Home screen"</strong> තෝරන්න.</li>
+            <li><strong>"Install"</strong> හෝ <strong>"Add"</strong> ඔබන්න. Phone එකේ Home Screen එකට PanelX App Icon එක වැටෙනවා!</li>
           </ol>
         </div>
 
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px;">
-          <h4 style="color: var(--accent-blue); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-brands fa-windows" style="font-size: 16px;"></i> On PC / Laptop (Chrome / Edge / Brave)
+        <div style="background: rgba(79, 172, 254, 0.06); border: 1px solid rgba(79, 172, 254, 0.25); border-radius: 12px; padding: 16px;">
+          <h4 style="color: var(--accent-blue); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+            <i class="fa-brands fa-windows" style="font-size: 20px;"></i> Windows / Mac Computer එකේ Install කරගන්නේ මෙහෙමයි:
           </h4>
-          <ol style="margin-left: 20px; color: #cbd5e1; line-height: 1.6;">
-            <li>Click the <strong>"Install App"</strong> button in the top navigation bar.</li>
-            <li>Or look in your browser's address bar (URL bar) for the <strong>Install Icon (⊞ or ⊕)</strong>.</li>
-            <li>Click <strong>Install</strong> to get a desktop shortcut and dedicated standalone window!</li>
+          <ol style="margin-left: 20px; color: #f0f4f8; line-height: 1.75; font-size: 13px;">
+            <li>Chrome / Edge Browser එකේ Address Bar එකේ කෙළවරේ තියෙන <strong>Install Icon (⊞ හෝ ⊕)</strong> ඔබන්න.</li>
+            <li>නැත්නම් Browser එකේ තිත් 3 (<strong>⋮</strong>) ඔබලා <strong>"Cast, save and share"</strong> -> <strong>"Install PanelX"</strong> (හෝ "Create shortcut") ඔබන්න.</li>
+            <li>Desktop එකට Shortcut එක හැදිලා Real Desktop Software එකක් වගේ Open වෙනවා!</li>
           </ol>
         </div>
       </div>
 
       <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
-        <button type="button" class="btn btn-outline" onclick="closeModal('pwa-guide-modal')">Close</button>
-        <button type="button" class="btn btn-primary" onclick="closeModal('pwa-guide-modal'); triggerPWAInstall();">
-          <i class="fa-solid fa-download"></i> Try Install Now
+        <button type="button" class="btn btn-primary" onclick="closeModal('pwa-guide-modal')" style="padding: 9px 20px;">
+          <i class="fa-solid fa-check"></i> තේරුණා (Got It)
         </button>
       </div>
     </div>
@@ -4536,16 +4586,24 @@ PANELX_API_KEY=${key}`;
              (document.referrer.includes('android-app://'));
     }
 
+    function dismissPwaBanner() {
+      const banner = document.getElementById('pwa-floating-banner');
+      if (banner) banner.style.display = 'none';
+      sessionStorage.setItem('pwa_banner_dismissed', '1');
+    }
+
     function checkPwaStatus() {
       const isStandalone = isRunningStandalone();
       const pwaStatus = document.getElementById('pwa-status-badge');
       const headerBtn = document.getElementById('pwa-install-btn');
       const sidebarLink = document.getElementById('pwa-sidebar-install');
       const settingsBtn = document.getElementById('pwa-settings-install-btn');
+      const floatingBanner = document.getElementById('pwa-floating-banner');
 
       if (isStandalone) {
         if (headerBtn) headerBtn.style.display = 'none';
         if (sidebarLink) sidebarLink.style.display = 'none';
+        if (floatingBanner) floatingBanner.style.display = 'none';
         if (settingsBtn) {
           settingsBtn.disabled = true;
           settingsBtn.innerHTML = '<i class="fa-solid fa-check"></i> Already Installed';
@@ -4555,14 +4613,25 @@ PANELX_API_KEY=${key}`;
           pwaStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Running as App';
         }
       } else {
-        if (deferredPwaPrompt) {
-          if (headerBtn) headerBtn.style.display = 'inline-flex';
-          if (sidebarLink) sidebarLink.style.display = 'flex';
+        // In browser mode: ALWAYS show install triggers
+        if (headerBtn) headerBtn.style.display = 'inline-flex';
+        if (sidebarLink) sidebarLink.style.display = 'flex';
+        if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+
+        // Auto-show floating install prompt after 1.5 seconds if not dismissed
+        if (!sessionStorage.getItem('pwa_banner_dismissed')) {
+          setTimeout(() => {
+            const fb = document.getElementById('pwa-floating-banner');
+            if (fb && !isRunningStandalone()) fb.style.display = 'flex';
+          }, 1500);
         }
       }
     }
 
     async function triggerPWAInstall() {
+      const floatingBanner = document.getElementById('pwa-floating-banner');
+      if (floatingBanner) floatingBanner.style.display = 'none';
+
       if (deferredPwaPrompt) {
         deferredPwaPrompt.prompt();
         const choiceResult = await deferredPwaPrompt.userChoice;
