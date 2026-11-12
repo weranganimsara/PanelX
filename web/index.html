@@ -864,6 +864,266 @@
     .action-btn-clean.delete-action:hover {
       color: #ef4444;
     }
+
+    /* ==========================================================================
+       MOBILE RESPONSIVE & OFF-CANVAS SIDEBAR DRAWER SYSTEM
+       ========================================================================== */
+
+    /* Mobile Menu Toggle Button (hidden on desktop) */
+    .mobile-menu-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .mobile-menu-btn:hover {
+      background: rgba(0, 242, 254, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Mobile Sidebar Close Button */
+    .mobile-sidebar-close {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      font-size: 15px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .mobile-sidebar-close:hover {
+      color: #fff;
+      border-color: var(--accent-red);
+      background: rgba(255, 51, 102, 0.15);
+    }
+
+    /* Mobile Sidebar Dim Backdrop Overlay */
+    .mobile-sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background: rgba(3, 7, 14, 0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 1190;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mobile-sidebar-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Large Tablet / Small Laptop / Mobile Breakpoint (< 992px) */
+    @media (max-width: 991.98px) {
+      #app-layout {
+        width: 100%;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .mobile-menu-btn {
+        display: inline-flex !important;
+      }
+      .mobile-sidebar-close {
+        display: inline-flex !important;
+      }
+
+      /* Transform Sidebar into Off-Canvas Slide Drawer */
+      .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 82vw !important;
+        z-index: 1200 !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        box-shadow: none !important;
+        border-right: 1px solid rgba(0, 242, 254, 0.2) !important;
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0) !important;
+        box-shadow: 12px 0 45px rgba(0, 0, 0, 0.85) !important;
+      }
+
+      /* Viewport expands to full screen width */
+      .main-viewport {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 18px 20px !important;
+        overflow-x: hidden !important;
+      }
+
+      .main-viewport::after {
+        left: 16px !important;
+        bottom: 6px !important;
+        font-size: 8px !important;
+      }
+    }
+
+    /* Tablet and Mobile (< 768px) */
+    @media (max-width: 767.98px) {
+      .top-header {
+        margin-bottom: 18px !important;
+        gap: 12px !important;
+      }
+
+      .top-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+      }
+
+      /* 2 Columns on Tablets/Large Phones */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        margin-bottom: 18px !important;
+      }
+
+      /* Stack Toolbar controls cleanly */
+      .toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+      }
+
+      .search-box {
+        width: 100% !important;
+        min-width: 100% !important;
+      }
+
+      /* Touch-friendly horizontal scroll for filter pills */
+      .filter-pills-container {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 6px !important;
+      }
+
+      /* Smooth Table Scrolling on Touch Devices */
+      .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 10px !important;
+      }
+
+      .table-responsive table {
+        min-width: 700px !important;
+      }
+
+      /* Touch friendly hit area for table buttons */
+      .action-btn-clean {
+        padding: 6px 9px !important;
+        font-size: 15px !important;
+      }
+
+      /* Forms stack into single column */
+      .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+
+      /* Centered Pagination controls */
+      .pagination-bar {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 10px !important;
+      }
+
+      /* Modals scale gracefully to mobile viewport */
+      .modal-backdrop, .modal-overlay {
+        padding: 10px !important;
+      }
+
+      .modal-card {
+        width: 96vw !important;
+        max-width: 96vw !important;
+        padding: 20px 15px !important;
+        max-height: 92vh !important;
+        border-radius: 14px !important;
+      }
+
+      #cmd-palette {
+        padding-top: 6vh !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+      }
+
+      .cmd-box {
+        width: 96vw !important;
+        max-width: 96vw !important;
+        border-radius: 14px !important;
+      }
+    }
+
+    /* Small Mobile Phones (< 520px) */
+    @media (max-width: 519.98px) {
+      .main-viewport {
+        padding: 14px 12px !important;
+      }
+
+      .page-title h2 {
+        font-size: 18px !important;
+      }
+
+      .page-title p {
+        font-size: 11.5px !important;
+      }
+
+      /* 1 column stat cards on small phones */
+      .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+
+      .content-card {
+        padding: 16px 12px !important;
+        border-radius: 12px !important;
+      }
+
+      .login-card {
+        padding: 26px 18px !important;
+        width: 94vw !important;
+        border-radius: 16px !important;
+      }
+
+      .login-brand {
+        width: 52px !important;
+        height: 52px !important;
+        font-size: 24px !important;
+        margin-bottom: 14px !important;
+      }
+    }
   </style>
 
 </head>
@@ -912,15 +1172,23 @@
   <!-- 2. MAIN APPLICATION (3X-UI + CloudPanel Style Sidebar) -->
   <div id="app-layout" style="display: none;">
 
+    <!-- Mobile Sidebar Dim Backdrop Overlay -->
+    <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
     <!-- Left Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="main-sidebar">
       <div>
-        <div class="sidebar-brand" onclick="window.open('https://paid.sghome.space/', '_blank')" style="cursor: pointer;" title="SG Home Official Paid Site • Click to visit">
-          <div class="sidebar-brand-icon"><i class="fa-solid fa-bolt"></i></div>
-          <div class="sidebar-brand-text">
-            <h1 id="top-title">SGPX</h1>
-            <span class="tagline">PANELX BY SG HOME</span>
+        <div class="sidebar-brand">
+          <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; min-width: 0;" onclick="window.open('https://paid.sghome.space/', '_blank')" title="SG Home Official Paid Site • Click to visit">
+            <div class="sidebar-brand-icon"><i class="fa-solid fa-bolt"></i></div>
+            <div class="sidebar-brand-text">
+              <h1 id="top-title">SGPX</h1>
+              <span class="tagline">PANELX BY SG HOME</span>
+            </div>
           </div>
+          <button class="mobile-sidebar-close" onclick="closeMobileSidebar()" aria-label="Close Sidebar" title="Close Menu">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
 
         <ul class="sidebar-menu">
@@ -1013,9 +1281,14 @@
 
       <!-- Top Header Action Bar -->
       <div class="top-header">
-        <div class="page-title">
-          <h2 id="view-heading">Server Overview</h2>
-          <p id="view-subheading">Real-time Linux VPS health, resource usage and active services</p>
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Navigation Menu" title="Open Navigation Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <h2 id="view-heading">Server Overview</h2>
+            <p id="view-subheading">Real-time Linux VPS health, resource usage and active services</p>
+          </div>
         </div>
         <div class="top-actions">
           <!-- Server Health Score Pill -->
@@ -2286,8 +2559,38 @@ PANELX_API_KEY=SGX_...</div>
       }
     }
 
+    // Mobile Sidebar Drawer Controller
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('main-sidebar');
+      const backdrop = document.getElementById('mobile-sidebar-backdrop');
+      if (!sidebar) return;
+      const isOpen = sidebar.classList.contains('mobile-open');
+      if (isOpen) {
+        closeMobileSidebar();
+      } else {
+        sidebar.classList.add('mobile-open');
+        if (backdrop) backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById('main-sidebar');
+      const backdrop = document.getElementById('mobile-sidebar-backdrop');
+      if (sidebar) sidebar.classList.remove('mobile-open');
+      if (backdrop) backdrop.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    window.addEventListener('resize', function() {
+      if (window.innerWidth >= 992) {
+        closeMobileSidebar();
+      }
+    });
+
     // Navigation Switcher
     function switchNav(view) {
+      closeMobileSidebar();
       const views = ['overview', 'firewall', 'inbounds', 'clients', 'services', 'processes', 'network', 'ssh', 'logs', 'storage', 'power', 'settings'];
       views.forEach(v => {
         const el = document.getElementById(`view-${v}`);
