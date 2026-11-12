@@ -2110,19 +2110,33 @@ def serve_static_file(rel_path: str):
 
     if os.path.exists(file_path) and os.path.isfile(file_path):
         media_type = "text/html"
+        headers = {}
         if file_path.endswith(".css"): media_type = "text/css"
-        elif file_path.endswith(".js"): media_type = "application/javascript"
+        elif file_path.endswith(".js"):
+            media_type = "application/javascript"
+            if os.path.basename(file_path) == "sw.js":
+                headers["Service-Worker-Allowed"] = "/"
+        elif file_path.endswith(".webmanifest") or file_path.endswith(".json"): media_type = "application/manifest+json"
         elif file_path.endswith(".svg"): media_type = "image/svg+xml"
         elif file_path.endswith(".png"): media_type = "image/png"
         elif file_path.endswith(".ico"): media_type = "image/x-icon"
         elif file_path.endswith(".webp"): media_type = "image/webp"
-        return FileResponse(file_path, media_type=media_type)
+        return FileResponse(file_path, media_type=media_type, headers=headers)
 
     # Fallback to index.html for Single Page Applications
     index_path = os.path.join(WEB_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path, media_type="text/html")
     return HTMLResponse("<h3>PanelX Web UI files not found. Check /etc/panelx/web/</h3>", status_code=404)
+
+@app.get("/manifest.webmanifest")
+@app.get("/manifest.json")
+async def pwa_manifest():
+    return serve_static_file("manifest.webmanifest")
+
+@app.get("/sw.js")
+async def pwa_sw():
+    return serve_static_file("sw.js")
 
 @app.get("/favicon.ico")
 @app.get("/favicon.svg")

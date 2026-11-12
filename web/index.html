@@ -3,14 +3,30 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SGPX | PanelX by SG Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>PanelX | SG Home Enterprise Control Panel</title>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
-  <link rel="shortcut icon" type="image/svg+xml" href="/assets/logo.svg">
-  <link rel="alternate icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" href="/assets/logo.svg">
+  <!-- PWA & Mobile Web App Capabilities -->
+  <meta name="theme-color" content="#07090e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PanelX">
+  <meta name="application-name" content="PanelX">
+  <meta name="msapplication-TileColor" content="#07090e">
+  <meta name="description" content="PanelX - High-Performance Linux VPS SSH & VPN Tunnel Control Panel by SG Home">
+
+  <!-- PWA Web App Manifest -->
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Favicons & App Touch Icons -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="shortcut icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="alternate icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1267,6 +1283,9 @@
         <a href="https://paid.sghome.space/" target="_blank" title="SG Home Official Paid Site" style="color: var(--accent-amber); margin-bottom: 2px;">
           <i class="fa-solid fa-crown"></i> SG Home Paid Site
         </a>
+        <a id="pwa-sidebar-install" onclick="triggerPWAInstall()" style="display: none; cursor: pointer; color: var(--accent-cyan); font-weight: 700; margin-bottom: 2px;">
+          <i class="fa-solid fa-cloud-arrow-down" style="color: var(--accent-cyan);"></i> Install PanelX App
+        </a>
         <a href="https://github.com/weranganimsara/PanelX" target="_blank" style="margin-bottom: 2px;">
           <i class="fa-brands fa-github"></i> GitHub Repository
         </a>
@@ -1291,6 +1310,11 @@
           </div>
         </div>
         <div class="top-actions">
+          <!-- PWA Standalone App Install Button -->
+          <button id="pwa-install-btn" class="btn btn-primary" style="display: none; font-weight: 700;" onclick="triggerPWAInstall()" title="Install PanelX as Standalone Web App (Android & PC)">
+            <i class="fa-solid fa-cloud-arrow-down"></i> <span>Install App</span>
+          </button>
+
           <!-- Server Health Score Pill -->
           <div class="health-pill" onclick="openHealthModal()" title="Click to view full health diagnostic breakdown">
             <div class="status-dot"></div>
@@ -1899,6 +1923,31 @@ PANELX_API_KEY=SGX_...</div>
             <input type="file" id="backup-file-input" style="display: none;" onchange="handleRestoreBackup(event)" accept=".db,.sqlite,.sqlite3">
           </div>
         </div>
+
+        <!-- PanelX Web App (PWA) Installation Card -->
+        <div id="pwa-app-card" class="content-card" style="max-width: 700px; margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="assets/icon-192.png" alt="PanelX Logo" style="width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 0 16px rgba(0, 242, 254, 0.4); border: 1px solid rgba(0, 242, 254, 0.3);">
+              <div>
+                <h3 style="font-size: 15px; color: #fff; margin: 0; font-weight: 700;">PanelX Web App (PWA)</h3>
+                <span style="font-size: 11px; color: var(--accent-cyan); font-weight: 600;">Standalone Desktop & Android Application</span>
+              </div>
+            </div>
+            <span id="pwa-status-badge" class="tag tag-blue"><i class="fa-solid fa-mobile-screen"></i> Web Mode</span>
+          </div>
+          <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5;">
+            Install PanelX as a lightweight, high-performance native application directly on your <strong>Android phone</strong> or <strong>Windows / Mac PC</strong>. Launches in its own frameless window with zero browser bars, instant app launch, and hardware-accelerated dashboard rendering.
+          </p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <button type="button" id="pwa-settings-install-btn" class="btn btn-primary" onclick="triggerPWAInstall()">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Install PanelX App
+            </button>
+            <button type="button" class="btn btn-outline" onclick="openModal('pwa-guide-modal')">
+              <i class="fa-solid fa-circle-info"></i> Installation Guide (Android & PC)
+            </button>
+          </div>
+        </div>
       </div>
 
     </main>
@@ -1917,6 +1966,53 @@ PANELX_API_KEY=SGX_...</div>
       </div>
       <h4 style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">DIAGNOSTIC FINDINGS:</h4>
       <div id="modal-health-deductions" style="display: flex; flex-direction: column; gap: 6px;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: PWA INSTALLATION GUIDE -->
+  <div id="pwa-guide-modal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-cloud-arrow-down" style="color: var(--accent-cyan); margin-right: 8px;"></i> Install PanelX as an App</h2>
+        <button class="modal-close" onclick="closeModal('pwa-guide-modal')">&times;</button>
+      </div>
+      <div style="text-align: center; margin-bottom: 18px;">
+        <img src="assets/icon-192.png" alt="PanelX App Icon" style="width: 64px; height: 64px; border-radius: 14px; box-shadow: 0 0 24px rgba(0, 242, 254, 0.4); margin-bottom: 10px;">
+        <h3 style="font-size: 16px; color: #fff; margin-bottom: 4px;">PanelX Web Application</h3>
+        <p style="font-size: 12px; color: var(--text-muted);">Install once, use everywhere on Android & PC</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px;">
+          <h4 style="color: var(--accent-cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-brands fa-android" style="font-size: 16px;"></i> On Android (Chrome / Brave / Edge)
+          </h4>
+          <ol style="margin-left: 20px; color: #cbd5e1; line-height: 1.6;">
+            <li>Click the cyan <strong>"Install App"</strong> button inside PanelX.</li>
+            <li>Or tap the 3 vertical dots (<strong>⋮</strong>) in your browser top right.</li>
+            <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+            <li>PanelX will appear as an app with the official shield icon on your phone!</li>
+          </ol>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px;">
+          <h4 style="color: var(--accent-blue); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-brands fa-windows" style="font-size: 16px;"></i> On PC / Laptop (Chrome / Edge / Brave)
+          </h4>
+          <ol style="margin-left: 20px; color: #cbd5e1; line-height: 1.6;">
+            <li>Click the <strong>"Install App"</strong> button in the top navigation bar.</li>
+            <li>Or look in your browser's address bar (URL bar) for the <strong>Install Icon (⊞ or ⊕)</strong>.</li>
+            <li>Click <strong>Install</strong> to get a desktop shortcut and dedicated standalone window!</li>
+          </ol>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('pwa-guide-modal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="closeModal('pwa-guide-modal'); triggerPWAInstall();">
+          <i class="fa-solid fa-download"></i> Try Install Now
+        </button>
+      </div>
     </div>
   </div>
 
@@ -4393,6 +4489,110 @@ PANELX_API_KEY=${key}`;
       };
       reader.readAsDataURL(file);
     }
+
+    // =========================================================================
+    // PROGRESSIVE WEB APP (PWA) & STANDALONE INSTALL CONTROLLER
+    // =========================================================================
+    let deferredPwaPrompt = null;
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: './' })
+          .then((reg) => {
+            console.log('[PWA] Service Worker registered with scope:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('[PWA] Service Worker registration failed:', err);
+          });
+      });
+    }
+
+    // Capture install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent browser default mini-infobar
+      e.preventDefault();
+      deferredPwaPrompt = e;
+
+      // Show in-app install buttons
+      const headerBtn = document.getElementById('pwa-install-btn');
+      const sidebarLink = document.getElementById('pwa-sidebar-install');
+      const settingsBtn = document.getElementById('pwa-settings-install-btn');
+      if (headerBtn) headerBtn.style.display = 'inline-flex';
+      if (sidebarLink) sidebarLink.style.display = 'flex';
+      if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+
+      const pwaStatus = document.getElementById('pwa-status-badge');
+      if (pwaStatus) {
+        pwaStatus.className = 'tag tag-active';
+        pwaStatus.innerHTML = '<i class="fa-solid fa-download"></i> Ready to Install';
+      }
+    });
+
+    // Detect if running in standalone mode
+    function isRunningStandalone() {
+      return (window.matchMedia('(display-mode: standalone)').matches) ||
+             (window.navigator.standalone === true) ||
+             (document.referrer.includes('android-app://'));
+    }
+
+    function checkPwaStatus() {
+      const isStandalone = isRunningStandalone();
+      const pwaStatus = document.getElementById('pwa-status-badge');
+      const headerBtn = document.getElementById('pwa-install-btn');
+      const sidebarLink = document.getElementById('pwa-sidebar-install');
+      const settingsBtn = document.getElementById('pwa-settings-install-btn');
+
+      if (isStandalone) {
+        if (headerBtn) headerBtn.style.display = 'none';
+        if (sidebarLink) sidebarLink.style.display = 'none';
+        if (settingsBtn) {
+          settingsBtn.disabled = true;
+          settingsBtn.innerHTML = '<i class="fa-solid fa-check"></i> Already Installed';
+        }
+        if (pwaStatus) {
+          pwaStatus.className = 'tag tag-active';
+          pwaStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Running as App';
+        }
+      } else {
+        if (deferredPwaPrompt) {
+          if (headerBtn) headerBtn.style.display = 'inline-flex';
+          if (sidebarLink) sidebarLink.style.display = 'flex';
+        }
+      }
+    }
+
+    async function triggerPWAInstall() {
+      if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        const choiceResult = await deferredPwaPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+          showToast('PanelX App is being installed!');
+          const headerBtn = document.getElementById('pwa-install-btn');
+          const sidebarLink = document.getElementById('pwa-sidebar-install');
+          if (headerBtn) headerBtn.style.display = 'none';
+          if (sidebarLink) sidebarLink.style.display = 'none';
+        } else {
+          showToast('App installation dismissed');
+        }
+        deferredPwaPrompt = null;
+      } else {
+        if (isRunningStandalone()) {
+          showToast('PanelX is already running as an installed app!');
+        } else {
+          openModal('pwa-guide-modal');
+        }
+      }
+    }
+
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] PanelX installed');
+      showToast('PanelX App installed successfully!');
+      deferredPwaPrompt = null;
+      checkPwaStatus();
+    });
+
+    window.addEventListener('DOMContentLoaded', checkPwaStatus);
 
     // Start
     checkAuth();
