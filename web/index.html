@@ -858,6 +858,9 @@
       color: #00f2fe;
       transform: translateY(-1px);
     }
+    .action-btn-clean.reset-action:hover {
+      color: #f59e0b;
+    }
     .action-btn-clean.delete-action:hover {
       color: #ef4444;
     }
@@ -1922,6 +1925,12 @@ PANELX_API_KEY=SGX_...</div>
             <label class="form-label"><i class="fa-solid fa-chart-pie" style="color: var(--accent-cyan); margin-right: 5px;"></i> Traffic Quota (GB, 0 = Unlimited)</label>
             <input type="number" id="edit-client-quota" class="form-input" min="0" required>
           </div>
+          <div class="form-group" style="background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.35); padding: 10px 14px; border-radius: 8px; margin-top: 10px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 0;">
+              <input type="checkbox" id="edit-client-reset-usage" style="accent-color: #f59e0b; width: 16px; height: 16px;">
+              <span style="font-size: 13px; color: #fbbf24; font-weight: 600;"><i class="fa-solid fa-rotate-left" style="margin-right: 4px;"></i> Reset Data Usage (Set back to 0 GB)</span>
+            </label>
+          </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
             <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-client')">Cancel</button>
             <button type="submit" class="btn btn-primary" id="btn-save-edit-client"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
@@ -1960,9 +1969,12 @@ PANELX_API_KEY=SGX_...</div>
             <span style="color: var(--text-muted);">Active Devices:</span>
             <span style="color: #cbd5e1;" id="info-client-devices"></span>
           </div>
-          <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">
             <span style="color: var(--text-muted);">Traffic Used:</span>
-            <span style="color: #b57edc; font-weight: 600;" id="info-client-quota"></span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="color: #b57edc; font-weight: 600;" id="info-client-quota"></span>
+              <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px; color: #fbbf24; border-color: rgba(245, 158, 11, 0.4);" title="Reset this client's usage to 0 GB" onclick="resetClientUsage(document.getElementById('info-client-name').innerText); closeModal('modal-client-info');"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+            </div>
           </div>
         </div>
       </div>
@@ -3002,6 +3014,7 @@ PANELX_API_KEY=SGX_...</div>
               <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;">
                 <button class="action-btn-clean" title="View Config / QR Code" onclick="openConfigModal('${u.username}')"><i class="fa-solid fa-qrcode"></i></button>
                 <button class="action-btn-clean" title="Client Details" onclick="openClientInfoModal('${u.username}')"><i class="fa-solid fa-circle-info"></i></button>
+                <button class="action-btn-clean reset-action" title="Reset Traffic Usage (0 GB)" onclick="resetClientUsage('${u.username}')"><i class="fa-solid fa-rotate-left"></i></button>
                 <button class="action-btn-clean" title="Renew (+30 Days)" onclick="renewClient('${u.username}')"><i class="fa-solid fa-arrows-rotate"></i></button>
                 <button class="action-btn-clean" title="Edit Client" onclick="openEditClientModal('${u.username}')"><i class="fa-solid fa-pen"></i></button>
                 <button class="action-btn-clean delete-action" title="Delete Client" onclick="deleteClient('${u.username}')"><i class="fa-solid fa-trash"></i></button>
@@ -3072,6 +3085,8 @@ PANELX_API_KEY=SGX_...</div>
       document.getElementById('edit-client-expiry').value = u.expiry_date || '';
       document.getElementById('edit-client-devices').value = u.max_devices || u.simultaneous_limit || 4;
       document.getElementById('edit-client-quota').value = typeof u.bandwidth_gb !== 'undefined' ? u.bandwidth_gb : (u.traffic_limit_gb || 0);
+      const resetChk = document.getElementById('edit-client-reset-usage');
+      if (resetChk) resetChk.checked = false;
 
       openModal('modal-edit-client');
     }
@@ -3086,6 +3101,7 @@ PANELX_API_KEY=SGX_...</div>
       }
 
       const username = document.getElementById('edit-client-username').value;
+      const resetUsage = document.getElementById('edit-client-reset-usage')?.checked || false;
       const body = {
         username: username,
         password: document.getElementById('edit-client-pass').value,
@@ -3094,7 +3110,8 @@ PANELX_API_KEY=SGX_...</div>
         simultaneous_limit: parseInt(document.getElementById('edit-client-devices').value) || 4,
         traffic_limit: parseInt(document.getElementById('edit-client-quota').value) || 0,
         bandwidth_gb: parseInt(document.getElementById('edit-client-quota').value) || 0,
-        inbound_id: parseInt(document.getElementById('edit-client-inbound').value || 0)
+        inbound_id: parseInt(document.getElementById('edit-client-inbound').value || 0),
+        reset_usage: resetUsage
       };
 
       try {
@@ -3125,6 +3142,29 @@ PANELX_API_KEY=SGX_...</div>
           saveBtn.disabled = false;
           saveBtn.innerHTML = originalBtnText;
         }
+      }
+    }
+
+    async function resetClientUsage(username) {
+      if (!username) return;
+      if (!confirm(`Are you sure you want to reset bandwidth usage for "${username}" to 0 GB?`)) return;
+
+      try {
+        showToast(`Resetting bandwidth usage for "${username}"...`);
+        const res = await fetch('/api/users/reset-bandwidth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (res.ok && (data.success || data.message)) {
+          showToast(`Bandwidth usage reset to 0 GB for "${username}"!`);
+          await loadUsers();
+        } else {
+          showToast(data.detail || data.error || data.message || 'Failed to reset bandwidth', true);
+        }
+      } catch (e) {
+        showToast('Error resetting bandwidth: ' + e.message, true);
       }
     }
 

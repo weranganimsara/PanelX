@@ -18,6 +18,7 @@ Key Architecture Upgrades:
 import os
 import re
 import sys
+import glob
 import time
 import json
 import socket
@@ -291,8 +292,48 @@ init_db()
 # ---------------------------------------------------------------------------
 # Linux Account Helpers (Non-blocking wrappers)
 # ---------------------------------------------------------------------------
+def purge_user_bandwidth_data(username: str):
+    """
+    Completely removes all bandwidth usage history and PID tracking files for a user.
+    Called when a user is deleted, or before a new user is created under the same username,
+    guaranteeing that previous bandwidth usage (e.g. 50 GB) never carries over.
+    """
+    clean = username.strip().lower()
+    dirs_to_check = [
+        os.path.join(DATA_DIR, "bandwidth"),
+        "/etc/panelx/bandwidth",
+        "/var/log/panelx/bw",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "bandwidth")
+    ]
+    for bdir in set(dirs_to_check):
+        if os.path.exists(bdir):
+            usage_file = os.path.join(bdir, f"{clean}.usage")
+            if os.path.exists(usage_file):
+                try:
+                    os.remove(usage_file)
+                except Exception:
+                    pass
+            pid_dir = os.path.join(bdir, "pidtrack")
+            if os.path.exists(pid_dir):
+                for f in glob.glob(os.path.join(pid_dir, f"{clean}__*.io")):
+                    try:
+                        os.remove(f)
+                    except Exception:
+                        pass
+    # Also clean banners
+    for bdir in ["/etc/panelx/banners", os.path.join(DATA_DIR, "banners")]:
+        bfile = os.path.join(bdir, f"{clean}.txt")
+        if os.path.exists(bfile):
+            try:
+                os.remove(bfile)
+            except Exception:
+                pass
+
 def os_create_user(username: str, password: str, expiry_date: str, max_logins: int = 4):
     clean_user = username.strip().lower()
+    # Purge any leftover bandwidth tracking from previously deleted user with the same name
+    purge_user_bandwidth_data(clean_user)
+    reset_user_bandwidth_usage(clean_user)
     # Safely create user without dropping other settings
     subprocess.run(f"userdel -r {clean_user} 2>/dev/null", shell=True)
     res = subprocess.run(f"useradd -e {expiry_date} -s /bin/false -M {clean_user}", shell=True)
@@ -342,6 +383,7 @@ def os_delete_user(username: str):
     subprocess.run(f"pkill -u {clean_user} -9 2>/dev/null", shell=True)
     subprocess.run(f"userdel -r {clean_user} 2>/dev/null", shell=True)
     subprocess.run(f"sed -i '/^{clean_user} /d' /etc/security/limits.conf 2>/dev/null", shell=True)
+    purge_user_bandwidth_data(clean_user)
     sync_users_db()
 
 def os_renew_user(username: str, expiry_date: str):
@@ -429,18 +471,37 @@ def get_user_bandwidth_usage(username: str) -> int:
     return 0
 
 def reset_user_bandwidth_usage(username: str):
+    """
+    Resets the user's bandwidth usage to 0 GB.
+    Overwrites the usage file with '0' and deletes all active session PID tracking files,
+    preventing any old IO deltas from continuing to count.
+    Also clears used_bytes in SQLite users table.
+    """
     clean = username.strip().lower()
-    for base_dir in ["/etc/panelx/bandwidth", "/var/log/panelx/bw"]:
-        os.makedirs(base_dir, exist_ok=True)
-        fpath = os.path.join(base_dir, f"{clean}.usage")
+    dirs_to_check = [
+        os.path.join(DATA_DIR, "bandwidth"),
+        "/etc/panelx/bandwidth",
+        "/var/log/panelx/bw",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "bandwidth")
+    ]
+    for bdir in set(dirs_to_check):
         try:
+            os.makedirs(bdir, exist_ok=True)
+            fpath = os.path.join(bdir, f"{clean}.usage")
             with open(fpath, "w", encoding="utf-8") as bf:
                 bf.write("0")
+            pid_dir = os.path.join(bdir, "pidtrack")
+            if os.path.exists(pid_dir):
+                for f in glob.glob(os.path.join(pid_dir, f"{clean}__*.io")):
+                    try:
+                        os.remove(f)
+                    except Exception:
+                        pass
         except Exception:
             pass
     try:
         with get_db() as conn:
-            conn.execute("UPDATE users SET used_bytes = 0 WHERE username = ?", (clean,))
+            conn.execute("UPDATE users SET used_bytes = 0 WHERE LOWER(username) = LOWER(?)", (clean,))
     except Exception:
         pass
 
@@ -913,13 +974,14 @@ async def api_user_create(request: Request):
         try:
             with get_db() as conn:
                 conn.execute("""
-                    INSERT INTO users (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, status, created_at, inbound_id)
-                    VALUES (?, ?, ?, ?, ?, ?, 'Active', datetime('now'), ?)
+                    INSERT INTO users (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, status, created_at, inbound_id, used_bytes)
+                    VALUES (?, ?, ?, ?, ?, ?, 'Active', datetime('now'), ?, 0)
                 """, (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, inbound_id))
         except sqlite3.IntegrityError:
             return False, f"Username '{username}' already exists"
 
         os_create_user(username, password, expiry_date, simultaneous_limit)
+        reset_user_bandwidth_usage(username)
         audit_log("admin", "user_create", username, client_ip, f"Validity: {days}d, Limit: {simultaneous_limit}")
         return True, ""
 
@@ -1028,6 +1090,9 @@ async def api_user_update(request: Request):
         except Exception as e:
             print(f"[WARN] os_update_user: {e}")
 
+        if body.get("reset_usage") or body.get("reset_bandwidth"):
+            reset_user_bandwidth_usage(actual_username)
+
         audit_log("admin", "user_update", actual_username, client_ip, f"Updated fields: {updates}")
         return True, ""
 
@@ -1099,8 +1164,9 @@ async def api_user_delete(request: Request):
 
     def delete_tx():
         with get_db() as conn:
-            conn.execute("DELETE FROM users WHERE username = ?", (username,))
+            conn.execute("DELETE FROM users WHERE LOWER(username) = LOWER(?)", (username,))
         os_delete_user(username)
+        purge_user_bandwidth_data(username)
         audit_log("admin", "user_delete", username, client_ip)
 
     await run_in_threadpool(delete_tx)
@@ -1165,10 +1231,11 @@ async def api_users_bulk_create(request: Request):
                 p = secrets.token_hex(4)
                 try:
                     conn.execute("""
-                        INSERT INTO users (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, status, created_at)
-                        VALUES (?, ?, ?, ?, ?, 'Bulk generated', 'Active', datetime('now'))
+                        INSERT INTO users (username, password, expiry_date, simultaneous_limit, bandwidth_gb, notes, status, created_at, used_bytes)
+                        VALUES (?, ?, ?, ?, ?, 'Bulk generated', 'Active', datetime('now'), 0)
                     """, (u, p, expiry_date, simultaneous_limit, bandwidth_gb))
                     os_create_user(u, p, expiry_date, simultaneous_limit)
+                    reset_user_bandwidth_usage(u)
                     created.append({"username": u, "password": p, "expiry_date": expiry_date})
                 except Exception:
                     pass
@@ -1180,26 +1247,40 @@ async def api_users_bulk_create(request: Request):
 
 @app.post("/api/users/reset-bandwidth")
 @app.post("/api/user/reset-bandwidth")
+@app.post("/api/users/reset-usage")
+@app.post("/api/user/reset-usage")
 @app.post("{base_path:path}/api/users/reset-bandwidth")
 @app.post("{base_path:path}/api/user/reset-bandwidth")
+@app.post("{base_path:path}/api/users/reset-usage")
+@app.post("{base_path:path}/api/user/reset-usage")
 async def api_user_reset_bandwidth(request: Request):
     require_auth(request)
     body = await parse_request_body(request)
     client_ip = request.client.host if request.client else "127.0.0.1"
 
-    username = str(body.get("username", "")).strip().lower()
+    username = str(body.get("username", request.query_params.get("username", ""))).strip().lower()
     if not username:
         raise HTTPException(status_code=400, detail="Username required")
 
     def reset_tx():
+        with get_db() as conn:
+            row = conn.execute("SELECT username, status FROM users WHERE LOWER(username) = LOWER(?)", (username,)).fetchone()
+            if not row:
+                return False, f"User '{username}' not found"
+            actual_username = row["username"]
+            new_status = "Active" if row["status"] == "Quota Exceeded" else row["status"]
+            conn.execute("UPDATE users SET used_bytes = 0, status = ? WHERE LOWER(username) = LOWER(?)", (new_status, actual_username))
+
         reset_user_bandwidth_usage(username)
         subprocess.run(f"usermod -U {username} 2>/dev/null", shell=True)
-        with get_db() as conn:
-            conn.execute("UPDATE users SET status = 'Active' WHERE username = ?", (username,))
         audit_log("admin", "user_reset_bandwidth", username, client_ip)
+        return True, ""
 
-    await run_in_threadpool(reset_tx)
-    return {"success": True, "message": f"Bandwidth reset to 0 GB for {username}"}
+    success, err = await run_in_threadpool(reset_tx)
+    if not success:
+        raise HTTPException(status_code=404, detail=err)
+
+    return {"success": True, "message": f"Bandwidth usage reset to 0 GB for '{username}'"}
 
 # ---------------------------------------------------------------------------
 # API Endpoints: Database Backup & Zero-Corruption Restore

@@ -437,8 +437,8 @@ def enforce_device_limits_and_bandwidth(user_sessions: Dict[str, List[Dict[str, 
             except Exception:
                 pass
 
-        # If file is empty or missing, fallback to DB used_bytes (e.g. after database restore)
-        if accumulated_bytes == 0 and uinfo.get("used_bytes"):
+        # Fallback to DB used_bytes ONLY if usage_file does NOT exist at all (e.g. after fresh install or DB restore)
+        if not os.path.exists(usage_file) and uinfo.get("used_bytes"):
             accumulated_bytes = int(uinfo.get("used_bytes") or 0)
             if accumulated_bytes > 0:
                 try:
